@@ -7,7 +7,7 @@ import aws.sdk.kotlin.services.sqs.model.SendMessageRequest
 import aws.smithy.kotlin.runtime.content.decodeToString
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import kotlinx.coroutines.runBlocking
-import org.http4k.client.OkHttp
+import org.http4k.client.JavaHttpClient
 import org.http4k.core.Method
 import org.http4k.core.Request
 import scorcerer.server.Environment
@@ -58,7 +58,7 @@ data class ScoreUpdate(
 val liveMatchesKey = "live-matches.json"
 
 class ScoreUpdater {
-    private val client = OkHttp()
+    private val client = JavaHttpClient()
     private val s3Client = S3Client { region = "eu-west-2" }
     private val sqsClient = SqsClient { region = "eu-west-2" }
     private val endpoint = "https://www.fotmob.com/api/matchDetails?matchId="

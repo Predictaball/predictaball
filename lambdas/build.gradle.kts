@@ -58,23 +58,18 @@ dependencies {
     implementation("org.http4k:http4k-core")
     implementation("org.http4k:http4k-format-jackson")
     implementation("org.http4k:http4k-server-netty")
-    implementation("org.http4k:http4k-client-okhttp")
 
     implementation("aws.sdk.kotlin:s3:1.2.15")
     implementation("aws.sdk.kotlin:cognitoidentityprovider:1.2.5")
     implementation("aws.sdk.kotlin:sqs:1.2.15")
 
     implementation("org.jetbrains.exposed:exposed-core:1.1.1")
-    implementation("org.jetbrains.exposed:exposed-dao:1.1.1")
     implementation("org.jetbrains.exposed:exposed-kotlin-datetime:1.1.1")
-    implementation("org.jetbrains.exposed:exposed-java-time:1.1.1")
     implementation("org.jetbrains.exposed:exposed-jdbc:1.1.1")
 
     implementation("org.postgresql:postgresql:42.7.3")
     implementation("com.zaxxer:HikariCP:6.2.1")
 
-    implementation("com.fasterxml.jackson.core:jackson-core:2.17.1")
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.17.1")
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.17.1")
 
     implementation("org.slf4j:slf4j-simple:2.0.6")
