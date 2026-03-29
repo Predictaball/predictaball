@@ -3,7 +3,7 @@ package scorcerer.server.db.tables
 import org.jetbrains.exposed.v1.core.Table
 import org.jetbrains.exposed.v1.core.greaterEq
 import org.jetbrains.exposed.v1.datetime.timestampWithTimeZone
-import org.openapitools.server.models.State
+import org.openapitools.server.models.Match
 
 enum class MatchResult(val value: String) {
     HOME("HOME"),
@@ -26,7 +26,7 @@ object MatchTable : Table("match") {
     val homeScore = integer("home_score").nullable()
     val awayScore = integer("away_score").nullable()
     val result = enumerationByName<MatchResult>("result", 10).nullable()
-    val state = enumerationByName<State>("state", 10)
+    val state = enumerationByName<Match.State>("state", 10)
     val venue = varchar("venue", 30)
     val matchDay = integer("match_day").check { it.greaterEq(1) }
     val round = enumerationByName<MatchRound>("round", 20)

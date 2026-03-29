@@ -150,12 +150,9 @@ tasks {
     register<GenerateTask>("generateKotlinServer") {
         generatorName.set("kotlin-server")
         inputSpec.set("$rootDir/contract/api-contract.yaml")
-        additionalProperties.set(mapOf("interfaceOnly" to "true", "library" to "jaxrs-spec"))
+        additionalProperties.set(mapOf("interfaceOnly" to "true", "library" to "jaxrs-spec", "enumPropertyNaming" to "UPPERCASE"))
         outputDir.set(layout.buildDirectory.dir("generated").map { it.asFile.absolutePath })
-        templateDir.set("$rootDir/templates")
-        configFile.set("$rootDir/config.yaml")
-        inputs.dir("$rootDir/templates")
-        inputs.file("$rootDir/config.yaml")
+        globalProperties.set(mapOf("models" to ""))
         inputs.file("$rootDir/contract/api-contract.yaml")
     }
 

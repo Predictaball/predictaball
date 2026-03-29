@@ -8,12 +8,12 @@ import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.less
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
-import org.openapitools.server.models.State
-import org.openapitools.server.toJson
+import org.openapitools.server.models.Match
 import scorcerer.server.db.tables.MatchTable
 import scorcerer.server.log
 import scorcerer.server.resources.getMatchDay
 import scorcerer.server.resources.setScore
+import scorcerer.server.toJson
 import scorcerer.utils.LeaderboardS3Service
 import java.time.Clock
 import java.time.OffsetDateTime
@@ -29,7 +29,7 @@ class MatchStarter(private val leaderboardService: LeaderboardS3Service) {
         transaction {
             val matchesWhichHaveStarted = MatchTable
                 .selectAll()
-                .where((MatchTable.datetime less now) and (MatchTable.state eq State.UPCOMING))
+                .where((MatchTable.datetime less now) and (MatchTable.state eq Match.State.UPCOMING))
 
             log.info("Found ${matchesWhichHaveStarted.count()} games which have already started")
 
@@ -52,7 +52,7 @@ fun updateLiveMatches(leaderboardService: LeaderboardS3Service) {
     val liveMatches = transaction {
         MatchTable
             .selectAll()
-            .where(MatchTable.state eq State.LIVE)
+            .where(MatchTable.state eq Match.State.LIVE)
             .filter { it.getOrNull(MatchTable.fotmobMatchId) != null }
             .map { LiveMatch(it[MatchTable.id].toString(), it[MatchTable.fotmobMatchId]!!) }
     }

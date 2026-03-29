@@ -9,14 +9,13 @@ import aws.smithy.kotlin.runtime.content.decodeToString
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
-import org.openapitools.server.fromJson
 import org.openapitools.server.models.LeaderboardInner
-import org.openapitools.server.models.Movement
 import org.openapitools.server.models.User
-import org.openapitools.server.toJson
 import scorcerer.server.db.tables.LeagueMembershipTable
 import scorcerer.server.db.tables.MemberTable
+import scorcerer.server.fromJson
 import scorcerer.server.log
+import scorcerer.server.toJson
 
 fun filterLeaderboardToLeague(
     globalLeaderboard: List<LeaderboardInner>?,
@@ -50,12 +49,12 @@ fun calculateMovement(
         val previous = previousPositions[current.user.userId]
         val movement = if (previous != null) {
             when {
-                current.position < previous.position -> Movement.IMPROVED
-                current.position > previous.position -> Movement.WORSENED
-                else -> Movement.UNCHANGED
+                current.position < previous.position -> LeaderboardInner.Movement.IMPROVED
+                current.position > previous.position -> LeaderboardInner.Movement.WORSENED
+                else -> LeaderboardInner.Movement.UNCHANGED
             }
         } else {
-            Movement.UNCHANGED
+            LeaderboardInner.Movement.UNCHANGED
         }
         current.copy(movement = movement)
     }
@@ -99,9 +98,9 @@ fun calculateGlobalLeaderboard(previousGlobalLeaderboard: List<LeaderboardInner>
 
         val previousPosition = previousPositions[user.userId]?.position ?: currentPosition
         val movement = when {
-            currentPosition > previousPosition -> Movement.WORSENED
-            currentPosition < previousPosition -> Movement.IMPROVED
-            else -> Movement.UNCHANGED
+            currentPosition > previousPosition -> LeaderboardInner.Movement.WORSENED
+            currentPosition < previousPosition -> LeaderboardInner.Movement.IMPROVED
+            else -> LeaderboardInner.Movement.UNCHANGED
         }
 
         LeaderboardInner(currentPosition, user, movement)

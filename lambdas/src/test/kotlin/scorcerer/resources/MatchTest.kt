@@ -19,9 +19,7 @@ import org.openapitools.server.models.CreateMatchRequest
 import org.openapitools.server.models.Match
 import org.openapitools.server.models.MatchRound
 import org.openapitools.server.models.Prediction
-import org.openapitools.server.models.Round
 import org.openapitools.server.models.SetMatchScoreRequest
-import org.openapitools.server.models.State
 import scorcerer.DatabaseTest
 import scorcerer.givenLeagueExists
 import scorcerer.givenMatchExists
@@ -70,13 +68,13 @@ class MatchTest : DatabaseTest() {
     @Test
     fun errorWhenViewingOtherUsersPredictions() {
         shouldThrow<ApiResponseError> {
-            MatchResource(RequestContexts(), mockLeaderboardService).listMatches("user-1", State.UPCOMING.toString(), "user-2")
+            MatchResource(RequestContexts(), mockLeaderboardService).listMatches("user-1", Match.State.UPCOMING.toString(), "user-2")
         }
     }
 
     @Test
     fun notErrorWhenPassingOwnUserId() {
-        MatchResource(RequestContexts(), mockLeaderboardService).listMatches("user-1", State.UPCOMING.toString(), "user-1")
+        MatchResource(RequestContexts(), mockLeaderboardService).listMatches("user-1", Match.State.UPCOMING.toString(), "user-1")
     }
 
     @Test
@@ -95,19 +93,19 @@ class MatchTest : DatabaseTest() {
 
         MatchResource(RequestContexts(), mockLeaderboardService).listMatches(
             "",
-            State.UPCOMING.toString(),
+            Match.State.UPCOMING.toString(),
             null,
         ).size shouldBe 2
 
         // There should be no matches which are LIVE or COMPLETED
         MatchResource(RequestContexts(), mockLeaderboardService).listMatches(
             "",
-            State.COMPLETED.toString(),
+            Match.State.COMPLETED.toString(),
             null,
         ).size shouldBe 0
         MatchResource(RequestContexts(), mockLeaderboardService).listMatches(
             "",
-            State.LIVE.toString(),
+            Match.State.LIVE.toString(),
             null,
         ).size shouldBe 0
     }
@@ -119,7 +117,7 @@ class MatchTest : DatabaseTest() {
         val anotherUserId = "anotherUser"
         givenUserExists(anotherUserId, "name")
 
-        val matchId = givenMatchExists("3", "4", matchState = State.LIVE)
+        val matchId = givenMatchExists("3", "4", matchState = Match.State.LIVE)
         val predictionId = givenPredictionExists(matchId, userId, 1, 1)
         val anotherPredictionId = givenPredictionExists(matchId, anotherUserId, 1, 1)
 
@@ -150,7 +148,7 @@ class MatchTest : DatabaseTest() {
         givenUserExists(userId, "name", fixedPoints = 0, livePoints = 0)
         val anotherUserId = "anotherUser"
         givenUserExists(anotherUserId, "name", fixedPoints = 0, livePoints = 0)
-        val matchId = givenMatchExists("3", "4", matchState = State.LIVE)
+        val matchId = givenMatchExists("3", "4", matchState = Match.State.LIVE)
 
         val predictionId = givenPredictionExists(matchId, userId, 1, 1)
         val leagueId = "test-league"
@@ -294,7 +292,7 @@ class MatchTest : DatabaseTest() {
         transaction {
             MatchTable.select(MatchTable.state).where { MatchTable.id eq matchId.toInt() }
                 .map { row -> row[MatchTable.state] }[0]
-        } shouldBe State.COMPLETED
+        } shouldBe Match.State.COMPLETED
         coVerify { mockLeaderboardService.updateGlobalLeaderboard(1) }
     }
 
@@ -326,7 +324,7 @@ class MatchTest : DatabaseTest() {
         transaction {
             MatchTable.select(MatchTable.state).where { MatchTable.id eq matchId.toInt() }
                 .map { row -> row[MatchTable.state] }[0]
-        } shouldBe State.COMPLETED
+        } shouldBe Match.State.COMPLETED
         coVerify { mockLeaderboardService.updateGlobalLeaderboard(1) }
     }
 }
@@ -335,11 +333,11 @@ class GetMatchesOnNextThreeDaysTest {
     @Test
     fun testWithMultipleMatchDays() {
         val matches = listOf(
-            Match("Team A", "flagA", "Team B", "flagB", "1", "Stadium A", OffsetDateTime.now(), 1, Round.GROUP_STAGE, State.UPCOMING),
-            Match("Team C", "flagC", "Team D", "flagD", "2", "Stadium B", OffsetDateTime.now(), 2, Round.GROUP_STAGE, State.UPCOMING),
-            Match("Team E", "flagE", "Team F", "flagF", "3", "Stadium C", OffsetDateTime.now(), 2, Round.GROUP_STAGE, State.UPCOMING),
-            Match("Team G", "flagG", "Team H", "flagH", "4", "Stadium D", OffsetDateTime.now(), 3, Round.GROUP_STAGE, State.UPCOMING),
-            Match("Team G", "flagG", "Team H", "flagH", "4", "Stadium D", OffsetDateTime.now(), 4, Round.GROUP_STAGE, State.UPCOMING),
+            Match("Team A", "flagA", "Team B", "flagB", "1", "Stadium A", OffsetDateTime.now(), 1, Round.GROUP_STAGE, Match.State.UPCOMING),
+            Match("Team C", "flagC", "Team D", "flagD", "2", "Stadium B", OffsetDateTime.now(), 2, Round.GROUP_STAGE, Match.State.UPCOMING),
+            Match("Team E", "flagE", "Team F", "flagF", "3", "Stadium C", OffsetDateTime.now(), 2, Round.GROUP_STAGE, Match.State.UPCOMING),
+            Match("Team G", "flagG", "Team H", "flagH", "4", "Stadium D", OffsetDateTime.now(), 3, Round.GROUP_STAGE, Match.State.UPCOMING),
+            Match("Team G", "flagG", "Team H", "flagH", "4", "Stadium D", OffsetDateTime.now(), 4, Round.GROUP_STAGE, Match.State.UPCOMING),
         )
 
         val filteredMatches = getMatchesOnNextThreeDays(matches)
@@ -350,8 +348,8 @@ class GetMatchesOnNextThreeDaysTest {
     @Test
     fun testWithLessThanNMatchDays() {
         val matches = listOf(
-            Match("Team A", "flagA", "Team B", "flagB", "1", "Stadium A", OffsetDateTime.now(), 1, Round.GROUP_STAGE, State.UPCOMING),
-            Match("Team C", "flagC", "Team D", "flagD", "2", "Stadium B", OffsetDateTime.now(), 1, Round.GROUP_STAGE, State.UPCOMING),
+            Match("Team A", "flagA", "Team B", "flagB", "1", "Stadium A", OffsetDateTime.now(), 1, Round.GROUP_STAGE, Match.State.UPCOMING),
+            Match("Team C", "flagC", "Team D", "flagD", "2", "Stadium B", OffsetDateTime.now(), 1, Round.GROUP_STAGE, Match.State.UPCOMING),
         )
 
         val filteredMatches = getMatchesOnNextThreeDays(matches)

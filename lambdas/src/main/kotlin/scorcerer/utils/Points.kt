@@ -7,7 +7,7 @@ import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.jetbrains.exposed.v1.jdbc.update
-import org.openapitools.server.models.State
+import org.openapitools.server.models.Match
 import scorcerer.server.db.tables.MatchTable
 import scorcerer.server.db.tables.MemberTable
 import scorcerer.server.db.tables.MemberTable.livePoints
@@ -15,7 +15,7 @@ import scorcerer.server.db.tables.PredictionTable
 
 fun recalculateLivePoints() {
     transaction {
-        val liveMatchIds = MatchTable.selectAll().where { MatchTable.state eq State.LIVE }.map { it[MatchTable.id] }
+        val liveMatchIds = MatchTable.selectAll().where { MatchTable.state eq Match.State.LIVE }.map { it[MatchTable.id] }
 
         val livePointsByUser = PredictionTable
             .select(PredictionTable.memberId, PredictionTable.points.sum())

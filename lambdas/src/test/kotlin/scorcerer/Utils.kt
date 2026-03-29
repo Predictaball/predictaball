@@ -2,7 +2,7 @@ package scorcerer
 
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
-import org.openapitools.server.models.State
+import org.openapitools.server.models.Match
 import scorcerer.server.db.tables.*
 import java.time.OffsetDateTime
 
@@ -22,7 +22,7 @@ fun givenMatchExists(
     homeTeamId: String,
     awayTeamId: String,
     matchDatetime: OffsetDateTime = OffsetDateTime.now(),
-    matchState: State = State.UPCOMING,
+    matchState: State = Match.State.UPCOMING,
     matchDay: Int = 1,
 ): String {
     return (

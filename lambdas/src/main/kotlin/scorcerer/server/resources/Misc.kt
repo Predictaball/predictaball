@@ -1,11 +1,11 @@
 package scorcerer.server.resources
 
-import org.http4k.core.RequestContexts
-import org.openapitools.server.apis.MiscApi
+import org.http4k.core.Method
+import org.http4k.core.Response
+import org.http4k.core.Status
+import org.http4k.routing.bind
+import org.http4k.routing.routes
 
-class Misc(context: RequestContexts) : MiscApi(context) {
-    override fun ping() {
-        // Sleep for one second to force multiple containers to start
-        Thread.sleep(1000)
-    }
-}
+val miscRoutes = routes(
+    "/ping" bind Method.GET to { Response(Status.OK) },
+)

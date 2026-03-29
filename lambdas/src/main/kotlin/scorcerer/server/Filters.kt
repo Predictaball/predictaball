@@ -5,8 +5,6 @@ import org.http4k.core.Filter
 import org.http4k.core.RequestContexts
 import org.http4k.core.Response
 import org.http4k.core.Status
-import org.openapitools.server.apis.Authorizer
-import org.openapitools.server.apis.LAMBDA_AUTHORIZER_KEY
 
 val loggingFilter = Filter { next ->
     { req ->
@@ -17,7 +15,7 @@ val loggingFilter = Filter { next ->
 fun localAuthFilter(requestContext: RequestContexts) = Filter { next ->
     { req ->
         val testUserId = System.getenv("TEST_USER_ID") ?: "test-user"
-        requestContext[req][LAMBDA_AUTHORIZER_KEY] = Authorizer(
+        requestContext[req][AUTHORIZER_KEY] = Authorizer(
             claims = mapOf("sub" to testUserId, "custom:isAdmin" to "true"),
             scopes = emptyList(),
         )
