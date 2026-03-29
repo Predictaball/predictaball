@@ -16,7 +16,7 @@ buildscript {
 
 plugins {
     id "org.jlleitschuh.gradle.ktlint" version "12.1.0"
-    id "com.github.johnrengelman.shadow" version "8.1.1"
+    id "com.gradleup.shadow" version "9.3.2"
 }
 
 apply plugin: 'jacoco'
@@ -25,8 +25,8 @@ group "org.openapitools"
 version "1.0.0"
 
 wrapper {
-    gradleVersion = '8.7'
-    distributionUrl = "https://services.gradle.org/distributions/gradle-$gradleVersion-all.zip"
+    gradleVersion = '9.4.1'
+    distributionUrl = "https://services.gradle.org/distributions/gradle-$gradleVersion-bin.zip"
 }
 
 apply plugin: "kotlin"
@@ -34,7 +34,9 @@ apply plugin: "java"
 apply plugin: "application"
 apply plugin: "org.openapi.generator"
 
-mainClassName = "scorcerer.server.ServerKt"
+application {
+    mainClass = "scorcerer.server.ServerKt"
+}
 
 compileKotlin {
     kotlinOptions.jvmTarget = "11"
