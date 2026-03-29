@@ -54,13 +54,11 @@ ktlint {
 }
 
 dependencies {
-    implementation(platform("org.http4k:http4k-bom:4.41.1.0"))
-    implementation(platform("org.http4k:http4k-connect-bom:3.35.0.0"))
+    implementation(platform("org.http4k:http4k-bom:6.39.0.0"))
     implementation("org.http4k:http4k-core")
-    implementation("org.http4k:http4k-contract")
-    implementation("org.http4k:http4k-format-jackson:5.20.0.0")
-    implementation("org.http4k:http4k-server-netty:5.20.0.0")
-    implementation("org.http4k:http4k-client-okhttp:5.23.0.0")
+    implementation("org.http4k:http4k-format-jackson")
+    implementation("org.http4k:http4k-server-netty")
+    implementation("org.http4k:http4k-client-okhttp")
 
     implementation("aws.sdk.kotlin:s3:1.2.15")
     implementation("aws.sdk.kotlin:cognitoidentityprovider:1.2.5")
