@@ -131,15 +131,18 @@ private fun listMatches(requesterUserId: String, filterType: String?, userId: St
             .join(homeTeamTable, JoinType.INNER, MatchTable.homeTeamId, homeTeamTable[TeamTable.id])
             .join(predictions, JoinType.LEFT, MatchTable.id, predictions[PredictionTable.matchId]).selectAll()
             .orderBy(MatchTable.datetime)
-        if (filterType.isNullOrBlank()) matchTeamTable else matchTeamTable.where { MatchTable.state eq Match.State.valueOf(filterType.uppercase()) }
-    }.map { row ->
-        val awayTeamTable = TeamTable.alias("awayTeam")
-        val homeTeamTable = TeamTable.alias("homeTeam")
-        val predictions = PredictionTable.selectAll().where { PredictionTable.memberId eq (userId ?: requesterUserId) }.alias("predictions")
-        Match(
-            row[homeTeamTable[TeamTable.name]].toTitleCase(), row[homeTeamTable[TeamTable.flagUri]], row[awayTeamTable[TeamTable.name]].toTitleCase(), row[awayTeamTable[TeamTable.flagUri]], row[MatchTable.id].toString(), row[MatchTable.venue], row[MatchTable.datetime], row[MatchTable.matchDay], Match.Round.valueOf(row[MatchTable.round].value), row[MatchTable.state], row[MatchTable.homeScore], row[MatchTable.awayScore],
-            row.getOrNull(predictions[PredictionTable.id])?.let { Prediction(row[predictions[PredictionTable.homeScore]], row[predictions[PredictionTable.awayScore]], row[MatchTable.id].toString(), row[predictions[PredictionTable.id]].toString(), row[predictions[PredictionTable.memberId]], row[predictions[PredictionTable.points]]) },
-        )
+        val query = if (filterType.isNullOrBlank()) matchTeamTable else matchTeamTable.where { MatchTable.state eq Match.State.valueOf(filterType.uppercase()) }
+        query.map { row ->
+            Match(
+                row[homeTeamTable[TeamTable.name]].toTitleCase(), row[homeTeamTable[TeamTable.flagUri]],
+                row[awayTeamTable[TeamTable.name]].toTitleCase(), row[awayTeamTable[TeamTable.flagUri]],
+                row[MatchTable.id].toString(), row[MatchTable.venue], row[MatchTable.datetime], row[MatchTable.matchDay],
+                Match.Round.valueOf(row[MatchTable.round].value), row[MatchTable.state], row[MatchTable.homeScore], row[MatchTable.awayScore],
+                row.getOrNull(predictions[PredictionTable.id])?.let {
+                    Prediction(row[predictions[PredictionTable.homeScore]], row[predictions[PredictionTable.awayScore]], row[MatchTable.id].toString(), row[predictions[PredictionTable.id]].toString(), row[predictions[PredictionTable.memberId]], row[predictions[PredictionTable.points]])
+                },
+            )
+        }
     }
     if (!filterType.isNullOrBlank() && Match.State.valueOf(filterType.uppercase()) == Match.State.UPCOMING) {
         log.info("Filtering matches to next 2 match days")

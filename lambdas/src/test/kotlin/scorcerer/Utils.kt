@@ -22,7 +22,7 @@ fun givenMatchExists(
     homeTeamId: String,
     awayTeamId: String,
     matchDatetime: OffsetDateTime = OffsetDateTime.now(),
-    matchState: State = Match.State.UPCOMING,
+    matchState: Match.State = Match.State.UPCOMING,
     matchDay: Int = 1,
 ): String {
     return (

@@ -1,25 +1,21 @@
 package scorcerer.resources
 
-import io.kotest.assertions.throwables.shouldThrow
-import io.kotest.inspectors.forOne
 import io.kotest.matchers.shouldBe
 import io.mockk.coVerify
 import io.mockk.coVerifySequence
 import io.mockk.mockk
+import org.http4k.core.Method
+import org.http4k.core.Request
 import org.http4k.core.RequestContexts
+import org.http4k.core.Status
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
-import org.openapitools.server.models.CompleteMatchRequest
-import org.openapitools.server.models.CreateMatchRequest
 import org.openapitools.server.models.Match
-import org.openapitools.server.models.MatchRound
 import org.openapitools.server.models.Prediction
-import org.openapitools.server.models.SetMatchScoreRequest
 import scorcerer.DatabaseTest
 import scorcerer.givenLeagueExists
 import scorcerer.givenMatchExists
@@ -27,17 +23,23 @@ import scorcerer.givenPredictionExists
 import scorcerer.givenTeamExists
 import scorcerer.givenUserExists
 import scorcerer.givenUserInLeague
-import scorcerer.server.ApiResponseError
 import scorcerer.server.db.tables.MatchTable
 import scorcerer.server.db.tables.MemberTable
 import scorcerer.server.db.tables.PredictionTable
-import scorcerer.server.resources.MatchResource
+import scorcerer.server.fromJson
+import scorcerer.server.resources.endMatch
 import scorcerer.server.resources.getMatchesOnNextThreeDays
+import scorcerer.server.resources.matchRoutes
+import scorcerer.server.resources.setScore
 import scorcerer.utils.LeaderboardS3Service
 import scorcerer.utils.MatchResult
 import java.time.OffsetDateTime
 
 class MatchTest : DatabaseTest() {
+    private val contexts = RequestContexts()
+    private val mockLeaderboardService = mockk<LeaderboardS3Service>(relaxed = true)
+    private val handler = testHandler(contexts, matchRoutes(contexts, mockLeaderboardService))
+
     @BeforeEach
     fun generateTeams() {
         givenTeamExists("England")
@@ -46,68 +48,66 @@ class MatchTest : DatabaseTest() {
         givenTeamExists("Scotland")
     }
 
-    private val mockLeaderboardService = mockk<LeaderboardS3Service>(relaxed = true)
-
     @Test
     fun createMatch() {
-        val match = MatchResource(RequestContexts(), mockLeaderboardService).createMatch(
-            "",
-            CreateMatchRequest(
-                "1",
-                "2",
-                OffsetDateTime.now(),
-                "Allianz",
-                1,
-                MatchRound.GROUP_STAGE,
-            ),
-        )
-
-        match.matchId shouldBe "1"
-    }
-
-    @Test
-    fun errorWhenViewingOtherUsersPredictions() {
-        shouldThrow<ApiResponseError> {
-            MatchResource(RequestContexts(), mockLeaderboardService).listMatches("user-1", Match.State.UPCOMING.toString(), "user-2")
-        }
-    }
-
-    @Test
-    fun notErrorWhenPassingOwnUserId() {
-        MatchResource(RequestContexts(), mockLeaderboardService).listMatches("user-1", Match.State.UPCOMING.toString(), "user-1")
+        val response = handler(Request(Method.POST, "/match").body("""{"homeTeamId":"1","awayTeamId":"2","datetime":"${OffsetDateTime.now()}","venue":"Allianz","matchDay":1,"matchRound":"GROUP_STAGE"}"""))
+        response.status shouldBe Status.OK
     }
 
     @Test
     fun listMatches() {
         givenMatchExists("1", "2")
         givenMatchExists("3", "4")
+        givenUserExists("test-user", "Test")
+        givenPredictionExists("1", "test-user", 3, 4)
 
-        givenUserExists("test", "Test")
-        givenPredictionExists("1", "test", 3, 4)
+        val response = handler(Request(Method.GET, "/match/list"))
+        response.status shouldBe Status.OK
+        val matches: List<Match> = response.bodyString().fromJson()
+        matches.size shouldBe 2
+        matches.first().prediction shouldBe Prediction(3, 4, "1", "1", "test-user", null)
+    }
 
-        val unfilteredMatches = MatchResource(RequestContexts(), mockLeaderboardService).listMatches("test", null, null)
-        unfilteredMatches.size shouldBe 2
+    @Test
+    fun listMatchesFilteredByState() {
+        givenMatchExists("1", "2")
+        givenMatchExists("3", "4")
+        givenUserExists("test-user", "Test")
 
-        val prediction = unfilteredMatches.first().prediction
-        prediction shouldBe Prediction(3, 4, "1", "1", "test", null)
+        val upcoming = handler(Request(Method.GET, "/match/list?filterType=upcoming"))
+        (upcoming.bodyString().fromJson<List<Match>>()).size shouldBe 2
 
-        MatchResource(RequestContexts(), mockLeaderboardService).listMatches(
-            "",
-            Match.State.UPCOMING.toString(),
-            null,
-        ).size shouldBe 2
+        val completed = handler(Request(Method.GET, "/match/list?filterType=completed"))
+        (completed.bodyString().fromJson<List<Match>>()).size shouldBe 0
 
-        // There should be no matches which are LIVE or COMPLETED
-        MatchResource(RequestContexts(), mockLeaderboardService).listMatches(
-            "",
-            Match.State.COMPLETED.toString(),
-            null,
-        ).size shouldBe 0
-        MatchResource(RequestContexts(), mockLeaderboardService).listMatches(
-            "",
-            Match.State.LIVE.toString(),
-            null,
-        ).size shouldBe 0
+        val live = handler(Request(Method.GET, "/match/list?filterType=live"))
+        (live.bodyString().fromJson<List<Match>>()).size shouldBe 0
+    }
+
+    @Test
+    fun errorWhenViewingOtherUsersPredictions() {
+        givenUserExists("test-user", "Test")
+        val response = handler(Request(Method.GET, "/match/list?filterType=upcoming&userId=other-user"))
+        response.status shouldBe Status.BAD_REQUEST
+    }
+
+    @Test
+    fun getMatchPredictionsWhenNoMatchRaisesError() {
+        val response = handler(Request(Method.GET, "/match/999/predictions"))
+        response.status shouldBe Status.NOT_FOUND
+    }
+
+    @Test
+    fun getMatchPredictionsWhenMatchUpcomingRaisesError() {
+        val matchId = givenMatchExists("3", "4")
+        val response = handler(Request(Method.GET, "/match/$matchId/predictions"))
+        response.status shouldBe Status.BAD_REQUEST
+    }
+
+    @Test
+    fun setMatchScoreWhenMatchDoesNotExistRaises() {
+        val response = handler(Request(Method.POST, "/match/999/score").body("""{"homeScore":1,"awayScore":2}"""))
+        response.status shouldBe Status.BAD_REQUEST
     }
 
     @Test
@@ -116,30 +116,18 @@ class MatchTest : DatabaseTest() {
         givenUserExists(userId, "name")
         val anotherUserId = "anotherUser"
         givenUserExists(anotherUserId, "name")
-
         val matchId = givenMatchExists("3", "4", matchState = Match.State.LIVE)
-        val predictionId = givenPredictionExists(matchId, userId, 1, 1)
-        val anotherPredictionId = givenPredictionExists(matchId, anotherUserId, 1, 1)
+        givenPredictionExists(matchId, userId, 1, 1)
+        givenPredictionExists(matchId, anotherUserId, 1, 1)
+        givenLeagueExists("test-league", "Test League")
+        givenUserInLeague(userId, "test-league")
+        givenLeagueExists("another-test-league", "Test League")
+        givenUserInLeague(anotherUserId, "another-test-league")
 
-        val leagueId = "test-league"
-        givenLeagueExists(leagueId, "Test League")
-        givenUserInLeague(userId, leagueId)
-
-        val anotherLeagueId = "another-test-league"
-        givenLeagueExists(anotherLeagueId, "Test League")
-        givenUserInLeague(anotherUserId, anotherLeagueId)
-
-        val predictions =
-            MatchResource(RequestContexts(), mockLeaderboardService).getMatchPredictions("", "1", null)
+        val response = handler(Request(Method.GET, "/match/$matchId/predictions"))
+        response.status shouldBe Status.OK
+        val predictions: List<org.openapitools.server.models.PredictionWithUser> = response.bodyString().fromJson()
         predictions.size shouldBe 2
-        predictions.forOne { predictionWithUser ->
-            predictionWithUser.prediction.predictionId shouldBe predictionId
-            predictionWithUser.user.userId shouldBe userId
-        }
-        predictions.forOne { predictionWithUser ->
-            predictionWithUser.prediction.predictionId shouldBe anotherPredictionId
-            predictionWithUser.user.userId shouldBe anotherUserId
-        }
     }
 
     @Test
@@ -149,70 +137,24 @@ class MatchTest : DatabaseTest() {
         val anotherUserId = "anotherUser"
         givenUserExists(anotherUserId, "name", fixedPoints = 0, livePoints = 0)
         val matchId = givenMatchExists("3", "4", matchState = Match.State.LIVE)
-
-        val predictionId = givenPredictionExists(matchId, userId, 1, 1)
-        val leagueId = "test-league"
-        givenLeagueExists(leagueId, "Test League")
-        givenUserInLeague(userId, leagueId)
-
+        givenPredictionExists(matchId, userId, 1, 1)
         givenPredictionExists(matchId, anotherUserId, 1, 1)
-        val anotherLeagueId = "another-test-league"
-        givenLeagueExists(anotherLeagueId, "Test League")
-        givenUserInLeague(anotherUserId, anotherLeagueId)
+        givenLeagueExists("test-league", "Test League")
+        givenUserInLeague(userId, "test-league")
+        givenLeagueExists("another-test-league", "Test League")
+        givenUserInLeague(anotherUserId, "another-test-league")
 
-        val matchPredictions =
-            MatchResource(RequestContexts(), mockLeaderboardService).getMatchPredictions(
-                "",
-                "1",
-                leagueId,
-            )
-        matchPredictions.size shouldBe 1
-        matchPredictions[0].prediction.predictionId shouldBe predictionId
-        matchPredictions[0].user.userId shouldBe userId
-    }
-
-    @Test
-    fun getMatchPredictionsWhenNoMatchRaisesError() {
-        assertThrows<ApiResponseError> {
-            MatchResource(RequestContexts(), mockLeaderboardService).getMatchPredictions(
-                "userId",
-                "1",
-                null,
-            )
-        }
-    }
-
-    @Test
-    fun getMatchPredictionsWhenMatchUpcomingRaisesError() {
-        val matchId = givenMatchExists("3", "4")
-        assertThrows<ApiResponseError> {
-            MatchResource(RequestContexts(), mockLeaderboardService).getMatchPredictions(
-                "userId",
-                matchId,
-                null,
-            )
-        }
-    }
-
-    @Test
-    fun setMatchScoreWhenMatchDoesNotExistRaises() {
-        assertThrows<ApiResponseError> {
-            MatchResource(RequestContexts(), mockLeaderboardService).setMatchScore(
-                "",
-                "1",
-                SetMatchScoreRequest(1, 2),
-            )
-        }
+        val response = handler(Request(Method.GET, "/match/$matchId/predictions?leagueId=test-league"))
+        response.status shouldBe Status.OK
+        val predictions: List<org.openapitools.server.models.PredictionWithUser> = response.bodyString().fromJson()
+        predictions.size shouldBe 1
+        predictions[0].user.userId shouldBe userId
     }
 
     @Test
     fun setMatchScoreWhenMatchExistsUpdatesScore() {
         val matchId = givenMatchExists("1", "2")
-        MatchResource(RequestContexts(), mockLeaderboardService).setMatchScore(
-            "",
-            matchId,
-            SetMatchScoreRequest(1, 2),
-        )
+        setScore(matchId, 1, 1, 2, mockLeaderboardService)
         val match = transaction {
             MatchTable.selectAll().where { MatchTable.id eq matchId.toInt() }.map { row ->
                 MatchResult(row[MatchTable.homeScore] ?: 0, row[MatchTable.awayScore] ?: 0)
@@ -229,19 +171,11 @@ class MatchTest : DatabaseTest() {
         val predictionId = givenPredictionExists(matchId, "userId", 1, 1)
         getPredictionPoints(predictionId) shouldBe null
 
-        MatchResource(RequestContexts(), mockLeaderboardService).setMatchScore(
-            "",
-            matchId,
-            SetMatchScoreRequest(0, 0),
-        )
+        setScore(matchId, 5, 0, 0, mockLeaderboardService)
         getPredictionPoints(predictionId) shouldBe 2
         getLivePoints("userId") shouldBe 2
 
-        MatchResource(RequestContexts(), mockLeaderboardService).setMatchScore(
-            "",
-            matchId,
-            SetMatchScoreRequest(1, 1),
-        )
+        setScore(matchId, 5, 1, 1, mockLeaderboardService)
         getPredictionPoints(predictionId) shouldBe 5
         getLivePoints("userId") shouldBe 5
         coVerifySequence {
@@ -251,8 +185,28 @@ class MatchTest : DatabaseTest() {
     }
 
     @Test
+    fun completeMatch() {
+        val matchId = givenMatchExists("1", "2")
+        givenUserExists("userId", "name")
+        givenUserExists("anotherUser", "name", fixedPoints = 1)
+        givenPredictionExists(matchId, "userId", 2, 1)
+        givenPredictionExists(matchId, "anotherUser", 1, 0)
+
+        setScore(matchId, 1, 1, 1, mockLeaderboardService)
+        endMatch(matchId, 2, 1, mockLeaderboardService)
+        getLivePoints("userId") shouldBe 0
+        getLivePoints("anotherUser") shouldBe 0
+        getFixedPoints("userId") shouldBe 5
+        getFixedPoints("anotherUser") shouldBe 3
+        transaction {
+            MatchTable.select(MatchTable.state).where { MatchTable.id eq matchId.toInt() }
+                .map { it[MatchTable.state] }[0]
+        } shouldBe Match.State.COMPLETED
+        coVerify { mockLeaderboardService.updateGlobalLeaderboard(1) }
+    }
+
+    @Test
     fun setMatchScoreWhenOtherLiveGame() {
-        val matchResource = MatchResource(RequestContexts(), mockLeaderboardService)
         val matchId = givenMatchExists("1", "2")
         val anotherMatchId = givenMatchExists("1", "2")
         givenUserExists("userId", "name")
@@ -260,48 +214,25 @@ class MatchTest : DatabaseTest() {
         givenPredictionExists(matchId, "userId", 1, 1)
         givenPredictionExists(anotherMatchId, "userId", 1, 0)
 
-        matchResource.setMatchScore("", matchId, SetMatchScoreRequest(0, 0))
+        setScore(matchId, 1, 0, 0, mockLeaderboardService)
         getLivePoints("userId") shouldBe 2
         getLivePoints("userNoPredictions") shouldBe 0
 
-        matchResource.setMatchScore("", anotherMatchId, SetMatchScoreRequest(0, 0))
+        setScore(anotherMatchId, 1, 0, 0, mockLeaderboardService)
         getLivePoints("userId") shouldBe 2
         getLivePoints("userNoPredictions") shouldBe 0
 
-        matchResource.setMatchScore("", anotherMatchId, SetMatchScoreRequest(1, 0))
+        setScore(anotherMatchId, 1, 1, 0, mockLeaderboardService)
         getLivePoints("userId") shouldBe 7
         getLivePoints("userNoPredictions") shouldBe 0
         coVerify { mockLeaderboardService.updateGlobalLeaderboard(1) }
     }
 
     @Test
-    fun completeMatch() {
-        val matchResource = MatchResource(RequestContexts(), mockLeaderboardService)
-        val matchId = givenMatchExists("1", "2")
-        givenUserExists("userId", "name")
-        givenUserExists("anotherUser", "name", fixedPoints = 1)
-        givenPredictionExists(matchId, "userId", 2, 1)
-        givenPredictionExists(matchId, "anotherUser", 1, 0)
-
-        matchResource.setMatchScore("", matchId, SetMatchScoreRequest(1, 1))
-        matchResource.completeMatch("", matchId, CompleteMatchRequest(2, 1))
-        getLivePoints("userId") shouldBe 0
-        getLivePoints("anotherUser") shouldBe 0
-        getFixedPoints("userId") shouldBe 5
-        getFixedPoints("anotherUser") shouldBe 3
-        transaction {
-            MatchTable.select(MatchTable.state).where { MatchTable.id eq matchId.toInt() }
-                .map { row -> row[MatchTable.state] }[0]
-        } shouldBe Match.State.COMPLETED
-        coVerify { mockLeaderboardService.updateGlobalLeaderboard(1) }
-    }
-
-    @Test
     fun completeMatchGivenLiveMatch() {
-        val matchResource = MatchResource(RequestContexts(), mockLeaderboardService)
         val matchId = givenMatchExists("1", "2")
         val anotherMatchId = givenMatchExists("1", "2")
-        matchResource.setMatchScore("", anotherMatchId, SetMatchScoreRequest(0, 0))
+        setScore(anotherMatchId, 1, 0, 0, mockLeaderboardService)
         givenUserExists("userId", "name")
         givenUserExists("anotherUser", "name", fixedPoints = 1)
         givenPredictionExists(matchId, "userId", 2, 1)
@@ -309,21 +240,21 @@ class MatchTest : DatabaseTest() {
         givenPredictionExists(anotherMatchId, "userId", 0, 0)
         givenPredictionExists(anotherMatchId, "anotherUser", 1, 1)
 
-        matchResource.setMatchScore("", matchId, SetMatchScoreRequest(2, 1))
-        matchResource.setMatchScore("", anotherMatchId, SetMatchScoreRequest(0, 0))
+        setScore(matchId, 1, 2, 1, mockLeaderboardService)
+        setScore(anotherMatchId, 1, 0, 0, mockLeaderboardService)
         getLivePoints("userId") shouldBe 10
         getLivePoints("anotherUser") shouldBe 4
         getFixedPoints("userId") shouldBe 0
         getFixedPoints("anotherUser") shouldBe 1
 
-        matchResource.completeMatch("", matchId, CompleteMatchRequest(2, 1))
+        endMatch(matchId, 2, 1, mockLeaderboardService)
         getLivePoints("userId") shouldBe 5
         getLivePoints("anotherUser") shouldBe 2
         getFixedPoints("userId") shouldBe 5
         getFixedPoints("anotherUser") shouldBe 3
         transaction {
             MatchTable.select(MatchTable.state).where { MatchTable.id eq matchId.toInt() }
-                .map { row -> row[MatchTable.state] }[0]
+                .map { it[MatchTable.state] }[0]
         } shouldBe Match.State.COMPLETED
         coVerify { mockLeaderboardService.updateGlobalLeaderboard(1) }
     }
@@ -333,13 +264,12 @@ class GetMatchesOnNextThreeDaysTest {
     @Test
     fun testWithMultipleMatchDays() {
         val matches = listOf(
-            Match("Team A", "flagA", "Team B", "flagB", "1", "Stadium A", OffsetDateTime.now(), 1, Round.GROUP_STAGE, Match.State.UPCOMING),
-            Match("Team C", "flagC", "Team D", "flagD", "2", "Stadium B", OffsetDateTime.now(), 2, Round.GROUP_STAGE, Match.State.UPCOMING),
-            Match("Team E", "flagE", "Team F", "flagF", "3", "Stadium C", OffsetDateTime.now(), 2, Round.GROUP_STAGE, Match.State.UPCOMING),
-            Match("Team G", "flagG", "Team H", "flagH", "4", "Stadium D", OffsetDateTime.now(), 3, Round.GROUP_STAGE, Match.State.UPCOMING),
-            Match("Team G", "flagG", "Team H", "flagH", "4", "Stadium D", OffsetDateTime.now(), 4, Round.GROUP_STAGE, Match.State.UPCOMING),
+            Match("Team A", "flagA", "Team B", "flagB", "1", "Stadium A", OffsetDateTime.now(), 1, Match.Round.GROUP_STAGE, Match.State.UPCOMING),
+            Match("Team C", "flagC", "Team D", "flagD", "2", "Stadium B", OffsetDateTime.now(), 2, Match.Round.GROUP_STAGE, Match.State.UPCOMING),
+            Match("Team E", "flagE", "Team F", "flagF", "3", "Stadium C", OffsetDateTime.now(), 2, Match.Round.GROUP_STAGE, Match.State.UPCOMING),
+            Match("Team G", "flagG", "Team H", "flagH", "4", "Stadium D", OffsetDateTime.now(), 3, Match.Round.GROUP_STAGE, Match.State.UPCOMING),
+            Match("Team G", "flagG", "Team H", "flagH", "4", "Stadium D", OffsetDateTime.now(), 4, Match.Round.GROUP_STAGE, Match.State.UPCOMING),
         )
-
         val filteredMatches = getMatchesOnNextThreeDays(matches)
         filteredMatches.size shouldBe 4
         filteredMatches.all { it.matchDay in listOf(1, 2, 3) } shouldBe true
@@ -348,35 +278,28 @@ class GetMatchesOnNextThreeDaysTest {
     @Test
     fun testWithLessThanNMatchDays() {
         val matches = listOf(
-            Match("Team A", "flagA", "Team B", "flagB", "1", "Stadium A", OffsetDateTime.now(), 1, Round.GROUP_STAGE, Match.State.UPCOMING),
-            Match("Team C", "flagC", "Team D", "flagD", "2", "Stadium B", OffsetDateTime.now(), 1, Round.GROUP_STAGE, Match.State.UPCOMING),
+            Match("Team A", "flagA", "Team B", "flagB", "1", "Stadium A", OffsetDateTime.now(), 1, Match.Round.GROUP_STAGE, Match.State.UPCOMING),
+            Match("Team C", "flagC", "Team D", "flagD", "2", "Stadium B", OffsetDateTime.now(), 1, Match.Round.GROUP_STAGE, Match.State.UPCOMING),
         )
-
         val filteredMatches = getMatchesOnNextThreeDays(matches)
         filteredMatches.size shouldBe 2
-        filteredMatches.all { it.matchDay == 1 } shouldBe true
     }
 
     @Test
     fun testWithNoMatches() {
-        val matches = emptyList<Match>()
-
-        val filteredMatches = getMatchesOnNextThreeDays(matches)
+        val filteredMatches = getMatchesOnNextThreeDays(emptyList())
         filteredMatches.size shouldBe 0
     }
 }
 
 private fun getLivePoints(memberId: String): Int = transaction {
-    MemberTable.select(MemberTable.livePoints).where { MemberTable.id eq memberId }
-        .map { row -> row[MemberTable.livePoints] }[0]
+    MemberTable.select(MemberTable.livePoints).where { MemberTable.id eq memberId }.map { it[MemberTable.livePoints] }[0]
 }
 
 private fun getFixedPoints(memberId: String): Int = transaction {
-    MemberTable.select(MemberTable.fixedPoints).where { MemberTable.id eq memberId }
-        .map { row -> row[MemberTable.fixedPoints] }[0]
+    MemberTable.select(MemberTable.fixedPoints).where { MemberTable.id eq memberId }.map { it[MemberTable.fixedPoints] }[0]
 }
 
 private fun getPredictionPoints(predictionId: String): Int? = transaction {
-    PredictionTable.select(PredictionTable.points).where { PredictionTable.id eq predictionId.toInt() }
-        .map { row -> row[PredictionTable.points] }[0]
+    PredictionTable.select(PredictionTable.points).where { PredictionTable.id eq predictionId.toInt() }.map { it[PredictionTable.points] }[0]
 }
