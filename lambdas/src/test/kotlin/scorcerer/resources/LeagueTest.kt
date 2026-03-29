@@ -3,6 +3,7 @@ package scorcerer.resources
 import aws.sdk.kotlin.services.s3.S3Client
 import io.kotlintest.inspectors.forOne
 import io.kotlintest.shouldBe
+import io.mockk.mockk
 import org.http4k.core.RequestContexts
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.and
@@ -11,7 +12,6 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
-import org.mockito.Mockito.mock
 import org.openapitools.server.models.CreateLeagueRequest
 import scorcerer.DatabaseTest
 import scorcerer.givenLeagueExists
@@ -28,7 +28,7 @@ class LeagueTest : DatabaseTest() {
         givenUserExists("userId", "name")
     }
 
-    private val mockS3Client: S3Client = mock(S3Client::class.java)
+    private val mockS3Client: S3Client = mockk(relaxed = true)
     private val mockLeaderboardService = LeaderboardS3Service(mockS3Client, "bucketName")
 
     @Test
