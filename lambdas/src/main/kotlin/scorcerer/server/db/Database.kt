@@ -1,5 +1,7 @@
 package scorcerer.server.db
 
+import com.zaxxer.hikari.HikariConfig
+import com.zaxxer.hikari.HikariDataSource
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.StdOutSqlLogger
@@ -15,13 +17,16 @@ import scorcerer.server.db.tables.TeamTable
 
 object Database {
     fun connectAndGenerateTables() {
-        Database.connect(
-            "jdbc:postgresql://${Environment.DatabaseUrl}:${Environment.DatabasePort}/${Environment.DatabaseName}",
-//            driver = "org.h2.Driver",
-            user = Environment.DatabaseUser,
-            password = Environment.DatabasePassword,
+        val dataSource = HikariDataSource(
+            HikariConfig().apply {
+                jdbcUrl = "jdbc:postgresql://${Environment.DatabaseUrl}:${Environment.DatabasePort}/${Environment.DatabaseName}"
+                username = Environment.DatabaseUser
+                password = Environment.DatabasePassword
+                maximumPoolSize = 10
+            },
         )
 
+        Database.connect(dataSource)
         generateTables()
     }
 

@@ -86,6 +86,7 @@ dependencies {
     implementation("org.http4k:http4k-server-netty:5.20.0.0")
     implementation("org.http4k:http4k-client-okhttp:5.23.0.0")
     implementation("org.postgresql:postgresql:42.7.3")
+    implementation("com.zaxxer:HikariCP:6.2.1")
     implementation("org.slf4j:slf4j-simple:2.0.6")
     implementation("aws.sdk.kotlin:cognitoidentityprovider:1.2.5")
     implementation("aws.sdk.kotlin:sqs:1.2.15")
