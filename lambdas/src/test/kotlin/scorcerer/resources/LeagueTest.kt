@@ -1,8 +1,8 @@
 package scorcerer.resources
 
 import aws.sdk.kotlin.services.s3.S3Client
-import io.kotlintest.inspectors.forOne
-import io.kotlintest.shouldBe
+import io.kotest.inspectors.forOne
+import io.kotest.matchers.shouldBe
 import io.mockk.mockk
 import org.http4k.core.RequestContexts
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq

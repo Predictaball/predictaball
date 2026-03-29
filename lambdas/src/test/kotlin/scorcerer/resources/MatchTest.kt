@@ -1,8 +1,8 @@
 package scorcerer.resources
 
-import io.kotlintest.inspectors.forOne
-import io.kotlintest.shouldBe
-import io.kotlintest.shouldThrow
+import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.inspectors.forOne
+import io.kotest.matchers.shouldBe
 import io.mockk.coVerify
 import io.mockk.coVerifySequence
 import io.mockk.mockk

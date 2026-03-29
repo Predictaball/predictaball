@@ -1,6 +1,6 @@
 package scorcerer.utils
 
-import io.kotlintest.shouldBe
+import io.kotest.matchers.shouldBe
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction

@@ -82,7 +82,6 @@ dependencies {
 
     testImplementation("io.kotest:kotest-runner-junit5:5.9.0")
     testImplementation("io.kotest:kotest-extensions-jvm:5.9.0")
-    testImplementation("io.kotlintest:kotlintest-assertions:3.4.2")
     testImplementation("org.junit.jupiter:junit-jupiter-engine:5.10.2")
     testImplementation("org.junit.jupiter:junit-jupiter-params:5.10.2")
     testImplementation("com.h2database:h2:2.2.224")

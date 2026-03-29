@@ -1,6 +1,6 @@
 package scorcerer.resources
 
-import io.kotlintest.shouldBe
+import io.kotest.matchers.shouldBe
 import org.http4k.core.RequestContexts
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.selectAll
