@@ -73,11 +73,6 @@ export class Predictaball extends Stack {
       }],
     })
 
-    const userCreateDLQ = new Queue(this, "userCreationDLQ")
-    const userCreationQueue = new Queue(this, "userCreationQueue", {
-      deadLetterQueue: { queue: userCreateDLQ, maxReceiveCount: 3 },
-    })
-
     const scoreUpdateDLQ = new Queue(this, "scoreUpdateDLQ", { fifo: true })
     const scoreUpdateQueue = new Queue(this, "scoreUpdateQueue", {
       deadLetterQueue: { queue: scoreUpdateDLQ, maxReceiveCount: 1 },
@@ -109,7 +104,6 @@ export class Predictaball extends Stack {
           DB_PORT: db.dbInstanceEndpointPort,
           USER_POOL_CLIENT_ID: cognito.poolClient.userPoolClientId,
           USER_POOL_ID: cognito.userPool.userPoolId,
-          USER_CREATION_QUEUE_URL: userCreationQueue.queueUrl,
           SCORE_UPDATE_QUEUE_URL: scoreUpdateQueue.queueUrl,
           LEADERBOARD_BUCKET_NAME: leaderboardBucket.bucketName,
         },
@@ -132,7 +126,6 @@ export class Predictaball extends Stack {
     const taskRole = ecsService.taskDefinition.taskRole
 
     leaderboardBucket.grantReadWrite(taskRole)
-    userCreationQueue.grantSendMessages(taskRole)
     scoreUpdateQueue.grantSendMessages(taskRole)
 
     taskRole.addToPrincipalPolicy(

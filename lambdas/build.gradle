@@ -126,7 +126,6 @@ task runLocal(type: JavaExec) {
     environment "DB_PORT", "5432"
     environment "USER_POOL_CLIENT_ID", "dummy"
     environment "USER_POOL_ID", "dummy"
-    environment "USER_CREATION_QUEUE_URL", "dummy"
     environment "SCORE_UPDATE_QUEUE_URL", "dummy"
     environment "LEADERBOARD_BUCKET_NAME", "dummy"
     environment "AUTH_DISABLED", "true"

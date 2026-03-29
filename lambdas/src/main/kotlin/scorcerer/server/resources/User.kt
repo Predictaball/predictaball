@@ -6,12 +6,11 @@ import aws.sdk.kotlin.services.cognitoidentityprovider.model.AdminDeleteUserRequ
 import aws.sdk.kotlin.services.cognitoidentityprovider.model.AdminSetUserPasswordRequest
 import aws.sdk.kotlin.services.cognitoidentityprovider.model.AttributeType
 import aws.sdk.kotlin.services.cognitoidentityprovider.model.MessageActionType
-import aws.sdk.kotlin.services.sqs.SqsClient
-import aws.sdk.kotlin.services.sqs.model.SendMessageRequest
 import kotlinx.coroutines.runBlocking
 import org.http4k.core.RequestContexts
 import org.http4k.core.Response
 import org.http4k.core.Status
+import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -21,19 +20,16 @@ import org.openapitools.server.models.League
 import org.openapitools.server.models.Prediction
 import org.openapitools.server.models.SignupRequest
 import org.openapitools.server.models.User
-import org.openapitools.server.toJson
 import scorcerer.server.ApiResponseError
 import scorcerer.server.Environment
 import scorcerer.server.db.tables.LeagueMembershipTable
 import scorcerer.server.db.tables.LeagueTable
 import scorcerer.server.db.tables.MemberTable
 import scorcerer.server.db.tables.PredictionTable
-import scorcerer.server.events.UserCreationEvent
 import scorcerer.server.log
 
 class User(context: RequestContexts) : UserApi(context) {
     private val cognitoClient = CognitoIdentityProviderClient { region = "eu-west-2" }
-    private val sqsClient = SqsClient { region = "eu-west-2" }
 
     override fun getUserLeagues(requesterUserId: String): List<League> {
         return transaction {
@@ -153,13 +149,29 @@ class User(context: RequestContexts) : UserApi(context) {
 
         log.info("Created user ($userId) and set password successfully")
 
-        runBlocking {
-            sqsClient.sendMessage(
-                SendMessageRequest {
-                    queueUrl = Environment.UserCreationQueueUrl
-                    messageBody = UserCreationEvent(userId, firstName, familyName).toJson()
-                },
-            )
+        transaction {
+            MemberTable.insert {
+                it[this.id] = userId
+                it[this.firstName] = firstName
+                it[this.familyName] = familyName
+                it[this.fixedPoints] = 0
+                it[this.livePoints] = 0
+            }
+
+            val globalLeagueExists = LeagueTable.selectAll().where { LeagueTable.id eq "global" }.count() > 0
+            if (!globalLeagueExists) {
+                LeagueTable.insert {
+                    it[this.name] = "Global"
+                    it[this.id] = "global"
+                }
+            }
+
+            LeagueMembershipTable.insert {
+                it[this.memberId] = userId
+                it[this.leagueId] = "global"
+            }
         }
+
+        log.info("Created member record and added to global league")
     }
 }
