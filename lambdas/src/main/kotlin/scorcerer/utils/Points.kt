@@ -1,11 +1,16 @@
 package scorcerer.utils
 
-import org.jetbrains.exposed.sql.*
-import org.jetbrains.exposed.sql.selectAll
-import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.inList
+import org.jetbrains.exposed.v1.core.sum
+import org.jetbrains.exposed.v1.jdbc.select
+import org.jetbrains.exposed.v1.jdbc.selectAll
+import org.jetbrains.exposed.v1.jdbc.transactions.transaction
+import org.jetbrains.exposed.v1.jdbc.update
 import org.openapitools.server.models.State
 import scorcerer.server.db.tables.MatchTable
 import scorcerer.server.db.tables.MemberTable
+import scorcerer.server.db.tables.MemberTable.livePoints
 import scorcerer.server.db.tables.PredictionTable
 
 fun recalculateLivePoints() {

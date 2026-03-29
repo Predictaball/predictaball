@@ -13,7 +13,7 @@ import org.http4k.filter.ServerFilters.InitialiseRequestContext
 import org.http4k.server.Netty
 import org.http4k.server.asServer
 import org.openapitools.server.apis.allRoutes
-import scorcerer.server.db.Database
+import scorcerer.server.db.DatabaseFactory
 import scorcerer.server.resources.Auth
 import scorcerer.server.resources.League
 import scorcerer.server.resources.MatchResource
@@ -67,7 +67,7 @@ private val httpServer = cors
     .then(routes)
 
 fun main() {
-    Database.connectAndGenerateTables()
+    DatabaseFactory.connectAndGenerateTables()
 
     val scheduler = Executors.newScheduledThreadPool(1)
     // TODO: Check if WC2026 matches all kick off on the hour. If not, increase frequency (e.g. every 5 min)

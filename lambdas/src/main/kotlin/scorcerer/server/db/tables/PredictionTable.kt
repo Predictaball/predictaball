@@ -1,7 +1,8 @@
 package scorcerer.server.db.tables
 
-import org.jetbrains.exposed.sql.Table
-import scorcerer.server.db.tables.LeagueMembershipTable.references
+import org.jetbrains.exposed.v1.core.Table
+import org.jetbrains.exposed.v1.core.greaterEq
+import org.jetbrains.exposed.v1.core.lessEq
 
 object PredictionTable : Table("prediction") {
     val id = integer("id").uniqueIndex().autoIncrement()

@@ -1,7 +1,8 @@
 package scorcerer.server.db.tables
 
-import org.jetbrains.exposed.sql.Table
-import org.jetbrains.exposed.sql.kotlin.datetime.timestampWithTimeZone
+import org.jetbrains.exposed.v1.core.Table
+import org.jetbrains.exposed.v1.core.greaterEq
+import org.jetbrains.exposed.v1.datetime.timestampWithTimeZone
 import org.openapitools.server.models.State
 
 enum class MatchResult(val value: String) {

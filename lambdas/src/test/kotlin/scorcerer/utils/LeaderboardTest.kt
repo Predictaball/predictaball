@@ -26,7 +26,7 @@ class TestLeaderboardS3Service {
     }
 
     @Test
-    fun writeLeaderboardShouldCallPutObjectWithCorrectParameters() = runBlocking {
+    fun writeLeaderboardShouldCallPutObjectWithCorrectParameters(): Unit = runBlocking {
         val leaderboard = listOf(
             LeaderboardInner(1, User("name", "secondName1", "user1", 10, 5), Movement.IMPROVED),
             LeaderboardInner(1, User("name", "secondName2", "user2", 10, 5), Movement.IMPROVED),

@@ -1,9 +1,9 @@
 package scorcerer
 
-import org.jetbrains.exposed.sql.Database
-import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.v1.jdbc.Database
+import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.junit.jupiter.api.BeforeEach
-import scorcerer.server.db.Database as ServerDatabase
+import scorcerer.server.db.DatabaseFactory
 
 open class DatabaseTest {
     init {
@@ -15,7 +15,7 @@ open class DatabaseTest {
 
     @BeforeEach
     fun resetDatabases() = transaction {
-        ServerDatabase.dropTables()
-        ServerDatabase.generateTables()
+        DatabaseFactory.dropTables()
+        DatabaseFactory.generateTables()
     }
 }

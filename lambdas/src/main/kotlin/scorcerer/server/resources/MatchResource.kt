@@ -4,8 +4,17 @@ import kotlinx.coroutines.runBlocking
 import org.http4k.core.RequestContexts
 import org.http4k.core.Response
 import org.http4k.core.Status
-import org.jetbrains.exposed.sql.*
-import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.v1.core.JoinType
+import org.jetbrains.exposed.v1.core.alias
+import org.jetbrains.exposed.v1.core.and
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.intLiteral
+import org.jetbrains.exposed.v1.core.plus
+import org.jetbrains.exposed.v1.jdbc.insert
+import org.jetbrains.exposed.v1.jdbc.select
+import org.jetbrains.exposed.v1.jdbc.selectAll
+import org.jetbrains.exposed.v1.jdbc.transactions.transaction
+import org.jetbrains.exposed.v1.jdbc.update
 import org.openapitools.server.apis.MatchApi
 import org.openapitools.server.models.*
 import org.openapitools.server.models.Prediction
@@ -296,8 +305,6 @@ private fun updatePredictionPoints(predictionId: Int, points: Int) {
 
 private fun updateMemberFixedPoints(userId: String, points: Int) {
     MemberTable.update({ MemberTable.id eq userId }) {
-        with(SqlExpressionBuilder) {
-            it.update(fixedPoints, fixedPoints + points)
-        }
+        it[fixedPoints] = fixedPoints + intLiteral(points)
     }
 }

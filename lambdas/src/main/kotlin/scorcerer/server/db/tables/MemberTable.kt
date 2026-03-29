@@ -1,6 +1,6 @@
 package scorcerer.server.db.tables
 
-import org.jetbrains.exposed.sql.Table
+import org.jetbrains.exposed.v1.core.Table
 
 object MemberTable : Table("member") {
     val id = varchar("id", 40).uniqueIndex()

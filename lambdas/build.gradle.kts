@@ -66,10 +66,11 @@ dependencies {
     implementation("aws.sdk.kotlin:cognitoidentityprovider:1.2.5")
     implementation("aws.sdk.kotlin:sqs:1.2.15")
 
-    implementation("org.jetbrains.exposed:exposed-core:0.49.0")
-    implementation("org.jetbrains.exposed:exposed-dao:0.49.0")
-    implementation("org.jetbrains.exposed:exposed-kotlin-datetime:0.49.0")
-    runtimeOnly("org.jetbrains.exposed:exposed-jdbc:0.49.0")
+    implementation("org.jetbrains.exposed:exposed-core:1.1.1")
+    implementation("org.jetbrains.exposed:exposed-dao:1.1.1")
+    implementation("org.jetbrains.exposed:exposed-kotlin-datetime:1.1.1")
+    implementation("org.jetbrains.exposed:exposed-java-time:1.1.1")
+    implementation("org.jetbrains.exposed:exposed-jdbc:1.1.1")
 
     implementation("org.postgresql:postgresql:42.7.3")
     implementation("com.zaxxer:HikariCP:6.2.1")
