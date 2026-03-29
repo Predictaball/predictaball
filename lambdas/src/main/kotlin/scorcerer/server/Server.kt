@@ -21,7 +21,11 @@ import scorcerer.server.resources.Misc
 import scorcerer.server.resources.Prediction
 import scorcerer.server.resources.Team
 import scorcerer.server.resources.User
+import scorcerer.server.schedule.MatchStarter
+import scorcerer.server.schedule.ScoreUpdater
 import scorcerer.utils.LeaderboardS3Service
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 
 private val requestContext = RequestContexts()
 private val s3Client = S3Client { region = "eu-west-2" }
@@ -64,6 +68,11 @@ private val httpServer = cors
 
 fun main() {
     Database.connectAndGenerateTables()
+
+    val scheduler = Executors.newScheduledThreadPool(1)
+    scheduler.scheduleAtFixedRate({ runCatching { MatchStarter(leaderboardService).run() }.onFailure { log.error(it.stackTraceToString()) } }, 0, 60, TimeUnit.MINUTES)
+    scheduler.scheduleAtFixedRate({ runCatching { ScoreUpdater().run() }.onFailure { log.error(it.stackTraceToString()) } }, 0, 2, TimeUnit.MINUTES)
+
     log.info("Starting server on port 8080 (auth disabled: $authDisabled)")
     httpServer.asServer(Netty(8080)).start().block()
 }
