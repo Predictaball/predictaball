@@ -70,6 +70,7 @@ fun main() {
     Database.connectAndGenerateTables()
 
     val scheduler = Executors.newScheduledThreadPool(1)
+    // TODO: Check if WC2026 matches all kick off on the hour. If not, increase frequency (e.g. every 5 min)
     scheduler.scheduleAtFixedRate({ runCatching { MatchStarter(leaderboardService).run() }.onFailure { log.error(it.stackTraceToString()) } }, 0, 60, TimeUnit.MINUTES)
     scheduler.scheduleAtFixedRate({ runCatching { ScoreUpdater().run() }.onFailure { log.error(it.stackTraceToString()) } }, 0, 2, TimeUnit.MINUTES)
 
