@@ -1,14 +1,14 @@
 package scorcerer.server.schedule
 
-import aws.sdk.kotlin.services.s3.S3Client
-import aws.sdk.kotlin.services.s3.model.GetObjectRequest
-import aws.smithy.kotlin.runtime.content.decodeToString
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
-import kotlinx.coroutines.runBlocking
 import org.http4k.client.JavaHttpClient
 import org.http4k.core.Method
 import org.http4k.core.Request
-import scorcerer.server.Environment
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.jdbc.selectAll
+import org.jetbrains.exposed.v1.jdbc.transactions.transaction
+import org.openapitools.server.models.Match
+import scorcerer.server.db.tables.MatchTable
 import scorcerer.server.fromJson
 import scorcerer.server.log
 import scorcerer.server.resources.endMatch
@@ -49,24 +49,17 @@ val liveMatchesKey = "live-matches.json"
 
 class ScoreUpdater(private val leaderboardService: LeaderboardS3Service) {
     private val client = JavaHttpClient()
-    private val s3Client = S3Client { region = "eu-west-2" }
     private val endpoint = "https://www.fotmob.com/api/matchDetails?matchId="
 
     fun run() {
-        log.info("Fetching the live matches from S3")
-
-        val liveMatches = runBlocking {
-            s3Client.getObject(
-                GetObjectRequest {
-                    bucket = Environment.LeaderboardBucketName
-                    key = liveMatchesKey
-                },
-            ) {
-                it.body?.decodeToString()?.fromJson<List<LiveMatch>>()
-            }
+        val liveMatches = transaction {
+            MatchTable.selectAll()
+                .where { MatchTable.state eq Match.State.LIVE }
+                .filter { it.getOrNull(MatchTable.fotmobMatchId) != null }
+                .map { LiveMatch(it[MatchTable.id].toString(), it[MatchTable.fotmobMatchId]!!) }
         }
 
-        if (liveMatches.isNullOrEmpty()) {
+        if (liveMatches.isEmpty()) {
             log.info("No live matches")
             return
         }

@@ -13,10 +13,9 @@ import { dbPassword } from "../environment"
 import { Cognito } from "./cognito"
 import { AnyPrincipal, Effect, PolicyStatement } from "aws-cdk-lib/aws-iam"
 import { BlockPublicAccess, Bucket, BucketEncryption, HttpMethods } from "aws-cdk-lib/aws-s3"
-import { Cluster, ContainerImage, LogDrivers, AsgCapacityProvider, EcsOptimizedImage, MachineImageType } from "aws-cdk-lib/aws-ecs"
-import { ApplicationLoadBalancedEc2Service } from "aws-cdk-lib/aws-ecs-patterns"
+import { Cluster, ContainerImage, LogDrivers } from "aws-cdk-lib/aws-ecs"
+import { ApplicationLoadBalancedFargateService } from "aws-cdk-lib/aws-ecs-patterns"
 import { LogGroup } from "aws-cdk-lib/aws-logs"
-import { AutoScalingGroup } from "aws-cdk-lib/aws-autoscaling"
 
 const dbUser = "postgres"
 const dbPort = 5432
@@ -73,29 +72,16 @@ export class Predictaball extends Stack {
       }],
     })
 
-    // ECS Cluster + Service
+    // ECS Cluster + Fargate Service
     const cluster = new Cluster(this, "predictaballCluster", { vpc })
 
-    const asg = new AutoScalingGroup(this, "ec2Asg", {
-      vpc,
-      instanceType: InstanceType.of(InstanceClass.T3, InstanceSize.SMALL),
-      machineImage: EcsOptimizedImage.amazonLinux2(),
-      desiredCapacity: 1,
-      minCapacity: 1,
-      maxCapacity: 1,
-      associatePublicIpAddress: true,
-      vpcSubnets: { subnetType: SubnetType.PUBLIC },
-    })
-
-    const capacityProvider = new AsgCapacityProvider(this, "ec2CapacityProvider", {
-      autoScalingGroup: asg,
-    })
-    cluster.addAsgCapacityProvider(capacityProvider)
-
-    const ecsService = new ApplicationLoadBalancedEc2Service(this, "predictaballService", {
+    const ecsService = new ApplicationLoadBalancedFargateService(this, "predictaballService", {
       cluster,
-      memoryLimitMiB: 1536,
+      cpu: 512,
+      memoryLimitMiB: 1024,
       desiredCount: 1,
+      assignPublicIp: true,
+      taskSubnets: { subnetType: SubnetType.PUBLIC },
       taskImageOptions: {
         image: ContainerImage.fromAsset("../lambdas"),
         containerPort: 8080,
@@ -144,9 +130,5 @@ export class Predictaball extends Stack {
 
     // Allow ECS tasks to connect to RDS
     db.connections.allowFrom(ecsService.service, Port.tcp(dbPort))
-    db.connections.allowFrom(asg, Port.tcp(dbPort))
-
-    // Allow ALB to reach ECS instances on dynamic ports
-    ecsService.loadBalancer.connections.allowTo(asg, Port.allTcp())
   }
 }
