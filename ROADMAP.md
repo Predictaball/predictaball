@@ -43,6 +43,7 @@ The API is deployed on AWS ECS (Fargate) with an ALB, RDS Postgres, and Cognito 
 
 ## Future Considerations
 
+- Integration tests against real Postgres (current tests use H2 which has subtle SQL differences)
 - Server-Sent Events for live score push (replace frontend polling)
 - http4k contract module for compile-time route safety
 - Flyway for database migrations if schema changes become frequent

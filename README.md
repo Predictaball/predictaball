@@ -50,6 +50,22 @@ cd lambdas
 ## Deploy
 
 ```bash
-cd cdk
-CDK_ACCOUNT_ID=<your-account-id> CDK_DB_PASSWORD=<password> npm run cdk -- deploy
+cd lambdas
+./gradlew shadowJar
+
+cd ../cdk
+npm install
+CDK_ACCOUNT_ID=<your-account-id> CDK_DB_PASSWORD=<password> npx cdk deploy --profile predictaball
 ```
+
+<details>
+<summary>Using macOS with Finch instead of Docker?</summary>
+
+Set `CDK_DOCKER=finch` before the deploy command:
+
+```bash
+CDK_DOCKER=finch CDK_ACCOUNT_ID=<your-account-id> CDK_DB_PASSWORD=<password> npx cdk deploy --profile predictaball
+```
+</details>
+
+See [cdk/README.md](cdk/README.md) for more details.
