@@ -1,6 +1,3 @@
 {
-  "app": "npx ts-node --prefer-ts-exts lib/app.ts",
-  "context": {
-    "@aws-cdk/aws-autoscaling:generateLaunchTemplateInsteadOfLaunchConfig": true
-  }
+  "app": "npx ts-node --prefer-ts-exts lib/app.ts"
 }
