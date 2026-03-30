@@ -61,7 +61,6 @@ dependencies {
 
     implementation("aws.sdk.kotlin:s3:1.2.15")
     implementation("aws.sdk.kotlin:cognitoidentityprovider:1.2.5")
-    implementation("aws.sdk.kotlin:sqs:1.2.15")
 
     implementation("org.jetbrains.exposed:exposed-core:1.1.1")
     implementation("org.jetbrains.exposed:exposed-kotlin-datetime:1.1.1")
@@ -159,7 +158,6 @@ tasks {
         environment("DB_PORT", "5432")
         environment("USER_POOL_CLIENT_ID", "dummy")
         environment("USER_POOL_ID", "dummy")
-        environment("SCORE_UPDATE_QUEUE_URL", "dummy")
         environment("LEADERBOARD_BUCKET_NAME", "dummy")
         environment("AUTH_DISABLED", "true")
         environment("TEST_USER_ID", "test-user-123")

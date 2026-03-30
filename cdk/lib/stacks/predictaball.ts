@@ -12,7 +12,6 @@ import { Credentials, DatabaseInstance, DatabaseInstanceEngine, StorageType } fr
 import { dbPassword } from "../environment"
 import { Cognito } from "./cognito"
 import { AnyPrincipal, Effect, PolicyStatement } from "aws-cdk-lib/aws-iam"
-import { Queue } from "aws-cdk-lib/aws-sqs"
 import { BlockPublicAccess, Bucket, BucketEncryption, HttpMethods } from "aws-cdk-lib/aws-s3"
 import { Cluster, ContainerImage, LogDrivers, AsgCapacityProvider, EcsOptimizedImage, MachineImageType } from "aws-cdk-lib/aws-ecs"
 import { ApplicationLoadBalancedEc2Service } from "aws-cdk-lib/aws-ecs-patterns"
@@ -74,12 +73,6 @@ export class Predictaball extends Stack {
       }],
     })
 
-    const scoreUpdateDLQ = new Queue(this, "scoreUpdateDLQ", { fifo: true })
-    const scoreUpdateQueue = new Queue(this, "scoreUpdateQueue", {
-      deadLetterQueue: { queue: scoreUpdateDLQ, maxReceiveCount: 1 },
-      fifo: true,
-    })
-
     // ECS Cluster + Service
     const cluster = new Cluster(this, "predictaballCluster", { vpc })
 
@@ -114,7 +107,6 @@ export class Predictaball extends Stack {
           DB_PORT: db.dbInstanceEndpointPort,
           USER_POOL_CLIENT_ID: cognito.poolClient.userPoolClientId,
           USER_POOL_ID: cognito.userPool.userPoolId,
-          SCORE_UPDATE_QUEUE_URL: scoreUpdateQueue.queueUrl,
           LEADERBOARD_BUCKET_NAME: leaderboardBucket.bucketName,
         },
         logDriver: LogDrivers.awsLogs({
@@ -136,7 +128,6 @@ export class Predictaball extends Stack {
     const taskRole = ecsService.taskDefinition.taskRole
 
     leaderboardBucket.grantReadWrite(taskRole)
-    scoreUpdateQueue.grantSendMessages(taskRole)
 
     taskRole.addToPrincipalPolicy(
       new PolicyStatement({
