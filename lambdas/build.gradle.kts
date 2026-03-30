@@ -1,4 +1,5 @@
 import org.jetbrains.kotlin.gradle.internal.KaptGenerateStubsTask
+import org.jlleitschuh.gradle.ktlint.tasks.KtLintCheckTask
 import org.jlleitschuh.gradle.ktlint.tasks.KtLintFormatTask
 import org.openapitools.generator.gradle.plugin.tasks.GenerateTask
 
@@ -134,6 +135,12 @@ tasks {
     }
 
     withType<KtLintFormatTask>().configureEach {
+        dependsOn("generateKotlinServer")
+        inputs.dir(layout.buildDirectory.dir("generated/src"))
+        inputs.dir("$rootDir/src")
+    }
+
+    withType<KtLintCheckTask>().configureEach {
         dependsOn("generateKotlinServer")
         inputs.dir(layout.buildDirectory.dir("generated/src"))
         inputs.dir("$rootDir/src")
