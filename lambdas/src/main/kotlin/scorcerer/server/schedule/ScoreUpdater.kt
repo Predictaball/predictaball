@@ -45,8 +45,6 @@ data class LiveMatch(
     val fotmobMatchId: String,
 )
 
-val liveMatchesKey = "live-matches.json"
-
 class ScoreUpdater(private val leaderboardService: LeaderboardS3Service) {
     private val client = JavaHttpClient()
     private val endpoint = "https://www.fotmob.com/api/matchDetails?matchId="

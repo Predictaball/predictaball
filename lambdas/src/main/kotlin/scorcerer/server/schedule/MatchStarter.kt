@@ -1,8 +1,5 @@
 package scorcerer.server.schedule
 
-import aws.sdk.kotlin.services.s3.model.PutObjectRequest
-import aws.smithy.kotlin.runtime.content.ByteStream
-import kotlinx.coroutines.runBlocking
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.less
@@ -13,7 +10,6 @@ import scorcerer.server.db.tables.MatchTable
 import scorcerer.server.log
 import scorcerer.server.resources.getMatchDay
 import scorcerer.server.resources.setScore
-import scorcerer.server.toJson
 import scorcerer.utils.LeaderboardS3Service
 import java.time.Clock
 import java.time.OffsetDateTime
@@ -22,8 +18,7 @@ class MatchStarter(private val leaderboardService: LeaderboardS3Service) {
     fun run() {
         log.info("Checking for games which have started")
 
-        val clock = Clock.systemDefaultZone()
-        val now = OffsetDateTime.now(clock).plusMinutes(1)
+        val now = OffsetDateTime.now(Clock.systemDefaultZone()).plusMinutes(1)
         log.info("Using now - $now")
 
         transaction {
@@ -43,29 +38,5 @@ class MatchStarter(private val leaderboardService: LeaderboardS3Service) {
         }
 
         log.info("All required matches started")
-
-        updateLiveMatches(leaderboardService)
     }
-}
-
-fun updateLiveMatches(leaderboardService: LeaderboardS3Service) {
-    val liveMatches = transaction {
-        MatchTable
-            .selectAll()
-            .where(MatchTable.state eq Match.State.LIVE)
-            .filter { it.getOrNull(MatchTable.fotmobMatchId) != null }
-            .map { LiveMatch(it[MatchTable.id].toString(), it[MatchTable.fotmobMatchId]!!) }
-    }
-
-    val putObjectRequest = PutObjectRequest {
-        bucket = leaderboardService.s3BucketName
-        key = liveMatchesKey
-        body = ByteStream.fromString(liveMatches.toJson())
-    }
-
-    runBlocking {
-        leaderboardService.s3Client.putObject(putObjectRequest)
-    }
-
-    log.info("Updated live matches to $liveMatches")
 }

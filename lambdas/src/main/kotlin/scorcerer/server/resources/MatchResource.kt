@@ -27,7 +27,6 @@ import scorcerer.server.extractUserId
 import scorcerer.server.fromJson
 import scorcerer.server.log
 import scorcerer.server.requireAdmin
-import scorcerer.server.schedule.updateLiveMatches
 import scorcerer.server.toJson
 import scorcerer.utils.LeaderboardS3Service
 import scorcerer.utils.MatchResult
@@ -184,7 +183,6 @@ fun endMatch(matchId: String, homeScore: Int, awayScore: Int, leaderboardService
     recalculateLivePoints()
     runBlocking {
         leaderboardService.updateGlobalLeaderboard(matchDay)
-        updateLiveMatches(leaderboardService)
     }
 }
 
