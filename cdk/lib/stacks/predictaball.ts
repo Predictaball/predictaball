@@ -14,9 +14,10 @@ import { Cognito } from "./cognito"
 import { AnyPrincipal, Effect, PolicyStatement } from "aws-cdk-lib/aws-iam"
 import { Queue } from "aws-cdk-lib/aws-sqs"
 import { BlockPublicAccess, Bucket, BucketEncryption, HttpMethods } from "aws-cdk-lib/aws-s3"
-import { Cluster, ContainerImage, Ec2Service, Ec2TaskDefinition, LogDrivers, NetworkMode } from "aws-cdk-lib/aws-ecs"
+import { Cluster, ContainerImage, LogDrivers, AsgCapacityProvider, EcsOptimizedImage, MachineImageType } from "aws-cdk-lib/aws-ecs"
 import { ApplicationLoadBalancedEc2Service } from "aws-cdk-lib/aws-ecs-patterns"
 import { LogGroup } from "aws-cdk-lib/aws-logs"
+import { AutoScalingGroup } from "aws-cdk-lib/aws-autoscaling"
 
 const dbUser = "postgres"
 const dbPort = 5432
@@ -61,7 +62,7 @@ export class Predictaball extends Stack {
     })
 
     new Bucket(this, "teamFlagsBucket", {
-      publicReadAccess: true,
+      blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
       encryption: BucketEncryption.S3_MANAGED,
       enforceSSL: true,
       versioned: true,
@@ -82,12 +83,21 @@ export class Predictaball extends Stack {
     // ECS Cluster + Service
     const cluster = new Cluster(this, "predictaballCluster", { vpc })
 
-    cluster.addCapacity("ec2Capacity", {
+    const asg = new AutoScalingGroup(this, "ec2Asg", {
+      vpc,
       instanceType: InstanceType.of(InstanceClass.T3, InstanceSize.SMALL),
+      machineImage: EcsOptimizedImage.amazonLinux2(),
       desiredCapacity: 1,
+      minCapacity: 1,
+      maxCapacity: 1,
       associatePublicIpAddress: true,
       vpcSubnets: { subnetType: SubnetType.PUBLIC },
     })
+
+    const capacityProvider = new AsgCapacityProvider(this, "ec2CapacityProvider", {
+      autoScalingGroup: asg,
+    })
+    cluster.addAsgCapacityProvider(capacityProvider)
 
     const ecsService = new ApplicationLoadBalancedEc2Service(this, "predictaballService", {
       cluster,
@@ -143,5 +153,9 @@ export class Predictaball extends Stack {
 
     // Allow ECS tasks to connect to RDS
     db.connections.allowFrom(ecsService.service, Port.tcp(dbPort))
+    db.connections.allowFrom(asg, Port.tcp(dbPort))
+
+    // Allow ALB to reach ECS instances on dynamic ports
+    ecsService.loadBalancer.connections.allowTo(asg, Port.allTcp())
   }
 }
