@@ -60,7 +60,13 @@ export class Predictaball extends Stack {
     })
 
     new Bucket(this, "teamFlagsBucket", {
-      blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
+      publicReadAccess: true,
+      blockPublicAccess: new BlockPublicAccess({
+        blockPublicAcls: false,
+        ignorePublicAcls: false,
+        blockPublicPolicy: false,
+        restrictPublicBuckets: false,
+      }),
       encryption: BucketEncryption.S3_MANAGED,
       enforceSSL: true,
       versioned: true,
