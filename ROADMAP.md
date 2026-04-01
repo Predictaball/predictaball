@@ -33,6 +33,7 @@ Scheduled tasks (MatchStarter, ScoreUpdater) run in-process when `SCHEDULER_ENAB
 - ~~Leaderboard redesign~~: batched prediction/fixedPoints updates, removed `recalculateLivePoints` and `livePoints` column, live points computed from predictions at query time
 - ~~Leaderboard caching~~: in-memory cache in `LeaderboardS3Service`, populated on write, configurable TTL
 - ~~Scheduled tasks~~: admin endpoints added, in-process schedulers gated by `SCHEDULER_ENABLED` env var
+- Flyway DB migrations (migrations in `src/main/resources/db/migration/`)
 - ~~S3 legacy cleanup~~: removed S3 live matches communication, ScoreUpdater queries DB directly
 
 ## Future Considerations
@@ -43,4 +44,3 @@ Scheduled tasks (MatchStarter, ScoreUpdater) run in-process when `SCHEDULER_ENAB
 - Auth: evaluate replacing Cognito post-tournament
 - Server-Sent Events for live score push (replace frontend polling)
 - http4k contract module for compile-time route safety
-- Flyway for database migrations if schema changes become frequent

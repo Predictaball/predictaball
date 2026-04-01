@@ -2,6 +2,7 @@ package scorcerer.server.db
 
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
+import org.flywaydb.core.Flyway
 import org.jetbrains.exposed.v1.core.StdOutSqlLogger
 import org.jetbrains.exposed.v1.jdbc.Database
 import org.jetbrains.exposed.v1.jdbc.SchemaUtils
@@ -13,6 +14,7 @@ import scorcerer.server.db.tables.MatchTable
 import scorcerer.server.db.tables.MemberTable
 import scorcerer.server.db.tables.PredictionTable
 import scorcerer.server.db.tables.TeamTable
+import scorcerer.server.log
 
 object DatabaseFactory {
     fun connectAndGenerateTables() {
@@ -24,6 +26,13 @@ object DatabaseFactory {
                 maximumPoolSize = 10
             },
         )
+
+        Flyway.configure()
+            .dataSource(dataSource)
+            .baselineOnMigrate(true)
+            .load()
+            .migrate()
+            .also { log.info("Flyway migrations applied: ${it.migrationsExecuted}") }
 
         Database.connect(dataSource)
         generateTables()

@@ -69,6 +69,8 @@ dependencies {
 
     implementation("org.postgresql:postgresql:42.7.3")
     implementation("com.zaxxer:HikariCP:6.2.1")
+    implementation("org.flywaydb:flyway-core:11.8.0")
+    implementation("org.flywaydb:flyway-database-postgresql:11.8.0")
 
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.17.1")
 
