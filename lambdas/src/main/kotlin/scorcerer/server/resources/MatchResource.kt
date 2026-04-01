@@ -12,6 +12,7 @@ import org.jetbrains.exposed.v1.core.JoinType
 import org.jetbrains.exposed.v1.core.alias
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.inList
 import org.jetbrains.exposed.v1.core.intLiteral
 import org.jetbrains.exposed.v1.core.plus
 import org.jetbrains.exposed.v1.jdbc.insert
@@ -31,7 +32,6 @@ import scorcerer.server.toJson
 import scorcerer.utils.LeaderboardS3Service
 import scorcerer.utils.MatchResult
 import scorcerer.utils.PointsCalculator.calculatePoints
-import scorcerer.utils.recalculateLivePoints
 import scorcerer.utils.toTitleCase
 
 fun matchRoutes(contexts: RequestContexts, leaderboardService: LeaderboardS3Service) = routes(
@@ -166,21 +166,17 @@ fun endMatch(matchId: String, homeScore: Int, awayScore: Int, leaderboardService
         it[MatchTable.awayScore] = awayScore
     }
 
+    val result = MatchResult(homeScore, awayScore)
     val predictions = getPredictions(matchId)
+    val pointsByPrediction = predictions.associate { it.predictionId.toInt() to calculatePoints(it, result) }
 
-    predictions.forEach { prediction ->
-        val points = calculatePoints(
-            prediction,
-            MatchResult(
-                homeScore,
-                awayScore,
-            ),
-        )
-        updatePredictionPoints(prediction.predictionId.toInt(), points)
-        updateMemberFixedPoints(prediction.userId, points)
-    }
+    batchUpdatePredictionPoints(pointsByPrediction)
 
-    recalculateLivePoints()
+    val pointsByMember = predictions.groupBy { it.userId }
+        .mapValues { (_, preds) -> preds.sumOf { pointsByPrediction[it.predictionId.toInt()] ?: 0 } }
+
+    batchUpdateMemberFixedPoints(pointsByMember)
+
     runBlocking {
         leaderboardService.updateGlobalLeaderboard(matchDay)
     }
@@ -200,19 +196,12 @@ fun setScore(matchId: String, matchDay: Int, homeScore: Int, awayScore: Int, lea
             it[state] = Match.State.LIVE
         }
 
+        val result = MatchResult(homeScore, awayScore)
         val predictions = getPredictions(matchId)
+        val pointsByPrediction = predictions.associate { it.predictionId.toInt() to calculatePoints(it, result) }
 
-        predictions.forEach { prediction ->
-            val points = calculatePoints(
-                prediction,
-                MatchResult(
-                    homeScore,
-                    awayScore,
-                ),
-            )
-            updatePredictionPoints(prediction.predictionId.toInt(), points)
-        }
-        recalculateLivePoints()
+        batchUpdatePredictionPoints(pointsByPrediction)
+
         runBlocking {
             leaderboardService.updateGlobalLeaderboard(matchDay)
         }
@@ -244,14 +233,19 @@ private fun getPredictions(matchId: String): List<Prediction> {
     }
 }
 
-private fun updatePredictionPoints(predictionId: Int, points: Int) {
-    PredictionTable.update({ PredictionTable.id eq predictionId }) {
-        it[PredictionTable.points] = points
+private fun batchUpdatePredictionPoints(pointsByPrediction: Map<Int, Int>) {
+    pointsByPrediction.entries.groupBy { it.value }.forEach { (points, entries) ->
+        val ids = entries.map { it.key }
+        PredictionTable.update({ PredictionTable.id inList ids }) {
+            it[PredictionTable.points] = points
+        }
     }
 }
 
-private fun updateMemberFixedPoints(userId: String, points: Int) {
-    MemberTable.update({ MemberTable.id eq userId }) {
-        it[fixedPoints] = fixedPoints + intLiteral(points)
+private fun batchUpdateMemberFixedPoints(pointsByMember: Map<String, Int>) {
+    pointsByMember.forEach { (userId, points) ->
+        MemberTable.update({ MemberTable.id eq userId }) {
+            it[fixedPoints] = fixedPoints + intLiteral(points)
+        }
     }
 }

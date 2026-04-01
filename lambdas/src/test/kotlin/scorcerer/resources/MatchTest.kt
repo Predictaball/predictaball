@@ -173,11 +173,9 @@ class MatchTest : DatabaseTest() {
 
         setScore(matchId, 5, 0, 0, mockLeaderboardService)
         getPredictionPoints(predictionId) shouldBe 2
-        getLivePoints("userId") shouldBe 2
 
         setScore(matchId, 5, 1, 1, mockLeaderboardService)
         getPredictionPoints(predictionId) shouldBe 5
-        getLivePoints("userId") shouldBe 5
         coVerifySequence {
             mockLeaderboardService.updateGlobalLeaderboard(5)
             mockLeaderboardService.updateGlobalLeaderboard(5)
@@ -194,8 +192,6 @@ class MatchTest : DatabaseTest() {
 
         setScore(matchId, 1, 1, 1, mockLeaderboardService)
         endMatch(matchId, 2, 1, mockLeaderboardService)
-        getLivePoints("userId") shouldBe 0
-        getLivePoints("anotherUser") shouldBe 0
         getFixedPoints("userId") shouldBe 5
         getFixedPoints("anotherUser") shouldBe 3
         transaction {
@@ -211,20 +207,18 @@ class MatchTest : DatabaseTest() {
         val anotherMatchId = givenMatchExists("1", "2")
         givenUserExists("userId", "name")
         givenUserExists("userNoPredictions", "name")
-        givenPredictionExists(matchId, "userId", 1, 1)
-        givenPredictionExists(anotherMatchId, "userId", 1, 0)
+        val predictionA = givenPredictionExists(matchId, "userId", 1, 1)
+        val predictionB = givenPredictionExists(anotherMatchId, "userId", 1, 0)
 
         setScore(matchId, 1, 0, 0, mockLeaderboardService)
-        getLivePoints("userId") shouldBe 2
-        getLivePoints("userNoPredictions") shouldBe 0
+        getPredictionPoints(predictionA) shouldBe 2
 
         setScore(anotherMatchId, 1, 0, 0, mockLeaderboardService)
-        getLivePoints("userId") shouldBe 2
-        getLivePoints("userNoPredictions") shouldBe 0
+        getPredictionPoints(predictionB) shouldBe 0
 
         setScore(anotherMatchId, 1, 1, 0, mockLeaderboardService)
-        getLivePoints("userId") shouldBe 7
-        getLivePoints("userNoPredictions") shouldBe 0
+        getPredictionPoints(predictionA) shouldBe 2
+        getPredictionPoints(predictionB) shouldBe 5
         coVerify { mockLeaderboardService.updateGlobalLeaderboard(1) }
     }
 
@@ -235,21 +229,23 @@ class MatchTest : DatabaseTest() {
         setScore(anotherMatchId, 1, 0, 0, mockLeaderboardService)
         givenUserExists("userId", "name")
         givenUserExists("anotherUser", "name", fixedPoints = 1)
-        givenPredictionExists(matchId, "userId", 2, 1)
-        givenPredictionExists(matchId, "anotherUser", 1, 0)
-        givenPredictionExists(anotherMatchId, "userId", 0, 0)
-        givenPredictionExists(anotherMatchId, "anotherUser", 1, 1)
+        val predA1 = givenPredictionExists(matchId, "userId", 2, 1)
+        val predA2 = givenPredictionExists(matchId, "anotherUser", 1, 0)
+        val predB1 = givenPredictionExists(anotherMatchId, "userId", 0, 0)
+        val predB2 = givenPredictionExists(anotherMatchId, "anotherUser", 1, 1)
 
         setScore(matchId, 1, 2, 1, mockLeaderboardService)
         setScore(anotherMatchId, 1, 0, 0, mockLeaderboardService)
-        getLivePoints("userId") shouldBe 10
-        getLivePoints("anotherUser") shouldBe 4
+        getPredictionPoints(predA1) shouldBe 5
+        getPredictionPoints(predA2) shouldBe 2
+        getPredictionPoints(predB1) shouldBe 5
+        getPredictionPoints(predB2) shouldBe 2
         getFixedPoints("userId") shouldBe 0
         getFixedPoints("anotherUser") shouldBe 1
 
         endMatch(matchId, 2, 1, mockLeaderboardService)
-        getLivePoints("userId") shouldBe 5
-        getLivePoints("anotherUser") shouldBe 2
+        getPredictionPoints(predB1) shouldBe 5
+        getPredictionPoints(predB2) shouldBe 2
         getFixedPoints("userId") shouldBe 5
         getFixedPoints("anotherUser") shouldBe 3
         transaction {
@@ -290,10 +286,6 @@ class GetMatchesOnNextThreeDaysTest {
         val filteredMatches = getMatchesOnNextThreeDays(emptyList())
         filteredMatches.size shouldBe 0
     }
-}
-
-private fun getLivePoints(memberId: String): Int = transaction {
-    MemberTable.select(MemberTable.livePoints).where { MemberTable.id eq memberId }.map { it[MemberTable.livePoints] }[0]
 }
 
 private fun getFixedPoints(memberId: String): Int = transaction {
