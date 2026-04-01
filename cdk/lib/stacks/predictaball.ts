@@ -82,6 +82,10 @@ export class Predictaball extends Stack {
     // ECS Cluster + Fargate Service
     const cluster = new Cluster(this, "predictaballCluster", { vpc })
 
+    // Single instance: SCHEDULER_ENABLED runs tasks in-process, cache TTL is infinite.
+    // When scaling to multiple instances: move schedulers to EventBridge (requires HTTPS on ALB),
+    // set SCHEDULER_ENABLED=false, and add CACHE_TTL_SECONDS=30 so instances pick up
+    // leaderboard changes from S3.
     const ecsService = new ApplicationLoadBalancedFargateService(this, "predictaballService", {
       cluster,
       cpu: 512,
