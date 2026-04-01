@@ -111,6 +111,11 @@ fun calculateGlobalLeaderboard(previousGlobalLeaderboard: List<LeaderboardInner>
 }
 
 class LeaderboardS3Service(val s3Client: S3Client, val s3BucketName: String) {
+    private var cachedLeaderboard: List<LeaderboardInner>? = null
+    private var cachedMatchDay: Int? = null
+    private var cacheTimestamp: Long = 0
+    private val cacheTtlMs = 300_000L
+
     suspend fun writeLeaderboard(leaderboard: List<LeaderboardInner>, matchDay: Int) {
         val request = PutObjectRequest {
             bucket = s3BucketName
@@ -118,9 +123,15 @@ class LeaderboardS3Service(val s3Client: S3Client, val s3BucketName: String) {
             body = ByteStream.fromString(leaderboard.toJson())
         }
         s3Client.putObject(request)
+        cachedLeaderboard = leaderboard
+        cachedMatchDay = matchDay
+        cacheTimestamp = System.currentTimeMillis()
     }
 
     suspend fun getLatestLeaderboardMatchDay(): Int {
+        if (cachedMatchDay != null && System.currentTimeMillis() - cacheTimestamp < cacheTtlMs) {
+            return cachedMatchDay!!
+        }
         val listRequest = ListObjectsV2Request {
             bucket = s3BucketName
         }
@@ -130,10 +141,15 @@ class LeaderboardS3Service(val s3Client: S3Client, val s3BucketName: String) {
             ?.mapNotNull { it.key?.substringAfter("matchDay")?.substringBefore(".json")?.toIntOrNull() }
             ?.maxOrNull()
             ?: 0
+        cachedMatchDay = latestMatchDay
+        cacheTimestamp = System.currentTimeMillis()
         return latestMatchDay
     }
 
     suspend fun getLeaderboard(matchDay: Int): List<LeaderboardInner>? {
+        if (matchDay == cachedMatchDay && cachedLeaderboard != null && System.currentTimeMillis() - cacheTimestamp < cacheTtlMs) {
+            return cachedLeaderboard
+        }
         val request = GetObjectRequest {
             bucket = s3BucketName
             key = "matchDay$matchDay.json"
@@ -143,7 +159,11 @@ class LeaderboardS3Service(val s3Client: S3Client, val s3BucketName: String) {
             s3Client.getObject(request) { resp ->
                 val json = resp.body?.decodeToString()
                 requireNotNull(json) { "Leaderboard is empty" }
-                return@getObject json.fromJson()
+                val leaderboard: List<LeaderboardInner> = json.fromJson()
+                cachedLeaderboard = leaderboard
+                cachedMatchDay = matchDay
+                cacheTimestamp = System.currentTimeMillis()
+                return@getObject leaderboard
             }
         } catch (e: Exception) {
             log.info("Error fetching leaderboard for matchDay $matchDay: $e")
