@@ -54,7 +54,7 @@ fun matchRoutes(contexts: RequestContexts, leaderboardService: LeaderboardS3Serv
             }.map { row ->
                 PredictionWithUser(
                     Prediction(row[PredictionTable.homeScore], row[PredictionTable.awayScore], row[PredictionTable.matchId].toString(), row[PredictionTable.id].toString(), row[PredictionTable.memberId], row[PredictionTable.points]),
-                    User(row[MemberTable.firstName], row[MemberTable.familyName], row[MemberTable.id], row[MemberTable.fixedPoints], row[MemberTable.livePoints]),
+                    User(row[MemberTable.firstName], row[MemberTable.familyName], row[MemberTable.id], row[MemberTable.fixedPoints], 0),
                 )
             }
         }

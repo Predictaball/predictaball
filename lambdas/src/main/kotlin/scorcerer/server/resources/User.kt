@@ -35,6 +35,7 @@ import scorcerer.server.extractUserId
 import scorcerer.server.fromJson
 import scorcerer.server.log
 import scorcerer.server.toJson
+import scorcerer.utils.livePointsForUser
 
 private val cognitoClient = CognitoIdentityProviderClient { region = "eu-west-2" }
 
@@ -101,7 +102,6 @@ fun userRoutes(contexts: RequestContexts) = routes(
                 it[MemberTable.firstName] = firstName
                 it[MemberTable.familyName] = familyName
                 it[fixedPoints] = 0
-                it[livePoints] = 0
             }
             val globalLeagueExists = LeagueTable.selectAll().where { LeagueTable.id eq "global" }.count() > 0
             if (!globalLeagueExists) {
@@ -129,7 +129,7 @@ fun userRoutes(contexts: RequestContexts) = routes(
                 .groupBy { it[LeagueTable.id] }
                 .mapValues { entry ->
                     val leagueName = entry.value.first()[LeagueTable.name]
-                    val users = entry.value.map { User(it[MemberTable.firstName], it[MemberTable.familyName], it[MemberTable.id], it[MemberTable.fixedPoints], it[MemberTable.livePoints]) }
+                    val users = entry.value.map { User(it[MemberTable.firstName], it[MemberTable.familyName], it[MemberTable.id], it[MemberTable.fixedPoints], 0) }
                     League(entry.key, leagueName, users)
                 }.values.toList()
         }
@@ -138,9 +138,10 @@ fun userRoutes(contexts: RequestContexts) = routes(
     "/user/{userId}/points" bind Method.GET to { req ->
         val userId = req.path("userId")!!
         val points = transaction {
-            MemberTable.selectAll().where { MemberTable.id eq userId }.firstOrNull()
-                ?.let { GetUserPoints200Response(it[MemberTable.fixedPoints], it[MemberTable.livePoints]) }
+            val member = MemberTable.selectAll().where { MemberTable.id eq userId }.firstOrNull()
                 ?: throw ApiResponseError(Response(Status.BAD_REQUEST).body("User does not exist"))
+            val livePoints = livePointsForUser(userId)
+            GetUserPoints200Response(member[MemberTable.fixedPoints], livePoints)
         }
         Response(Status.OK).body(points.toJson())
     },

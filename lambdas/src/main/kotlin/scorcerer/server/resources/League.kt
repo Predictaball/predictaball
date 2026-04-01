@@ -64,9 +64,9 @@ fun leagueRoutes(contexts: RequestContexts, leaderboardService: LeaderboardS3Ser
         } ?: throw ApiResponseError(Response(Status.BAD_REQUEST).body("League does not exist"))
         val users = transaction {
             (LeagueTable innerJoin LeagueMembershipTable innerJoin MemberTable)
-                .select(MemberTable.firstName, MemberTable.familyName, MemberTable.id, MemberTable.fixedPoints, MemberTable.livePoints)
+                .select(MemberTable.firstName, MemberTable.familyName, MemberTable.id, MemberTable.fixedPoints)
                 .where { LeagueTable.id eq leagueId }
-                .map { User(it[MemberTable.firstName], it[MemberTable.familyName], it[MemberTable.id], it[MemberTable.fixedPoints], it[MemberTable.livePoints]) }
+                .map { User(it[MemberTable.firstName], it[MemberTable.familyName], it[MemberTable.id], it[MemberTable.fixedPoints], 0) }
         }
         Response(Status.OK).body(League(leagueId, leagueName, users).toJson())
     },

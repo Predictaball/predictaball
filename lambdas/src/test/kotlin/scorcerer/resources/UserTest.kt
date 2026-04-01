@@ -24,18 +24,18 @@ class UserTest : DatabaseTest() {
 
     @Test
     fun getUserPoints() {
-        givenUserExists("userId", "name", fixedPoints = 15, livePoints = 5)
+        givenUserExists("userId", "name", fixedPoints = 15)
         val response = handler(Request(Method.GET, "/user/userId/points"))
         response.status shouldBe Status.OK
         val points: GetUserPoints200Response = response.bodyString().fromJson()
-        points.livePoints shouldBe 5
+        points.livePoints shouldBe 0
         points.fixedPoints shouldBe 15
     }
 
     @Test
     fun getUserPredictions() {
         val userId = "userId"
-        givenUserExists(userId, "name", fixedPoints = 15, livePoints = 5)
+        givenUserExists(userId, "name", fixedPoints = 15)
         val homeTeamId = givenTeamExists("England")
         val awayTeamId = givenTeamExists("France")
         val matchId = givenMatchExists(homeTeamId, awayTeamId)

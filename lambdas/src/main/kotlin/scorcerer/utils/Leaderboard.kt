@@ -62,22 +62,24 @@ fun calculateMovement(
 
 fun calculateGlobalLeaderboard(previousGlobalLeaderboard: List<LeaderboardInner>?): List<LeaderboardInner> {
     val globalUsers = transaction {
+        val livePoints = livePointsByUser()
+
         (LeagueMembershipTable innerJoin MemberTable)
             .select(
                 MemberTable.id,
                 MemberTable.firstName,
                 MemberTable.familyName,
                 MemberTable.fixedPoints,
-                MemberTable.livePoints,
             )
             .where { LeagueMembershipTable.leagueId eq "global" }
             .map {
+                val userId = it[MemberTable.id]
                 User(
                     it[MemberTable.firstName],
                     it[MemberTable.familyName],
-                    it[MemberTable.id],
+                    userId,
                     it[MemberTable.fixedPoints],
-                    it[MemberTable.livePoints],
+                    livePoints[userId] ?: 0,
                 )
             }
     }
