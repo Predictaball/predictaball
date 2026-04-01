@@ -48,6 +48,7 @@ export class Predictaball extends Stack {
       instanceType: InstanceType.of(InstanceClass.T3, InstanceSize.MICRO),
       storageType: StorageType.GP2,
       allocatedStorage: 20,
+      publiclyAccessible: true,
       credentials: Credentials.fromPassword(dbUser, SecretValue.unsafePlainText(dbPassword)),
     })
 
@@ -100,6 +101,7 @@ export class Predictaball extends Stack {
           USER_POOL_CLIENT_ID: cognito.poolClient.userPoolClientId,
           USER_POOL_ID: cognito.userPool.userPoolId,
           LEADERBOARD_BUCKET_NAME: leaderboardBucket.bucketName,
+          SCHEDULER_ENABLED: "true",
         },
         logDriver: LogDrivers.awsLogs({
           logGroup: new LogGroup(this, "predictaballLogs"),
@@ -136,5 +138,8 @@ export class Predictaball extends Stack {
 
     // Allow ECS tasks to connect to RDS
     db.connections.allowFrom(ecsService.service, Port.tcp(dbPort))
+
+    // TODO: Add EventBridge scheduled triggers for /admin/start-matches and /admin/update-scores
+    // Requires HTTPS on the ALB (API Destinations only support HTTPS endpoints)
   }
 }

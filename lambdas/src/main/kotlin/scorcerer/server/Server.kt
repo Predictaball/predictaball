@@ -14,6 +14,7 @@ import org.http4k.routing.routes
 import org.http4k.server.Netty
 import org.http4k.server.asServer
 import scorcerer.server.db.DatabaseFactory
+import scorcerer.server.resources.adminRoutes
 import scorcerer.server.resources.authRoutes
 import scorcerer.server.resources.leagueRoutes
 import scorcerer.server.resources.matchRoutes
@@ -34,6 +35,7 @@ private val leaderboardService = LeaderboardS3Service(s3Client, Environment.Lead
 private val allRoutes = routes(
     authRoutes,
     miscRoutes,
+    adminRoutes(leaderboardService),
     leagueRoutes(requestContext, leaderboardService),
     matchRoutes(requestContext, leaderboardService),
     predictionRoutes(requestContext),
@@ -58,6 +60,7 @@ private val cors = Cors(
 )
 
 private val authDisabled = System.getenv("AUTH_DISABLED") == "true"
+private val schedulerEnabled = System.getenv("SCHEDULER_ENABLED") == "true"
 
 private val httpServer = cors
     .then(InitialiseRequestContext(requestContext))
@@ -69,11 +72,13 @@ private val httpServer = cors
 fun main() {
     DatabaseFactory.connectAndGenerateTables()
 
-    val scheduler = Executors.newScheduledThreadPool(1)
-    // TODO: Check if WC2026 matches all kick off on the hour. If not, increase frequency (e.g. every 5 min)
-    scheduler.scheduleAtFixedRate({ runCatching { MatchStarter(leaderboardService).run() }.onFailure { log.error(it.stackTraceToString()) } }, 0, 60, TimeUnit.MINUTES)
-    scheduler.scheduleAtFixedRate({ runCatching { ScoreUpdater(leaderboardService).run() }.onFailure { log.error(it.stackTraceToString()) } }, 0, 2, TimeUnit.MINUTES)
+    if (schedulerEnabled) {
+        log.info("Starting scheduled tasks")
+        val scheduler = Executors.newScheduledThreadPool(1)
+        scheduler.scheduleAtFixedRate({ runCatching { MatchStarter(leaderboardService).run() }.onFailure { log.error(it.stackTraceToString()) } }, 0, 60, TimeUnit.MINUTES)
+        scheduler.scheduleAtFixedRate({ runCatching { ScoreUpdater(leaderboardService).run() }.onFailure { log.error(it.stackTraceToString()) } }, 0, 2, TimeUnit.MINUTES)
+    }
 
-    log.info("Starting server on port 8080 (auth disabled: $authDisabled)")
+    log.info("Starting server on port 8080 (auth disabled: $authDisabled, scheduler: $schedulerEnabled)")
     httpServer.asServer(Netty(8080)).start().block()
 }
