@@ -17,8 +17,8 @@ import scorcerer.givenUserInLeague
 import scorcerer.server.db.tables.MatchTable
 import scorcerer.server.db.tables.MemberTable
 import scorcerer.server.db.tables.PredictionTable
-import scorcerer.server.resources.endMatch
-import scorcerer.server.resources.setScore
+import scorcerer.server.services.endMatch
+import scorcerer.server.services.setScore
 import scorcerer.utils.LeaderboardS3Service
 import scorcerer.utils.calculateGlobalLeaderboard
 import scorcerer.utils.filterLeaderboardToLeague

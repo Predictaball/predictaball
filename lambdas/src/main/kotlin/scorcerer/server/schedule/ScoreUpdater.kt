@@ -11,9 +11,9 @@ import org.openapitools.server.models.Match
 import scorcerer.server.db.tables.MatchTable
 import scorcerer.server.fromJson
 import scorcerer.server.log
-import scorcerer.server.resources.endMatch
-import scorcerer.server.resources.getMatchDay
-import scorcerer.server.resources.setScore
+import scorcerer.server.services.endMatch
+import scorcerer.server.services.getMatchDay
+import scorcerer.server.services.setScore
 import scorcerer.utils.LeaderboardS3Service
 
 @JsonIgnoreProperties(ignoreUnknown = true)

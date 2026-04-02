@@ -27,10 +27,10 @@ import scorcerer.server.db.tables.MatchTable
 import scorcerer.server.db.tables.MemberTable
 import scorcerer.server.db.tables.PredictionTable
 import scorcerer.server.fromJson
-import scorcerer.server.resources.endMatch
 import scorcerer.server.resources.getMatchesOnNextThreeDays
 import scorcerer.server.resources.matchRoutes
-import scorcerer.server.resources.setScore
+import scorcerer.server.services.endMatch
+import scorcerer.server.services.setScore
 import scorcerer.utils.LeaderboardS3Service
 import scorcerer.utils.MatchResult
 import java.time.OffsetDateTime
