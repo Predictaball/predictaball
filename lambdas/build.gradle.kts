@@ -18,18 +18,12 @@ plugins {
     kotlin("jvm") version "2.3.20"
     id("org.jlleitschuh.gradle.ktlint") version "12.1.0"
     id("com.gradleup.shadow") version "8.3.6"
-    application
     jacoco
 }
 
 apply(plugin = "org.openapi.generator")
 
 group = "org.openapitools"
-version = "1.0.0"
-
-application {
-    mainClass.set("scorcerer.server.ServerKt")
-}
 
 kotlin {
     jvmToolchain(21)
@@ -94,6 +88,9 @@ tasks {
         archiveClassifier.set("")
         archiveVersion.set("")
         mergeServiceFiles()
+        manifest {
+            attributes("Main-Class" to "scorcerer.server.ServerKt")
+        }
     }
 
     test {
