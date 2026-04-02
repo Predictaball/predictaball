@@ -7,7 +7,7 @@ import scorcerer.server.db.DatabaseFactory
 
 open class PostgresTest {
     companion object {
-        private val dbUrl = System.getenv("INTEGRATION_DB_URL") ?: "jdbc:postgresql://localhost:5432/postgres"
+        private val dbUrl = System.getenv("INTEGRATION_DB_URL") ?: "jdbc:postgresql://localhost:5432/postgres_test"
         private val dbUser = System.getenv("INTEGRATION_DB_USER") ?: "postgres"
         private val dbPassword = System.getenv("INTEGRATION_DB_PASSWORD") ?: "postgres"
 
