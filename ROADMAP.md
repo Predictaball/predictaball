@@ -24,9 +24,8 @@ Scheduled tasks (MatchStarter, ScoreUpdater) run in-process when `SCHEDULER_ENAB
 - Workflow already written: build+test on all branches, deploy only on main
 
 ### Data
-- Seed World Cup 2026 teams and match schedule
-- Verify fotmob match IDs for score tracking
-- Check if all matches kick off on the hour (if not, increase MatchStarter frequency)
+- Resolve live score data source (fotmob blocked by Cloudflare, evaluate alternatives)
+- Verify kick-off times against FIFA's final schedule closer to the tournament
 
 ## Done
 
@@ -38,6 +37,7 @@ Scheduled tasks (MatchStarter, ScoreUpdater) run in-process when `SCHEDULER_ENAB
 
 ## Future Considerations
 
+- WAF (Web Application Firewall) on the ALB for prod: block bot scanning, rate limiting, managed rule groups
 - EventBridge scheduled tasks (when HTTPS is set up, replace in-process schedulers)
 - Integration tests against real Postgres using Testcontainers (current tests use H2 which has subtle SQL differences)
 - S3 event notifications to invalidate leaderboard cache across multiple instances

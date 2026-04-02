@@ -75,7 +75,7 @@ fun main() {
     if (schedulerEnabled) {
         log.info("Starting scheduled tasks")
         val scheduler = Executors.newScheduledThreadPool(1)
-        scheduler.scheduleAtFixedRate({ runCatching { MatchStarter(leaderboardService).run() }.onFailure { log.error(it.stackTraceToString()) } }, 0, 60, TimeUnit.MINUTES)
+        scheduler.scheduleAtFixedRate({ runCatching { MatchStarter(leaderboardService).run() }.onFailure { log.error(it.stackTraceToString()) } }, 0, 15, TimeUnit.MINUTES)
         scheduler.scheduleAtFixedRate({ runCatching { ScoreUpdater(leaderboardService).run() }.onFailure { log.error(it.stackTraceToString()) } }, 0, 2, TimeUnit.MINUTES)
     }
 
