@@ -24,15 +24,15 @@ class TeamTest : DatabaseTest() {
 
     @Test
     fun createTeam() {
-        val response = handler(Request(Method.POST, "/team").body("""{"teamName":"England","flagUri":"flag-uri"}"""))
+        val response = handler(Request(Method.POST, "/team").body("""{"teamName":"England","flagCode":"flag-uri"}"""))
         response.status shouldBe Status.OK
     }
 
     @Test
     fun createMultipleTeams() {
-        handler(Request(Method.POST, "/team").body("""{"teamName":"France","flagUri":"flag-uri"}"""))
-        handler(Request(Method.POST, "/team").body("""{"teamName":"Germany","flagUri":"flag-uri"}"""))
-        handler(Request(Method.POST, "/team").body("""{"teamName":"Spain","flagUri":"flag-uri"}"""))
+        handler(Request(Method.POST, "/team").body("""{"teamName":"France","flagCode":"flag-uri"}"""))
+        handler(Request(Method.POST, "/team").body("""{"teamName":"Germany","flagCode":"flag-uri"}"""))
+        handler(Request(Method.POST, "/team").body("""{"teamName":"Spain","flagCode":"flag-uri"}"""))
 
         val numberOfTeams = transaction { TeamTable.selectAll().count() }
         numberOfTeams shouldBe 3

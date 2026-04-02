@@ -30,7 +30,7 @@ fun teamRoutes(contexts: RequestContexts) = routes(
             val id = transaction {
                 TeamTable.insert {
                     it[name] = body.teamName.lowercase()
-                    it[flagUri] = body.flagUri
+                    it[flagCode] = body.flagCode
                 } get TeamTable.id
             }
             Response(Status.OK).body(CreateTeam200Response(id.toString()).toJson())
@@ -40,7 +40,7 @@ fun teamRoutes(contexts: RequestContexts) = routes(
         val teamId = req.path("teamId")!!
         val team = transaction {
             TeamTable.selectAll().where { TeamTable.id eq teamId.toInt() }.firstOrNull()
-                ?.let { row -> Team(row[TeamTable.id].toString(), row[TeamTable.name].toTitleCase(), row[TeamTable.flagUri]) }
+                ?.let { row -> Team(row[TeamTable.id].toString(), row[TeamTable.name].toTitleCase(), row[TeamTable.flagCode]) }
                 ?: throw ApiResponseError(Response(Status.BAD_REQUEST).body("Team does not exist"))
         }
         Response(Status.OK).body(team.toJson())
@@ -49,7 +49,7 @@ fun teamRoutes(contexts: RequestContexts) = routes(
         val teamName = req.path("teamName")!!
         val team = transaction {
             TeamTable.selectAll().where { TeamTable.name eq teamName.lowercase() }.firstOrNull()
-                ?.let { row -> Team(row[TeamTable.id].toString(), row[TeamTable.name].toTitleCase(), row[TeamTable.flagUri]) }
+                ?.let { row -> Team(row[TeamTable.id].toString(), row[TeamTable.name].toTitleCase(), row[TeamTable.flagCode]) }
                 ?: throw ApiResponseError(Response(Status.BAD_REQUEST).body("Team does not exist"))
         }
         Response(Status.OK).body(team.toJson())

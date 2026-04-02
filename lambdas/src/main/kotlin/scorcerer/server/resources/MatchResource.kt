@@ -102,7 +102,7 @@ fun matchRoutes(contexts: RequestContexts, leaderboardService: LeaderboardS3Serv
                 .join(homeTeamTable, JoinType.INNER, MatchTable.homeTeamId, homeTeamTable[TeamTable.id]).selectAll()
                 .orderBy(MatchTable.datetime)
                 .where { MatchTable.id eq matchId.toInt() }.singleOrNull()?.let { row ->
-                    Match(row[homeTeamTable[TeamTable.name]].toTitleCase(), row[homeTeamTable[TeamTable.flagUri]], row[awayTeamTable[TeamTable.name]].toTitleCase(), row[awayTeamTable[TeamTable.flagUri]], row[MatchTable.id].toString(), row[MatchTable.venue], row[MatchTable.datetime], row[MatchTable.matchDay], Match.Round.valueOf(row[MatchTable.round].value), row[MatchTable.state], row[MatchTable.homeScore], row[MatchTable.awayScore])
+                    Match(row[homeTeamTable[TeamTable.name]].toTitleCase(), row[homeTeamTable[TeamTable.flagCode]], row[awayTeamTable[TeamTable.name]].toTitleCase(), row[awayTeamTable[TeamTable.flagCode]], row[MatchTable.id].toString(), row[MatchTable.venue], row[MatchTable.datetime], row[MatchTable.matchDay], Match.Round.valueOf(row[MatchTable.round].value), row[MatchTable.state], row[MatchTable.homeScore], row[MatchTable.awayScore])
                 } ?: throw ApiResponseError(Response(Status.BAD_REQUEST).body("Match does not exist"))
         }
         Response(Status.OK).body(match.toJson())
@@ -133,8 +133,8 @@ private fun listMatches(requesterUserId: String, filterType: String?, userId: St
         val query = if (filterType.isNullOrBlank()) matchTeamTable else matchTeamTable.where { MatchTable.state eq Match.State.valueOf(filterType.uppercase()) }
         query.map { row ->
             Match(
-                row[homeTeamTable[TeamTable.name]].toTitleCase(), row[homeTeamTable[TeamTable.flagUri]],
-                row[awayTeamTable[TeamTable.name]].toTitleCase(), row[awayTeamTable[TeamTable.flagUri]],
+                row[homeTeamTable[TeamTable.name]].toTitleCase(), row[homeTeamTable[TeamTable.flagCode]],
+                row[awayTeamTable[TeamTable.name]].toTitleCase(), row[awayTeamTable[TeamTable.flagCode]],
                 row[MatchTable.id].toString(), row[MatchTable.venue], row[MatchTable.datetime], row[MatchTable.matchDay],
                 Match.Round.valueOf(row[MatchTable.round].value), row[MatchTable.state], row[MatchTable.homeScore], row[MatchTable.awayScore],
                 row.getOrNull(predictions[PredictionTable.id])?.let {

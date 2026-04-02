@@ -12,7 +12,7 @@ import { Credentials, DatabaseInstance, DatabaseInstanceEngine, StorageType } fr
 import { dbPassword } from "../environment"
 import { Cognito } from "./cognito"
 import { AnyPrincipal, Effect, PolicyStatement } from "aws-cdk-lib/aws-iam"
-import { BlockPublicAccess, Bucket, BucketEncryption, HttpMethods } from "aws-cdk-lib/aws-s3"
+import { BlockPublicAccess, Bucket, BucketEncryption } from "aws-cdk-lib/aws-s3"
 import { Cluster, ContainerImage, LogDrivers } from "aws-cdk-lib/aws-ecs"
 import { ApplicationLoadBalancedFargateService } from "aws-cdk-lib/aws-ecs-patterns"
 import { LogGroup } from "aws-cdk-lib/aws-logs"
@@ -58,25 +58,6 @@ export class Predictaball extends Stack {
       enforceSSL: true,
       versioned: true,
       removalPolicy: RemovalPolicy.RETAIN,
-    })
-
-    new Bucket(this, "teamFlagsBucket", {
-      publicReadAccess: true,
-      blockPublicAccess: new BlockPublicAccess({
-        blockPublicAcls: false,
-        ignorePublicAcls: false,
-        blockPublicPolicy: false,
-        restrictPublicBuckets: false,
-      }),
-      encryption: BucketEncryption.S3_MANAGED,
-      enforceSSL: true,
-      versioned: true,
-      removalPolicy: RemovalPolicy.RETAIN,
-      cors: [{
-        allowedOrigins: ["*"],
-        allowedMethods: [HttpMethods.GET],
-        allowedHeaders: ["*"],
-      }],
     })
 
     // ECS Cluster + Fargate Service

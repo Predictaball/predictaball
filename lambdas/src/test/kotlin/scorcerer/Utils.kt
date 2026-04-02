@@ -44,7 +44,7 @@ fun givenTeamExists(teamName: String): String {
         transaction {
             TeamTable.insert {
                 it[this.name] = teamName
-                it[this.flagUri] = ""
+                it[this.flagCode] = ""
             }
         } get TeamTable.id
         ).toString()
