@@ -17,6 +17,12 @@ jobs:
         run: cd lambdas && ./gradlew build
       - name: Test
         run: cd lambdas && ./gradlew test
+      - name: Integration test
+        run: |
+          docker compose up -d
+          sleep 3
+          cd lambdas && ./gradlew integrationTest
+          docker compose down
 
   deploy:
     needs: build
