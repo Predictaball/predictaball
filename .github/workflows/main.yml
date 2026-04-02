@@ -14,7 +14,7 @@ jobs:
           java-version: 21
       - uses: gradle/actions/setup-gradle@v3
       - name: Build
-        run: cd lambdas && ./gradlew shadowJar
+        run: cd lambdas && ./gradlew build
       - name: Test
         run: cd lambdas && ./gradlew test
       - name: Integration test
@@ -23,6 +23,14 @@ jobs:
           sleep 3
           cd lambdas && ./gradlew integrationTest
           docker compose down
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Build frontend
+        run: cd frontend && npm ci && npm run build
+        env:
+          COGNITO_CLIENT_ID: dummy
+          COGNITO_USER_POOL_ID: eu-west-2_dummy
 
   deploy:
     needs: build

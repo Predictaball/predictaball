@@ -5,3 +5,8 @@
 # Ignore Gradle build output directory
 build
 migration.json
+
+# Frontend
+frontend/node_modules/
+frontend/client/
+frontend/.next/
