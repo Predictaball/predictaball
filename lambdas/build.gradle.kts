@@ -17,7 +17,7 @@ buildscript {
 plugins {
     kotlin("jvm") version "2.3.20"
     id("org.jlleitschuh.gradle.ktlint") version "12.1.0"
-    id("com.gradleup.shadow") version "9.3.2"
+    id("com.gradleup.shadow") version "8.3.6"
     application
     jacoco
 }

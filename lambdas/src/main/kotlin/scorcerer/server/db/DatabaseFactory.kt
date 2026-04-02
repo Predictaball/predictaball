@@ -30,6 +30,8 @@ object DatabaseFactory {
         Flyway.configure()
             .dataSource(dataSource)
             .baselineOnMigrate(true)
+            .baselineVersion("0")
+            .locations("classpath:db/migration")
             .load()
             .migrate()
             .also { log.info("Flyway migrations applied: ${it.migrationsExecuted}") }
