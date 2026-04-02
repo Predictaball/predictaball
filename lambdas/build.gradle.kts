@@ -99,6 +99,20 @@ tasks {
     test {
         useJUnitPlatform()
         finalizedBy(jacocoTestReport)
+        exclude("**/integration/**")
+    }
+
+    register<Test>("integrationTest") {
+        useJUnitPlatform()
+        include("**/integration/*")
+        testClassesDirs = sourceSets["test"].output.classesDirs
+        classpath = sourceSets["test"].runtimeClasspath
+        description = "Runs integration tests against real Postgres (requires docker compose up)"
+        group = "verification"
+        testLogging {
+            events("passed", "failed", "skipped")
+            showStandardStreams = false
+        }
     }
 
     jacocoTestReport {
