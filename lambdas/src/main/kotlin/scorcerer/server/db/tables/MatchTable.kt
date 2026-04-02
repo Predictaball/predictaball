@@ -31,4 +31,5 @@ object MatchTable : Table("match") {
     val matchDay = integer("match_day").check { it.greaterEq(1) }
     val round = enumerationByName<MatchRound>("round", 20)
     val externalMatchId = varchar("external_match_id", 20).nullable()
+    override val primaryKey = PrimaryKey(id)
 }

@@ -15,4 +15,5 @@ object PredictionTable : Table("prediction") {
     init {
         uniqueIndex(memberId, matchId)
     }
+    override val primaryKey = PrimaryKey(id)
 }

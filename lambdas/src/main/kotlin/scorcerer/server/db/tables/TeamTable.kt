@@ -6,4 +6,5 @@ object TeamTable : Table("team") {
     val id = integer("id").uniqueIndex().autoIncrement()
     val name = varchar("name", 30).uniqueIndex()
     val flagCode = varchar("flag_code", 100)
+    override val primaryKey = PrimaryKey(id)
 }
