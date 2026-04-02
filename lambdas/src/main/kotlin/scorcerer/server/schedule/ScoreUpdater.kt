@@ -42,7 +42,7 @@ data class FotMobGeneral(
 
 data class LiveMatch(
     val matchId: String,
-    val fotmobMatchId: String,
+    val externalMatchId: String,
 )
 
 class ScoreUpdater(private val leaderboardService: LeaderboardS3Service) {
@@ -53,8 +53,8 @@ class ScoreUpdater(private val leaderboardService: LeaderboardS3Service) {
         val liveMatches = transaction {
             MatchTable.selectAll()
                 .where { MatchTable.state eq Match.State.LIVE }
-                .filter { it.getOrNull(MatchTable.fotmobMatchId) != null }
-                .map { LiveMatch(it[MatchTable.id].toString(), it[MatchTable.fotmobMatchId]!!) }
+                .filter { it.getOrNull(MatchTable.externalMatchId) != null }
+                .map { LiveMatch(it[MatchTable.id].toString(), it[MatchTable.externalMatchId]!!) }
         }
 
         if (liveMatches.isEmpty()) {
@@ -64,7 +64,7 @@ class ScoreUpdater(private val leaderboardService: LeaderboardS3Service) {
 
         liveMatches.forEach {
             log.info("Fetching for $it")
-            val response = client(Request(Method.GET, endpoint + it.fotmobMatchId))
+            val response = client(Request(Method.GET, endpoint + it.externalMatchId))
 
             log.info("Response status - ${response.status}")
 
