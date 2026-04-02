@@ -8,6 +8,7 @@ import org.http4k.routing.routes
 import scorcerer.server.log
 import scorcerer.server.schedule.MatchStarter
 import scorcerer.server.schedule.ScoreUpdater
+import scorcerer.server.services.recalculateAllFixedPoints
 import scorcerer.utils.LeaderboardS3Service
 
 fun adminRoutes(leaderboardService: LeaderboardS3Service) = routes(
@@ -21,6 +22,12 @@ fun adminRoutes(leaderboardService: LeaderboardS3Service) = routes(
     "/admin/update-scores" bind Method.POST to {
         log.info("Admin: update-scores triggered")
         runCatching { ScoreUpdater(leaderboardService).run() }
+            .onFailure { log.error(it.stackTraceToString()) }
+        Response(Status.OK)
+    },
+    "/admin/recalculate-points" bind Method.POST to {
+        log.info("Admin: recalculate-points triggered")
+        runCatching { recalculateAllFixedPoints() }
             .onFailure { log.error(it.stackTraceToString()) }
         Response(Status.OK)
     },

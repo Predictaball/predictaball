@@ -72,6 +72,29 @@ fun getMatchDay(matchId: String): Int? = transaction {
         ?.let { row -> row[MatchTable.matchDay] }
 }
 
+fun recalculateAllFixedPoints() = transaction {
+    log.info("Recalculating all fixed points from scratch")
+    MemberTable.update { it[fixedPoints] = intLiteral(0) }
+
+    val completedMatches = MatchTable.selectAll()
+        .where { MatchTable.state eq Match.State.COMPLETED }
+        .map { Triple(it[MatchTable.id].toString(), it[MatchTable.homeScore]!!, it[MatchTable.awayScore]!!) }
+
+    val totalPointsByMember = mutableMapOf<String, Int>()
+    completedMatches.forEach { (matchId, homeScore, awayScore) ->
+        scorePredictions(matchId, homeScore, awayScore).forEach { (userId, points) ->
+            totalPointsByMember.merge(userId, points, Int::plus)
+        }
+    }
+
+    totalPointsByMember.forEach { (userId, points) ->
+        MemberTable.update({ MemberTable.id eq userId }) {
+            it[fixedPoints] = intLiteral(points)
+        }
+    }
+    log.info("Recalculated fixed points for ${totalPointsByMember.size} members across ${completedMatches.size} matches")
+}
+
 private fun scorePredictions(matchId: String, homeScore: Int, awayScore: Int): Map<String, Int> {
     val result = MatchResult(homeScore, awayScore)
     val predictions = getPredictions(matchId)
