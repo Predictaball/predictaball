@@ -55,6 +55,8 @@ dependencies {
     implementation("org.http4k:http4k-server-netty")
 
     implementation("aws.sdk.kotlin:s3:1.2.15")
+    implementation("com.auth0:java-jwt:4.4.0")
+    implementation("com.auth0:jwks-rsa:0.22.1")
     implementation("aws.sdk.kotlin:cognitoidentityprovider:1.2.5")
 
     implementation("org.jetbrains.exposed:exposed-core:1.1.1")

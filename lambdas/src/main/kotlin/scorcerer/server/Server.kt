@@ -66,7 +66,7 @@ private val httpServer = cors
     .then(InitialiseRequestContext(requestContext))
     .then(loggingFilter)
     .then(CatchAll(::handleError))
-    .let { if (authDisabled) it.then(localAuthFilter(requestContext)) else it }
+    .let { if (authDisabled) it.then(localAuthFilter(requestContext)) else it.then(cognitoAuthFilter(requestContext)) }
     .then(allRoutes)
 
 fun main() {
