@@ -7,7 +7,8 @@ import org.http4k.core.Status
 
 fun RequestContexts.extractUserId(req: Request): String {
     val authorizer = extract(req).get<Authorizer>(AUTHORIZER_KEY)
-    return authorizer?.claims?.get("sub")!!
+    return authorizer?.claims?.get("sub")
+        ?: throw ApiResponseError(Response(Status.UNAUTHORIZED).body("Not authenticated"))
 }
 
 fun RequestContexts.extractIsAdmin(req: Request): Boolean {
