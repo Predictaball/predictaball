@@ -1,6 +1,7 @@
 package scorcerer.resources
 
 import io.kotest.matchers.shouldBe
+import io.mockk.mockk
 import org.http4k.core.Method
 import org.http4k.core.Request
 import org.http4k.core.RequestContexts
@@ -17,10 +18,12 @@ import scorcerer.givenUserExists
 import scorcerer.givenUserInLeague
 import scorcerer.server.fromJson
 import scorcerer.server.resources.userRoutes
+import scorcerer.utils.LeaderboardS3Service
 
 class UserTest : DatabaseTest() {
     private val contexts = RequestContexts()
-    private val handler = testHandler(contexts, userRoutes(contexts))
+    private val mockLeaderboardService = mockk<LeaderboardS3Service>(relaxed = true)
+    private val handler = testHandler(contexts, userRoutes(contexts, mockLeaderboardService))
 
     @Test
     fun getUserPoints() {

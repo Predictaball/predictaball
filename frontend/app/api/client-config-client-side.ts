@@ -9,7 +9,7 @@ export async function getConfigWithAuthHeaderClient(): Promise<Configuration> {
     const token: string | undefined = getCookie(TOKEN_COOKIE_KEY)
     const validatedToken: string = token ? token : ""
     return new Configuration({
-        basePath: API_GATEWAY + '/prod',
+        basePath: API_GATEWAY,
         headers: {
             "Authorization": validatedToken
         }

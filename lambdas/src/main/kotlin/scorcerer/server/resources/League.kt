@@ -30,6 +30,7 @@ import scorcerer.server.extractUserId
 import scorcerer.server.fromJson
 import scorcerer.server.toJson
 import scorcerer.utils.LeaderboardS3Service
+import scorcerer.utils.calculateGlobalLeaderboard
 import scorcerer.utils.calculateMovement
 import scorcerer.utils.filterLeaderboardToLeague
 import scorcerer.utils.throwDatabaseError
@@ -80,7 +81,13 @@ fun leagueRoutes(contexts: RequestContexts, leaderboardService: LeaderboardS3Ser
         val (latestMatchDay, latestGlobalLeaderboard) = runBlocking {
             val matchDay = leaderboardService.getLatestLeaderboardMatchDay()
             val leaderboard = leaderboardService.getLeaderboard(matchDay)
-            matchDay to (leaderboard ?: throw ApiResponseError(Response(Status.NOT_FOUND).body("Leaderboard does not exist")))
+            if (leaderboard != null) {
+                matchDay to leaderboard
+            } else {
+                val computed = calculateGlobalLeaderboard(null)
+                leaderboardService.writeLeaderboard(computed, 0)
+                0 to computed
+            }
         }
         val response = if (leagueId == "global") {
             paginateLeaderboard(leagueName, sortLeaderboard(latestGlobalLeaderboard), page, pageSize)

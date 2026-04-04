@@ -22,7 +22,7 @@ export class AuthClient {
 }
 
 const authClientConfig = new Configuration({
-    basePath: API_GATEWAY + '/prod',
+    basePath: API_GATEWAY,
 })
 export const AUTH_CLIENT = AuthClient.create(authClientConfig)
 

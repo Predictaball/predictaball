@@ -116,6 +116,11 @@ class LeaderboardS3Service(val s3Client: S3Client, val s3BucketName: String) {
     private var cacheTimestamp: Long = 0
     private val cacheTtlMs = System.getenv("CACHE_TTL_SECONDS")?.toLongOrNull()?.let { it * 1000 } ?: Long.MAX_VALUE
 
+    fun invalidateCache() {
+        cachedLeaderboard = null
+        cachedMatchDay = null
+    }
+
     suspend fun writeLeaderboard(leaderboard: List<LeaderboardInner>, matchDay: Int) {
         val request = PutObjectRequest {
             bucket = s3BucketName

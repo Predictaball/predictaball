@@ -40,7 +40,7 @@ private val allRoutes = routes(
     matchRoutes(requestContext, leaderboardService),
     predictionRoutes(requestContext),
     teamRoutes(requestContext),
-    userRoutes(requestContext),
+    userRoutes(requestContext, leaderboardService),
 )
 
 private val cors = Cors(

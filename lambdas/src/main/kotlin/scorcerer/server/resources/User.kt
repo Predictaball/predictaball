@@ -35,11 +35,12 @@ import scorcerer.server.extractUserId
 import scorcerer.server.fromJson
 import scorcerer.server.log
 import scorcerer.server.toJson
+import scorcerer.utils.LeaderboardS3Service
 import scorcerer.utils.livePointsForUser
 
 private val cognitoClient = CognitoIdentityProviderClient { region = "eu-west-2" }
 
-fun userRoutes(contexts: RequestContexts) = routes(
+fun userRoutes(contexts: RequestContexts, leaderboardService: LeaderboardS3Service) = routes(
     "/user" bind Method.POST to { req ->
         val body: SignupRequest = req.bodyString().fromJson()
         val firstName = body.firstName.trim()
@@ -116,6 +117,7 @@ fun userRoutes(contexts: RequestContexts) = routes(
             }
         }
         log.info("Created member record and added to global league")
+        leaderboardService.invalidateCache()
         Response(Status.OK)
     },
     "/user/leagues" bind Method.GET to { req ->
