@@ -18,10 +18,9 @@ export default function Crest(props: CrestProps): React.JSX.Element {
                 height={0}
                 unoptimized={true}
                 style={{
-                    maxWidth: props.large ? "80px" : "75px",
-                    width: "auto",
-                    height: "auto",
-                    maxHeight: props.large ? "80px" : "75px"
+                    width: props.large ? "80px" : "75px",
+                    height: props.large ? "53px" : "50px",
+                    objectFit: "contain",
             }}
             />
             <span className="text-center text-xs font-bold text-white">
