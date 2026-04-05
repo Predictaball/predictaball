@@ -4,8 +4,7 @@ import MatchesToPredict from "@/app/components/ticket/matches-to-predict";
 import Link from "next/link";
 import SignOutButton from "@/app/components/sign-out-button";
 import Dashboard from "@/app/components/leaderboard/dashboard";
-import { getUserId, isAdmin, isLoggedIn } from "../auth/jwt-handler";
-import { redirect } from "next/navigation";
+import { isAdmin } from "../auth/jwt-handler";
 import { Button } from "@nextui-org/react";
 import { BUTTON_CLASS } from "../util/css-classes";
 import HeadlineSuspense from "@/app/components/points/headline-suspense";
@@ -13,11 +12,7 @@ import { Toaster } from "react-hot-toast";
 import LiveMatches from "@/app/components/ticket/live-matches";
 import LinkToHistory from "@/app/components/link-to-history"
 
-
 const Home = async () => {
-    const loggedIn = await isLoggedIn()
-    if (!loggedIn) redirect("/login")
-        
     const isUserAdmin = await isAdmin()
 
     return (

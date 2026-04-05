@@ -3,12 +3,9 @@ import {getConfigWithAuthHeader} from "@/app/api/client-config";
 import {redirect} from "next/navigation";
 import { Button, Link } from "@nextui-org/react";
 import { BUTTON_CLASS } from "@/app/util/css-classes";
-import { isLoggedIn } from "@/app/auth/jwt-handler";
 
 export default async function Home({params}: { params: Promise<{ leagueId: string }> }) {
     const { leagueId } = await params
-    const loggedIn = await isLoggedIn()
-    if (!loggedIn) redirect(`/login?leagueId=${leagueId}`)
     
     let joined = false
     

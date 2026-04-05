@@ -1,5 +1,4 @@
 import React from "react";
-import {redirectIfLoggedOut} from "@/app/auth/log-in-redirect";
 import Predictions from "@/app/app/match/[matchId]/predictions/predictions";
 import { League, Match, MatchApi, UserApi } from "@/client"
 import { getConfigWithAuthHeader } from "@/app/api/client-config"
@@ -13,7 +12,6 @@ export default async function Home(
         searchParams: Promise<{ [key: string]: string | string[] | undefined }>
     }
 ): Promise<React.JSX.Element> {
-    await redirectIfLoggedOut()
     const { matchId } = await params
     const resolvedSearchParams = await searchParams
 

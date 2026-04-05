@@ -2,10 +2,8 @@ import {getConfigWithAuthHeader} from "@/app/api/client-config"
 import {MatchesHeader} from "@/app/components/ticket/matches-header"
 import Ticket from "@/app/components/ticket/ticket"
 import {LeaderboardInner, LeagueApi, ListMatchesFilterTypeEnum, Match, MatchApi} from "@/client"
-import {redirect} from "next/navigation"
 import BackButton from "@/app/components/back-button";
 import React from "react";
-import {isLoggedIn} from "@/app/auth/jwt-handler";
 import LeaderboardEntry from "@/app/components/leaderboard/leaderboard-entry";
 
 export default async function Home({
@@ -14,8 +12,6 @@ export default async function Home({
     params: Promise<{ userId: string }>
 }): Promise<React.JSX.Element> {
     const { userId } = await params
-    const loggedIn = await isLoggedIn()
-    if (!loggedIn) redirect("/login")
 
     async function getGames(): Promise<Match[]> {
         try {

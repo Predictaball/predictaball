@@ -1,16 +1,12 @@
 import React from "react";
 import Leaderboard from "@/app/components/leaderboard/leaderboard";
 import Share from "./share";
-import {isLoggedIn} from "@/app/auth/jwt-handler";
-import {redirect} from "next/navigation";
 import Leave from "./leave";
 import BackButton from "@/app/components/back-button";
 
 
 export default async function Home({ params }: { params: Promise<{ leagueId: string }> }): Promise<React.JSX.Element> {
     const { leagueId } = await params
-    const loggedIn = await isLoggedIn()
-    if (!loggedIn) redirect("/login")
 
     return (
         <div className="min-h-svh bg-gray-900">
