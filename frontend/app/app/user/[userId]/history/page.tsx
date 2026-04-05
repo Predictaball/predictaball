@@ -5,7 +5,7 @@ import {LeaderboardInner, LeagueApi, ListMatchesFilterTypeEnum, Match, MatchApi}
 import {redirect} from "next/navigation"
 import BackButton from "@/app/components/back-button";
 import React from "react";
-import {isLoggedIn} from "@/app/auth/jtw-handler";
+import {isLoggedIn} from "@/app/auth/jwt-handler";
 import LeaderboardEntry from "@/app/components/leaderboard/leaderboard-entry";
 
 export default async function Home({

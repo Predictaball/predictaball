@@ -14,6 +14,7 @@ import org.http4k.routing.bind
 import org.http4k.routing.routes
 import org.openapitools.server.models.Login200Response
 import org.openapitools.server.models.LoginRequest
+import org.openapitools.server.models.RefreshTokenRequest
 import org.openapitools.server.models.ResetPasswordConfirmRequest
 import org.openapitools.server.models.ResetPasswordRequest
 import scorcerer.server.ApiResponseError
@@ -42,7 +43,25 @@ val authRoutes = routes(
         }
         val result = response.authenticationResult ?: throw ApiResponseError(Response(Status.UNAUTHORIZED))
         if (result.idToken == null) throw Exception("Cognito did not return an ID token")
-        Response(Status.OK).body(Login200Response(result.idToken!!, result.accessToken).toJson())
+        Response(Status.OK).body(Login200Response(result.idToken!!, result.refreshToken ?: "", result.accessToken).toJson())
+    },
+    "/auth/refresh" bind Method.POST to { req ->
+        val body: RefreshTokenRequest = req.bodyString().fromJson()
+        val request = InitiateAuthRequest {
+            authFlow = AuthFlowType.RefreshTokenAuth
+            clientId = Environment.CognitoUserPoolClientId
+            authParameters = mapOf("REFRESH_TOKEN" to body.refreshToken)
+        }
+        val response = runBlocking {
+            try {
+                cognitoClient.initiateAuth(request)
+            } catch (e: NotAuthorizedException) {
+                throw ApiResponseError(Response(Status.UNAUTHORIZED).body(e.message))
+            }
+        }
+        val result = response.authenticationResult ?: throw ApiResponseError(Response(Status.UNAUTHORIZED))
+        if (result.idToken == null) throw Exception("Cognito did not return an ID token")
+        Response(Status.OK).body(Login200Response(result.idToken!!, body.refreshToken, result.accessToken).toJson())
     },
     "/auth/reset" bind Method.POST to { req ->
         val body: ResetPasswordRequest = req.bodyString().fromJson()

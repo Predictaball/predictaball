@@ -2,7 +2,7 @@ import React from "react";
 import CountUpWrapped from "@/app/components/points/count-up-wrapper";
 import { GetUserPoints200Response, GetUserPointsRequest, User, UserApi } from "@/client";
 import { getConfigWithAuthHeader } from "@/app/api/client-config";
-import { getUserId } from "@/app/auth/jtw-handler";
+import { getUserId } from "@/app/auth/jwt-handler";
 import { getPositionForLeague } from "@/app/app/league/get-position-for-league";
 
 export default async function Headline(): Promise<React.JSX.Element> {

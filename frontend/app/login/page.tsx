@@ -1,5 +1,5 @@
 import React from "react";
-import { isLoggedIn } from "../auth/jtw-handler";
+import { isLoggedIn } from "../auth/jwt-handler";
 import { redirect } from "next/navigation";
 import Login from "./login";
 

@@ -1,6 +1,6 @@
 import React from "react";
 import {Header} from "@/app/components/landing-header";
-import {isLoggedIn} from "@/app/auth/jtw-handler";
+import {isLoggedIn} from "@/app/auth/jwt-handler";
 
 export default async function MoreInfo(): Promise<React.JSX.Element> {
 

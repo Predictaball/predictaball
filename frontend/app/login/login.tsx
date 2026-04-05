@@ -2,7 +2,7 @@
 
 import React, {useState} from "react";
 import {LoginRequest} from "@/client";
-import {AUTH_CLIENT, TOKEN_COOKIE_KEY} from "@/app/api/api";
+import {AUTH_CLIENT, TOKEN_COOKIE_KEY, REFRESH_TOKEN_COOKIE_KEY} from "@/app/api/api";
 import {navigateTo} from "@/app/actions";
 import {Button, Input} from "@nextui-org/react";
 import {EyeFilledIcon, EyeSlashFilledIcon} from "@nextui-org/shared-icons";
@@ -36,7 +36,10 @@ export default function Login({leagueId}: {leagueId: string | undefined}) {
                 setDidFail(true)
                 return
             }
-            setCookie(TOKEN_COOKIE_KEY, response.idToken, {maxAge: 60 * 60 * 24 * 7})
+            setCookie(TOKEN_COOKIE_KEY, response.idToken, {maxAge: 60 * 60 * 24})
+            if (response.refreshToken) {
+                setCookie(REFRESH_TOKEN_COOKIE_KEY, response.refreshToken, {maxAge: 60 * 60 * 24 * 30})
+            }
             await navigateTo((leagueId !== undefined) ? `app/league/${leagueId}/join`: "app")
         } catch (error) {
             setIsLoading(false)

@@ -27,3 +27,4 @@ const authClientConfig = new Configuration({
 export const AUTH_CLIENT = AuthClient.create(authClientConfig)
 
 export const TOKEN_COOKIE_KEY = "authToken"
+export const REFRESH_TOKEN_COOKIE_KEY = "refreshToken"

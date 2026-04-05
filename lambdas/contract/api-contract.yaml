@@ -651,9 +651,49 @@ paths:
                     type: string
                   accessToken:
                     type: string
+                  refreshToken:
+                    type: string
                 required:
                   - idToken
+                  - refreshToken
 
+        '401':
+          description: Unauthorized
+  /auth/refresh:
+    post:
+      tags:
+        - auth
+      operationId: refreshToken
+      description: Refresh an expired ID token using a refresh token
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                refreshToken:
+                  type: string
+              required:
+                - refreshToken
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  idToken:
+                    type: string
+                  refreshToken:
+                    type: string
+                  accessToken:
+                    type: string
+                required:
+                  - idToken
+                  - refreshToken
         '401':
           description: Unauthorized
   /auth/reset:

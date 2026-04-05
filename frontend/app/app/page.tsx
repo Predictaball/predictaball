@@ -4,7 +4,7 @@ import MatchesToPredict from "@/app/components/ticket/matches-to-predict";
 import Link from "next/link";
 import SignOutButton from "@/app/components/sign-out-button";
 import Dashboard from "@/app/components/leaderboard/dashboard";
-import { getUserId, isAdmin, isLoggedIn } from "../auth/jtw-handler";
+import { getUserId, isAdmin, isLoggedIn } from "../auth/jwt-handler";
 import { redirect } from "next/navigation";
 import { Button } from "@nextui-org/react";
 import { BUTTON_CLASS } from "../util/css-classes";

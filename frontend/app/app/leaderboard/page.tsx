@@ -1,5 +1,5 @@
 import React from "react";
-import {isLoggedIn} from "@/app/auth/jtw-handler";
+import {isLoggedIn} from "@/app/auth/jwt-handler";
 import {redirect} from "next/navigation";
 
 export default async function Home(): Promise<React.JSX.Element> {

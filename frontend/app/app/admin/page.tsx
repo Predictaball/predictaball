@@ -1,4 +1,4 @@
-import { isAdmin } from "@/app/auth/jtw-handler";
+import { isAdmin } from "@/app/auth/jwt-handler";
 import SignOutButton from "@/app/components/sign-out-button";
 import LiveMatches from "@/app/components/ticket/live-matches";
 import { BUTTON_CLASS } from "@/app/util/css-classes";

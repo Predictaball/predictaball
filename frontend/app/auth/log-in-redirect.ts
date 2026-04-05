@@ -1,4 +1,4 @@
-import {isLoggedIn} from "@/app/auth/jtw-handler";
+import {isLoggedIn} from "@/app/auth/jwt-handler";
 import {redirect} from "next/navigation";
 
 export async function redirectIfLoggedOut() {

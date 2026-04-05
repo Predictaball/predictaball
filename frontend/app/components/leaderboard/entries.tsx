@@ -2,7 +2,7 @@ import React from "react";
 import {GetLeagueLeaderboard200Response, LeagueApi} from "@/client";
 import {getConfigWithAuthHeader} from "@/app/api/client-config";
 import {filterWithContext} from "@/app/util/array";
-import {getUserId} from "@/app/auth/jtw-handler";
+import {getUserId} from "@/app/auth/jwt-handler";
 import LeaderboardPagination from "./leaderboard-pagination";
 
 export interface EntriesProps {

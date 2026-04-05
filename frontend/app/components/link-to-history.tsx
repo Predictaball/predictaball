@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { getToken, getUserId } from "@/app/auth/jtw-handler"
+import { getToken, getUserId } from "@/app/auth/jwt-handler"
 import YourHistory from "@/app/components/your-history"
 import React from "react";
 
