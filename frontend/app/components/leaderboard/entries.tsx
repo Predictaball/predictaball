@@ -4,6 +4,9 @@ import {getConfigWithAuthHeader} from "@/app/api/client-config";
 import {filterWithContext} from "@/app/util/array";
 import {getUserId} from "@/app/auth/jwt-handler";
 import LeaderboardPagination from "./leaderboard-pagination";
+import {getCachedGlobalLeaderboard} from "@/app/api/cached";
+import {TOKEN_COOKIE_KEY} from "@/app/api/api";
+import {cookies} from "next/headers";
 
 export interface EntriesProps {
     leagueId: string,
@@ -14,8 +17,12 @@ export interface EntriesProps {
 export default async function Entries(props: EntriesProps): Promise<React.JSX.Element> {
 
     const userId = await getUserId()
+    const token = (await cookies()).get(TOKEN_COOKIE_KEY)?.value ?? ""
 
     async function getLeaderboard(): Promise<GetLeagueLeaderboard200Response | undefined> {
+        if (props.leagueId === "global") {
+            return getCachedGlobalLeaderboard(token)
+        }
         try {
             const leagueApi = new LeagueApi(await getConfigWithAuthHeader())
             return await leagueApi.getLeagueLeaderboard({leagueId: props.leagueId, pageSize: "200"})
