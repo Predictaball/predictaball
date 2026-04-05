@@ -1,9 +1,9 @@
 'use client'
 
-import {AuthApi, Configuration} from "@/client";
+import {AuthApi, Configuration, Middleware, ResponseContext} from "@/client";
 import {API_GATEWAY} from "@/app/api/constants";
 import {REFRESH_TOKEN_COOKIE_KEY, TOKEN_COOKIE_KEY} from "@/app/api/api";
-import {getCookie, setCookie} from "cookies-next";
+import {getCookie, setCookie, deleteCookie} from "cookies-next";
 import {jwtDecode} from "jwt-decode";
 
 function isTokenExpired(token: string): boolean {
@@ -29,6 +29,17 @@ async function refreshIdToken(): Promise<string | undefined> {
     }
 }
 
+const unauthorizedRedirect: Middleware = {
+    async post(context: ResponseContext): Promise<Response> {
+        if (context.response.status === 401) {
+            deleteCookie(TOKEN_COOKIE_KEY)
+            deleteCookie(REFRESH_TOKEN_COOKIE_KEY)
+            window.location.href = `/login?callbackUrl=${encodeURIComponent(window.location.pathname)}`
+        }
+        return context.response
+    }
+}
+
 export async function getConfigWithAuthHeaderClient(): Promise<Configuration> {
     let token: string | undefined = getCookie(TOKEN_COOKIE_KEY)
 
@@ -40,6 +51,7 @@ export async function getConfigWithAuthHeaderClient(): Promise<Configuration> {
         basePath: API_GATEWAY,
         headers: {
             "Authorization": token ?? ""
-        }
+        },
+        middleware: [unauthorizedRedirect],
     })
 }
