@@ -38,12 +38,12 @@ const getEntryState = (matchState: MatchStateEnum, admin: boolean): EntryState =
     }
 }
 
-const getStartingValue = (prediction: number | undefined, score: number | undefined, entryState: EntryState): string | undefined => {
+const getStartingValue = (prediction: number | undefined, score: number | undefined, entryState: EntryState): string => {
     switch (entryState) {
         case EntryState.LIVE_ADMIN:
-            return score?.toString()
+            return score?.toString() ?? ""
         default:
-            return prediction?.toString()
+            return prediction?.toString() ?? ""
     }
 }
 
@@ -52,10 +52,10 @@ export default function Entry(props: EntryProps): React.JSX.Element {
     const entryState = getEntryState(props.match.state, props.admin)
     const canInput = [EntryState.UPCOMING, EntryState.LIVE_ADMIN].includes(entryState)
 
-    const [homeScore, setHomeScore] = useState<string | undefined>(
+    const [homeScore, setHomeScore] = useState<string>(
         getStartingValue(props.match.prediction?.homeScore, props.match.homeScore, entryState)
     )
-    const [awayScore, setAwayScore] = useState<string | undefined>(
+    const [awayScore, setAwayScore] = useState<string>(
         getStartingValue(props.match.prediction?.awayScore, props.match.awayScore, entryState)
     )
     const [isSending, setIsSending] = useState<boolean>(false)
