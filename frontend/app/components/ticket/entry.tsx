@@ -218,7 +218,7 @@ export default function Entry(props: EntryProps): React.JSX.Element {
                 <div className="flex space-x-4 p-1 justify-around items-center">
                     <div className="inline-block rounded-full bg-gradient-to-tr from-[#10abff] to-[#1beabd] p-[3px] text-2xl">
                         <input
-                            type="text"
+                            type="text" inputMode="numeric" pattern="[0-9]*"
                             value={props.forPredictionPage 
                                 ? props.match.homeScore 
                                 : (canInput ? homeScore : props.match.prediction?.homeScore)}
@@ -230,7 +230,7 @@ export default function Entry(props: EntryProps): React.JSX.Element {
                         />
                     </div>
                     <div className="inline-block rounded-full bg-gradient-to-tr from-[#10abff] to-[#1beabd] p-[3px] text-2xl">
-                        <input type="text"
+                        <input type="text" inputMode="numeric" pattern="[0-9]*"
                                value={
                                 props.forPredictionPage 
                                 ? props.match.awayScore
