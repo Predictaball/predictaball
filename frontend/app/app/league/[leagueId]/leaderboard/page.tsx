@@ -7,7 +7,8 @@ import Leave from "./leave";
 import BackButton from "@/app/components/back-button";
 
 
-export default async function Home({ params }: { params: { leagueId: string } }): Promise<React.JSX.Element> {
+export default async function Home({ params }: { params: Promise<{ leagueId: string }> }): Promise<React.JSX.Element> {
+    const { leagueId } = await params
     const loggedIn = await isLoggedIn()
     if (!loggedIn) redirect("/login")
 
@@ -19,12 +20,12 @@ export default async function Home({ params }: { params: { leagueId: string } })
                         <BackButton/>
                     </div>
                     <div className="flex justify-around">
-                        <Leave leagueId={params.leagueId}/>
-                        <Share leagueId={params.leagueId} />
+                        <Leave leagueId={leagueId}/>
+                        <Share leagueId={leagueId} />
                     </div>
                 </div>
                 <div className="p-2 w-full bg-gray-900 flex flex-col items-center">
-                    <Leaderboard shouldPaginate={true} leagueId={params.leagueId} limit={false} />
+                    <Leaderboard shouldPaginate={true} leagueId={leagueId} limit={false} />
                 </div>
             </div>
         </div>

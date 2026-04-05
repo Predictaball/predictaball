@@ -7,7 +7,7 @@ import { getPositionForLeague } from "@/app/app/league/get-position-for-league";
 
 export default async function Headline(): Promise<React.JSX.Element> {
 
-    const userId = getUserId()
+    const userId = await getUserId()
     const config = await getConfigWithAuthHeader()
 
     async function fetchUserData(): Promise<GetUserPoints200Response | undefined> {

@@ -4,9 +4,9 @@ import {jwtDecode} from "jwt-decode";
 import {CognitoJwtVerifier} from "aws-jwt-verify";
 import { JwtPayload } from "aws-jwt-verify/jwt-model"
 
-export function getUserId(): string | undefined {
+export async function getUserId(): Promise<string | undefined> {
     try {
-        const token: string | undefined = cookies().get(TOKEN_COOKIE_KEY)?.value
+        const token: string | undefined = (await cookies()).get(TOKEN_COOKIE_KEY)?.value
         if (token === undefined) {
             return undefined
         }
@@ -17,9 +17,9 @@ export function getUserId(): string | undefined {
     }
 }
 
-export function getToken(): JwtPayload | undefined {
+export async function getToken(): Promise<JwtPayload | undefined> {
     try {
-        const token: string | undefined = cookies().get(TOKEN_COOKIE_KEY)?.value
+        const token: string | undefined = (await cookies()).get(TOKEN_COOKIE_KEY)?.value
         if (token === undefined) {
             return undefined
         }
@@ -37,7 +37,7 @@ const verifier = CognitoJwtVerifier.create({
 });
 
 const getAuthPayload = async () => {
-    const token: string | undefined = cookies().get(TOKEN_COOKIE_KEY)?.value
+    const token: string | undefined = (await cookies()).get(TOKEN_COOKIE_KEY)?.value
     if (token === undefined) throw new Error("Auth cookie does not exist")
 
     await verifier.hydrate()

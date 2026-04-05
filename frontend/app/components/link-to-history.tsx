@@ -3,9 +3,9 @@ import { getToken, getUserId } from "@/app/auth/jtw-handler"
 import YourHistory from "@/app/components/your-history"
 import React from "react";
 
-export default function LinkToHistory(): React.JSX.Element {
+export default async function LinkToHistory(): Promise<React.JSX.Element> {
 
-    const token = getToken()
+    const token = await getToken()
     const userId = token?.sub
 
     return(

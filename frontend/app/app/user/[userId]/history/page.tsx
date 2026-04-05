@@ -11,8 +11,9 @@ import LeaderboardEntry from "@/app/components/leaderboard/leaderboard-entry";
 export default async function Home({
     params
 }: {
-    params: { userId: string }
+    params: Promise<{ userId: string }>
 }): Promise<React.JSX.Element> {
+    const { userId } = await params
     const loggedIn = await isLoggedIn()
     if (!loggedIn) redirect("/login")
 
@@ -21,11 +22,11 @@ export default async function Home({
             const matchApi = new MatchApi(await getConfigWithAuthHeader())
             const liveMatches: Match[] = await matchApi.listMatches({
                 filterType: ListMatchesFilterTypeEnum.Live,
-                userId: params.userId
+                userId: userId
             })
             const completed: Match[] = await matchApi.listMatches({
                 filterType: ListMatchesFilterTypeEnum.Completed,
-                userId: params.userId
+                userId: userId
             })
             return [
                 ...liveMatches,
@@ -41,7 +42,7 @@ export default async function Home({
         try {
             const leaderboardApi = new LeagueApi(await getConfigWithAuthHeader())
             const league = await leaderboardApi.getLeagueLeaderboard({ leagueId: "global", pageSize: "200" })
-            return league.leaderboard.find(entry => entry.user.userId === params.userId)
+            return league.leaderboard.find(entry => entry.user.userId === userId)
         } catch (error) {
             console.log(error)
             return undefined

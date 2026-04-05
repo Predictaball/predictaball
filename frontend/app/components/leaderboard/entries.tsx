@@ -13,7 +13,7 @@ export interface EntriesProps {
 
 export default async function Entries(props: EntriesProps): Promise<React.JSX.Element> {
 
-    const userId = getUserId()
+    const userId = await getUserId()
 
     async function getLeaderboard(): Promise<GetLeagueLeaderboard200Response | undefined> {
         try {

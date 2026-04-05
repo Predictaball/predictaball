@@ -9,13 +9,15 @@ export default async function Home(
         params,
         searchParams,
     }: {
-        params: { matchId: string }
-        searchParams: { [key: string]: string | string[] | undefined }
+        params: Promise<{ matchId: string }>
+        searchParams: Promise<{ [key: string]: string | string[] | undefined }>
     }
 ): Promise<React.JSX.Element> {
     await redirectIfLoggedOut()
+    const { matchId } = await params
+    const resolvedSearchParams = await searchParams
 
-    const leagueId = searchParams["leagueId"]
+    const leagueId = resolvedSearchParams["leagueId"]
     const leagueIdAsString: string = leagueId === undefined || Array.isArray(leagueId)
         ? "global"
         : leagueId
@@ -32,7 +34,7 @@ export default async function Home(
 
     async function getMatchData(): Promise<Match | null> {
         try {
-            return await new MatchApi(config).getMatch({ matchId: params.matchId })
+            return await new MatchApi(config).getMatch({ matchId: matchId })
         } catch (error) {
             console.log(error)
             return null
@@ -48,7 +50,7 @@ export default async function Home(
                 match={match} 
                 leagues={leagues} 
                 leagueId={leagueIdAsString} 
-                matchId={params.matchId}
+                matchId={matchId}
             />}
         </>
     )

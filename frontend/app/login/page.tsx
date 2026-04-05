@@ -4,13 +4,12 @@ import { redirect } from "next/navigation";
 import Login from "./login";
 
 const ServerLogin = async ({
-  params,
   searchParams,
 }: {
-  params: { }
-  searchParams: { [key: string]: string | undefined }
+  searchParams: Promise<{ [key: string]: string | undefined }>
 }) => {
-    const leagueId = searchParams["leagueId"]
+    const resolvedSearchParams = await searchParams
+    const leagueId = resolvedSearchParams["leagueId"]
 
     const loggedIn = await isLoggedIn()
     if (loggedIn) {

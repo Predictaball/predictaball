@@ -1,6 +1,7 @@
 'use client'
 
-import React, {useState} from "react"
+import React, {Suspense, useState} from "react"
+import {useSearchParams} from "next/navigation"
 import {AUTH_CLIENT} from "../api/api"
 import {SignupRequest} from "@/client";
 import {navigateTo} from "@/app/actions";
@@ -10,14 +11,13 @@ import Link from "next/link";
 import {doesContainDigit, doesContainLowerCase} from "@/app/util/regex";
 import {EyeFilledIcon, EyeSlashFilledIcon} from "@nextui-org/shared-icons";
 
-export default function SignUp({
-  params,
-  searchParams,
-}: {
-  params: { }
-  searchParams: { [key: string]: string | undefined }
-}) {
-    const leagueId = searchParams["leagueId"]
+export default function SignUpPage() {
+    return <Suspense><SignUp /></Suspense>
+}
+
+function SignUp() {
+    const searchParams = useSearchParams()
+    const leagueId = searchParams.get("leagueId") ?? undefined
     const emailRegex = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|.(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
 
     const [firstName, setFirstName] = useState('')
