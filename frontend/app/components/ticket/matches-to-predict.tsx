@@ -1,12 +1,12 @@
 import React, {Suspense} from "react";
 import Tickets from "@/app/components/ticket/tickets";
-import EmptyTicket from "@/app/components/ticket/empty-ticket";
 import {ListMatchesFilterTypeEnum} from "@/client";
+import TicketSkeleton from "@/app/components/ticket/ticket-skeleton";
 
 export default function MatchesToPredict(): React.JSX.Element {
     return (
         <div className="flex flex-wrap w-full content-center justify-center">
-            <Suspense fallback={<EmptyTicket />}>
+            <Suspense fallback={<><TicketSkeleton /><TicketSkeleton /></>}>
                 <Tickets 
                     title="Upcoming Matches" 
                     showInfoButton
