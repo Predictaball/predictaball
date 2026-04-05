@@ -10,7 +10,7 @@ import {BUTTON_CLASS} from "@/app/util/css-classes";
 import {setCookie} from "cookies-next";
 import Link from "next/link";
 
-export default function Login({leagueId}: {leagueId: string | undefined}) {
+export default function Login({callbackUrl, leagueId}: {callbackUrl: string | undefined, leagueId: string | undefined}) {
 
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
@@ -40,7 +40,7 @@ export default function Login({leagueId}: {leagueId: string | undefined}) {
             if (response.refreshToken) {
                 setCookie(REFRESH_TOKEN_COOKIE_KEY, response.refreshToken, {maxAge: 60 * 60 * 24 * 30})
             }
-            await navigateTo((leagueId !== undefined) ? `app/league/${leagueId}/join`: "app")
+            await navigateTo(callbackUrl ?? (leagueId ? `app/league/${leagueId}/join` : "app"))
         } catch (error) {
             setIsLoading(false)
             setDidFail(true)

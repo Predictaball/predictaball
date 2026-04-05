@@ -10,17 +10,14 @@ const ServerLogin = async ({
 }) => {
     const resolvedSearchParams = await searchParams
     const leagueId = resolvedSearchParams["leagueId"]
+    const callbackUrl = resolvedSearchParams["callbackUrl"]
 
     const loggedIn = await isLoggedIn()
     if (loggedIn) {
-        if (leagueId !== undefined) {
-            redirect(`app/league/${leagueId}/join`)
-        } else {
-            redirect("/app")
-        }
+        redirect(callbackUrl ?? "/app")
     }
 
-    return <Login leagueId={leagueId}/>
+    return <Login callbackUrl={callbackUrl} leagueId={leagueId}/>
 }
 
 export default ServerLogin
