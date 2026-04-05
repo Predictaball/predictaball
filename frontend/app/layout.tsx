@@ -8,10 +8,10 @@ const montserrat = Montserrat({subsets: ["latin"]});
 
 export const metadata: Metadata = {
     title: "Predictaball.live",
-    description: "A score predictor for Euro 2024",
+    description: "A score predictor for World Cup 2026",
     openGraph: {
         title: "Predictaball.live",
-        description: "A score predictor for Euro 2024",
+        description: "A score predictor for World Cup 2026",
         images: {
             url: "https://predictaball-teamflagsbucketb6ca46de-2uk8faboxd6r.s3.eu-west-2.amazonaws.com/hidden-image.png"
         }

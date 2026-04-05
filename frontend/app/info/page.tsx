@@ -14,7 +14,7 @@ export default async function MoreInfo(): Promise<React.JSX.Element> {
             <div className="max-w-3xl text-center lg:pt-20 pt-20">
                 <p className="text-2xl">About</p>
                 <p>Predictaball is a game where you are challenged to predict the scores of <span className="font-bold">every</span> game that
-                takes place during Euro 2024 &#9917;</p>
+                takes place during World Cup 2026 &#9917;</p>
                 <p>The better your predictions are, the more points you will receive &#128175;</p>
                 
                 <p>Upcoming games will be displayed for the next 2 match days, come back each day to submit your predictions</p>

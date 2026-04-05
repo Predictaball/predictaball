@@ -58,7 +58,7 @@ export const MATCH: Match = {
     venue: "Allianz Arena, Munich",
     matchId: "1",
     matchDay: 1,
-    datetime: new Date(Date.UTC(2024, 6, 16, 20, 0, 0)),
+    datetime: new Date(Date.UTC(2026, 5, 11, 19, 0, 0)),
     round: MatchRoundEnum.GroupStage,
     state: MatchStateEnum.Upcoming,
 }

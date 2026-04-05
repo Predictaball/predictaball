@@ -26,7 +26,7 @@ export default async function Home(): Promise<React.JSX.Element> {
                     className="bg-gradient-to-r from-blue-600 to-green-300 inline-block text-transparent bg-clip-text">Funner</p>
                 </div>
                 <div>
-                    A Euro 2024 Score Predictor.
+                    A World Cup 2026 Score Predictor.
                 </div>
             </div>
 
