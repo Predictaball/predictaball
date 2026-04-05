@@ -3,7 +3,6 @@
 import React, {useState} from "react";
 import {Match, MatchStateEnum} from "@/client";
 import Crest from "@/app/components/ticket/crest";
-import Styles from "@/app/styles/Input.module.scss"
 import {Button} from "@nextui-org/react";
 import {BUTTON_CLASS} from "@/app/util/css-classes";
 import {handlePrediction} from "./submit-prediction"
@@ -217,7 +216,7 @@ export default function Entry(props: EntryProps): React.JSX.Element {
             </div>
             <div className="flex flex-col justify-center items-center" style={{width: "33.3%"}}>
                 <div className="flex space-x-4 p-1 justify-around items-center">
-                    <div className={Styles.inputBox}>
+                    <div className="inline-block rounded-full bg-gradient-to-tr from-[#10abff] to-[#1beabd] p-[3px] text-2xl">
                         <input
                             type="text"
                             value={props.forPredictionPage 
@@ -227,9 +226,10 @@ export default function Entry(props: EntryProps): React.JSX.Element {
                             maxLength={1}
                             placeholder={"_"}
                             disabled={!canInput}
+                            className="w-[50px] h-[50px] rounded-full bg-[#102C4C] text-center text-white border-none outline-none"
                         />
                     </div>
-                    <div className={Styles.inputBox}>
+                    <div className="inline-block rounded-full bg-gradient-to-tr from-[#10abff] to-[#1beabd] p-[3px] text-2xl">
                         <input type="text"
                                value={
                                 props.forPredictionPage 
@@ -239,6 +239,7 @@ export default function Entry(props: EntryProps): React.JSX.Element {
                                maxLength={1}
                                placeholder={"_"}
                                disabled={!canInput}
+                               className="w-[50px] h-[50px] rounded-full bg-[#102C4C] text-center text-white border-none outline-none"
                         />
                     </div>
                 </div>
