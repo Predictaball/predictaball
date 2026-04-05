@@ -1,16 +1,12 @@
 import React from "react";
 import {Header} from "@/app/components/landing-header";
-import {isLoggedIn} from "@/app/auth/jwt-handler";
 
-export default async function MoreInfo(): Promise<React.JSX.Element> {
-
-    const loggedIn = await isLoggedIn()
-    const headerButtonValue = loggedIn ? "Go to App" : "Sign In"
+export default function MoreInfo(): React.JSX.Element {
 
     return(
         <main
             className="bg-gray-900 flex flex-col items-center p-10 min-h-svh overflow-auto text-white">
-            <Header buttonText={headerButtonValue}/>
+            <Header/>
             <div className="max-w-3xl text-center lg:pt-20 pt-20">
                 <p className="text-2xl">About</p>
                 <p>Predictaball is a game where you are challenged to predict the scores of <span className="font-bold">every</span> game that
