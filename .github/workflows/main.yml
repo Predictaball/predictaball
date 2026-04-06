@@ -31,6 +31,8 @@ jobs:
         env:
           COGNITO_CLIENT_ID: dummy
           COGNITO_USER_POOL_ID: eu-west-2_dummy
+      - name: Lint frontend
+        run: cd frontend && npm run lint
 
   deploy:
     needs: build
