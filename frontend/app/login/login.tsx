@@ -112,7 +112,7 @@ export default function Login({callbackUrl, leagueId}: {callbackUrl: string | un
                             Sign in
                         </Button>
                         <p className="text-center text-sm font-light text-gray-500">
-                            Don't have an account yet? <a href={signUpLink}
+                            {"Don't have an account yet?"} <a href={signUpLink}
                                                           className="font-medium hover:underline text-indigo-600">Sign
                             up</a>
                         </p>
