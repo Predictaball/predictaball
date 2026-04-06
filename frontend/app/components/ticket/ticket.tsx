@@ -5,6 +5,7 @@ import {Match, MatchRoundEnum} from "@/client";
 import Entry from "@/app/components/ticket/entry";
 import {DROP_DOWN, DROP_UP} from "@/app/components/ticket/drop-downs";
 import TeamsHeader from "@/app/components/ticket/teams-header";
+import {COUNTRY_CODES, FIFA_RANKINGS} from "@/app/util/teams";
 import {LocalTime} from "./local-time";
 
 interface TicketProps {
@@ -47,18 +48,18 @@ export default function Ticket(props: TicketProps): React.JSX.Element {
                 <div className="w-full flex justify-between">
                     <div className="flex-row">
                         <div className="font-bold">
-                            ROUND
+                            FIFA RANKING
                         </div>
                         <div className="text-xs">
-                            {RoundToString.get(props.match.round)}
+                            {`${COUNTRY_CODES[props.match.homeTeam.toLowerCase()]}: ${FIFA_RANKINGS[props.match.homeTeam.toLowerCase()] ?? "—"}, ${COUNTRY_CODES[props.match.awayTeam.toLowerCase()]}: ${FIFA_RANKINGS[props.match.awayTeam.toLowerCase()] ?? "—"}`}
                         </div>
                     </div>
                     <div className="flex-row text-right">
                         <div className="font-bold">
-                            DATE
+                            ROUND
                         </div>
                         <div className="text-xs">
-                            <LocalTime date={props.match.datetime}/>
+                            {RoundToString.get(props.match.round)}
                         </div>
                     </div>
                 </div>
@@ -69,6 +70,14 @@ export default function Ticket(props: TicketProps): React.JSX.Element {
                         </div>
                         <div className="text-xs">
                             {props.match.venue}
+                        </div>
+                    </div>
+                    <div className="flex-row text-right">
+                        <div className="font-bold">
+                            DATE
+                        </div>
+                        <div className="text-xs">
+                            <LocalTime date={props.match.datetime}/>
                         </div>
                     </div>
                 </div>
