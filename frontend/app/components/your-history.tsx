@@ -12,7 +12,7 @@ export default function YourHistory(): React.JSX.Element {
             <Button
                 className={BUTTON_CLASS}
                 isLoading={isLoading}
-                onClick={() => setIsLoading(true)}
+                onPress={() => setIsLoading(true)}
             >
                 Your Prediction History
             </Button>

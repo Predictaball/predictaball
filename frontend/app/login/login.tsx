@@ -20,8 +20,7 @@ export default function Login({callbackUrl, leagueId}: {callbackUrl: string | un
 
     const toggleVisibility = () => setIsVisible(!isVisible);
 
-    const handleEvent: React.MouseEventHandler<HTMLButtonElement> = async (e) => {
-        e.preventDefault()
+    const handleEvent = async () => {
 
         const requestBody: LoginRequest = {
             email: email,
@@ -105,7 +104,7 @@ export default function Login({callbackUrl, leagueId}: {callbackUrl: string | un
                             </a>
                         </div>
                         <Button
-                            onClick={handleEvent}
+                            onPress={handleEvent}
                             isLoading={isLoading}
                             type="submit"
                             className={"w-full " + BUTTON_CLASS}>

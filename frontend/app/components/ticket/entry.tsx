@@ -161,7 +161,7 @@ export default function Entry(props: EntryProps): React.JSX.Element {
                             <Button className={BUTTON_CLASS}
                                     isLoading={isNavigatingToMatchPage}
                                     size="sm"
-                                    onClick={() => {
+                                    onPress={() => {
                                         setIsNavigatingToMatchPage(true)
                                         navigateTo(`app/match/${props.match.matchId}/predictions`)
                                     }}
@@ -174,7 +174,7 @@ export default function Entry(props: EntryProps): React.JSX.Element {
             case EntryState.UPCOMING:
                 return (
                     <Button
-                        onClick={() => handleSubmit()} isLoading={isSending}
+                        onPress={() => handleSubmit()} isLoading={isSending}
                         style={{height: "25px"}}
                         className={BUTTON_CLASS}
                     >
@@ -185,7 +185,7 @@ export default function Entry(props: EntryProps): React.JSX.Element {
                 return (
                     <>
                         <Button
-                            onClick={() => handleSubmit()}
+                            onPress={() => handleSubmit()}
                             isLoading={isSending}
                             style={{height: "25px"}}
                             className={"mt-1 " + BUTTON_CLASS}

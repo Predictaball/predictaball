@@ -37,8 +37,7 @@ function SignUp() {
 
     const toggleVisibility = () => setIsVisible(!isVisible);
 
-    const handleEvent: React.MouseEventHandler<HTMLButtonElement> = async (e) => {
-        e.preventDefault()
+    const handleEvent = async () => {
 
         const signupRequest: SignupRequest = {
             email: email,
@@ -181,7 +180,7 @@ function SignUp() {
                                 />
                             </div>
                             <Button
-                                onClick={handleEvent}
+                                onPress={handleEvent}
                                 isLoading={isLoading}
                                 disabled={isFormInvalid()}
                                 type="submit"

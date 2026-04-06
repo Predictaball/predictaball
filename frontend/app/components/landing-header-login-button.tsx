@@ -13,7 +13,7 @@ const LandingHeaderLoginButton = (props: LandingHeaderLoginButtonProps) => {
 
     return (
         <Button
-            onClick={() => setIsLoading(true)}
+            onPress={() => setIsLoading(true)}
             isLoading={isLoading}
             className={"bg-gradient-to-tr from-blue-600 to-green-300 shadow-lg text-white"}
         >

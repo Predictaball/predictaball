@@ -39,8 +39,7 @@ export default function Reset() {
         return containsDigit && validLength && containsLowerCase
     }
 
-    const handleVerificationCodeRequest: React.MouseEventHandler<HTMLButtonElement> = async (e) => {
-        e.preventDefault()
+    const handleVerificationCodeRequest = async () => {
 
         const requestBody: ResetPasswordRequest = {
             email: email
@@ -60,8 +59,7 @@ export default function Reset() {
         setIsLoadingCode(false)
     }
 
-    const handlePasswordResetRequest: React.MouseEventHandler<HTMLButtonElement> = async (e) => {
-        e.preventDefault()
+    const handlePasswordResetRequest = async () => {
 
         if (!isPasswordValid()) return
 
@@ -114,7 +112,7 @@ export default function Reset() {
                             />
                         </div>
                         <Button
-                            onClick={handleVerificationCodeRequest}
+                            onPress={handleVerificationCodeRequest}
                             disabled={isRequested}
                             isLoading={isLoadingCode}
                             type="submit"
@@ -169,7 +167,7 @@ export default function Reset() {
                         </div>
                         <Button
                             disabled={!isRequested || !isPasswordValid()}
-                            onClick={handlePasswordResetRequest}
+                            onPress={handlePasswordResetRequest}
                             isLoading={isLoadingConfirmation}
                             type="submit"
                             className={"w-full " + ((!isRequested || !isPasswordValid()) ? "bg-gray-300" : BUTTON_CLASS)}>

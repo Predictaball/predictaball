@@ -13,7 +13,7 @@ export default function SignOutButton(): React.JSX.Element {
     }
 
     return(
-        <Button size="sm" onClick={handleClick} className={BUTTON_CLASS}>Sign Out</Button>
+        <Button size="sm" onPress={handleClick} className={BUTTON_CLASS}>Sign Out</Button>
     )
 }
 
