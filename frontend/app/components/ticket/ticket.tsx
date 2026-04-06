@@ -62,6 +62,16 @@ export default function Ticket(props: TicketProps): React.JSX.Element {
                         </div>
                     </div>
                 </div>
+                <div className="w-full flex justify-between mt-1">
+                    <div className="flex-row">
+                        <div className="font-bold">
+                            VENUE
+                        </div>
+                        <div className="text-xs">
+                            {props.match.venue}
+                        </div>
+                    </div>
+                </div>
             </div>}
             <div
                 className="w-full max-w-xl p-3 rounded-large border-gray-200 border-2 animate-appearance-in animation-delay-0">
