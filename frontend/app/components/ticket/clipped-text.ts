@@ -5,11 +5,12 @@ export function getClippedTextForTeam(url: string): React.CSSProperties {
         backgroundImage: "url('" + url + "')",
         backgroundClip: "text",
         WebkitBackgroundClip: "text",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
         color: "transparent",
         fontSize: "4.5rem",
         width: "auto",
         height: "auto"
-        //WebkitTextStrokeColor: "black",
-        //WebkitTextStrokeWidth: "0.1px",
     }
 }
