@@ -2,7 +2,6 @@
 
 import React, {useState} from "react";
 import {Match, MatchRoundEnum} from "@/client";
-import {COUNTRY_CODES} from "@/app/util/teams";
 import Entry from "@/app/components/ticket/entry";
 import {DROP_DOWN, DROP_UP} from "@/app/components/ticket/drop-downs";
 import TeamsHeader from "@/app/components/ticket/teams-header";
@@ -48,28 +47,10 @@ export default function Ticket(props: TicketProps): React.JSX.Element {
                 <div className="w-full flex justify-between">
                     <div className="flex-row">
                         <div className="font-bold">
-                            FIFA RANKING
-                        </div>
-                        <div className="text-xs">
-                            {`${COUNTRY_CODES[props.match.homeTeam.toLowerCase()] ?? props.match.homeTeam} vs ${COUNTRY_CODES[props.match.awayTeam.toLowerCase()] ?? props.match.awayTeam}`}
-                        </div>
-                    </div>
-                    <div className="flex-row text-right">
-                        <div className="font-bold">
                             ROUND
                         </div>
                         <div className="text-xs">
                             {RoundToString.get(props.match.round)}
-                        </div>
-                    </div>
-                </div>
-                <div className="w-full flex justify-between">
-                    <div className="flex-row">
-                        <div className="font-bold">
-                            VENUE
-                        </div>
-                        <div className="text-xs">
-                            {props.match.venue}
                         </div>
                     </div>
                     <div className="flex-row text-right">
