@@ -17,16 +17,19 @@ Kotlin/http4k backend for the Predictaball score prediction webapp.
 src/main/kotlin/scorcerer/
   server/
     resources/     # HTTP route handlers
+    services/      # Business logic (match scoring)
     db/tables/     # Exposed table definitions
     schedule/      # MatchStarter and ScoreUpdater scheduled tasks
     Server.kt      # Entry point, route wiring, filters
-    Filters.kt     # Logging, error handling, auth bypass
+    Filters.kt     # Logging, error handling, auth filters
     Auth.kt        # Auth extraction utilities
     Json.kt        # Jackson toJson/fromJson helpers
     Environment.kt # Environment variable config
   utils/           # Leaderboard, points calculation
 contract/
   api-contract.yaml  # OpenAPI spec (source of truth for frontend client generation)
+src/main/resources/
+  db/migration/    # Flyway SQL migrations
 ```
 
 ## Build
@@ -46,6 +49,7 @@ All endpoints except auth require a valid Cognito JWT. Locally, auth is disabled
 
 ### Auth
 - `POST /auth/login` - Login with email/password
+- `POST /auth/refresh` - Refresh an expired ID token
 - `POST /auth/reset` - Request password reset
 - `POST /auth/reset-confirm` - Confirm password reset with OTP
 - `POST /user` - Sign up
@@ -81,3 +85,8 @@ All endpoints except auth require a valid Cognito JWT. Locally, auth is disabled
 
 ### Health
 - `GET /ping` - Health check
+
+### Admin (internal, not in contract)
+- `POST /admin/start-matches` - Trigger match starter
+- `POST /admin/update-scores` - Trigger score updater
+- `POST /admin/recalculate-points` - Recalculate all member fixed points

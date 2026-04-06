@@ -1,13 +1,13 @@
 # Predictaball CDK
 
-Infrastructure as code for the Predictaball API, deployed to AWS using CDK (TypeScript).
+Infrastructure as code for the Predictaball webapp, deployed to AWS using CDK (TypeScript).
 
 ## Architecture
 
 - ECS Fargate service behind an Application Load Balancer
 - RDS Postgres (t3.micro)
 - Cognito user pool for authentication
-- S3 buckets for leaderboard data and team flags
+- S3 bucket for leaderboard data
 
 ## Prerequisites
 

@@ -1,39 +1,45 @@
-# score
-Score prediction front end
+# Predictaball Frontend
 
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+Next.js frontend for the Predictaball score prediction webapp.
 
-## Getting Started
+## Tech Stack
 
-First, run the development server:
+- Next.js 15 / React 19
+- NextUI component library
+- Tailwind CSS
+- TypeScript API client generated from the backend OpenAPI contract
+
+## Setup
+
+```bash
+npm install
+npm run build-client   # generates TypeScript client from ../lambdas/contract/api-contract.yaml
+```
+
+## Development
+
+Run against the local backend (default):
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Run against the deployed backend:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+NEXT_PUBLIC_API_URL=http://<alb-url> COGNITO_CLIENT_ID=<id> COGNITO_USER_POOL_ID=<pool-id> npm run dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+## Build
 
-## Learn More
+```bash
+COGNITO_CLIENT_ID=<id> COGNITO_USER_POOL_ID=<pool-id> npm run build
+```
 
-To learn more about Next.js, take a look at the following resources:
+## Environment Variables
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+| Variable | Description |
+|---|---|
+| `NEXT_PUBLIC_API_URL` | Backend API URL (defaults to `http://localhost:8080`) |
+| `COGNITO_CLIENT_ID` | Cognito user pool client ID |
+| `COGNITO_USER_POOL_ID` | Cognito user pool ID |

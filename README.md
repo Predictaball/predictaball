@@ -1,12 +1,21 @@
-# Scorcerer
+# Predictaball
 
-Score prediction backend API for the Predictaball webapp.
+Score prediction webapp for the FIFA World Cup 2026.
+
+## Structure
+
+```
+lambdas/    # Kotlin/http4k backend API
+frontend/   # Next.js frontend
+cdk/        # AWS CDK infrastructure
+```
 
 ## Local Development
 
 ### Prerequisites
 
 - Java 21
+- Node.js 20+
 - Docker (or [Finch](https://github.com/runfinch/finch)) for running Postgres locally
 
 ### Start Postgres
@@ -15,57 +24,51 @@ Score prediction backend API for the Predictaball webapp.
 docker compose up -d
 ```
 
-This starts a Postgres 16 instance on `localhost:5432` with user/password `postgres`.
-
-### Run the server
+### Run the backend
 
 ```bash
 cd lambdas
 ./gradlew runLocal
 ```
 
-The server starts on `http://localhost:8080` with auth disabled. All authenticated endpoints use a test user (`test-user-123`). Tables are created automatically on startup.
+The server starts on `http://localhost:8080` with auth disabled.
 
-### Test it
-
-```bash
-curl http://localhost:8080/ping        # health check
-curl http://localhost:8080/match/list  # returns [] when DB is empty
-```
-
-### Stop Postgres
+### Run the frontend
 
 ```bash
-docker compose down
+cd frontend
+npm install
+npm run build-client
+npm run dev
 ```
 
-## Build
+The frontend starts on `http://localhost:3000`, pointing at the local backend by default.
+
+To point at the deployed backend instead:
+
+```bash
+NEXT_PUBLIC_API_URL=http://<alb-url> COGNITO_CLIENT_ID=<id> COGNITO_USER_POOL_ID=<pool-id> npm run dev
+```
+
+### Run tests
 
 ```bash
 cd lambdas
-./gradlew shadowJar    # builds fat jar at build/libs/scorcerer.jar
-./gradlew test         # run tests
+./gradlew test              # unit tests
+./gradlew integrationTest   # integration tests (requires Postgres)
 ```
 
 ## Deploy
 
 ```bash
-cd lambdas
-./gradlew shadowJar
-
-cd ../cdk
-npm install
-CDK_ACCOUNT_ID=<your-account-id> CDK_DB_PASSWORD=<password> npx cdk deploy --profile predictaball
+cd lambdas && ./gradlew shadowJar
+cd ../cdk && npm install && CDK_ACCOUNT_ID=<account-id> CDK_DB_PASSWORD=<password> npx cdk deploy --profile predictaball
 ```
 
 <details>
-<summary>Using macOS with Finch instead of Docker?</summary>
-
-Set `CDK_DOCKER=finch` before the deploy command:
+<summary>Using Finch instead of Docker?</summary>
 
 ```bash
-CDK_DOCKER=finch CDK_ACCOUNT_ID=<your-account-id> CDK_DB_PASSWORD=<password> npx cdk deploy --profile predictaball
+CDK_DOCKER=finch CDK_ACCOUNT_ID=<account-id> CDK_DB_PASSWORD=<password> npx cdk deploy --profile predictaball
 ```
 </details>
-
-See [cdk/README.md](cdk/README.md) for more details.
