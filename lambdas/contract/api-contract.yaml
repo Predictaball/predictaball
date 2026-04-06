@@ -63,14 +63,22 @@ components:
           description: Home team
           type: string
         homeTeamFlagCode:
-          description: Home team flag uri
+          description: Home team flag code
           type: string
+        homeTeamRanking:
+          description: Home team ranking
+          type: integer
+          format: int32
         awayTeam:
           description: Away team
           type: string
         awayTeamFlagCode:
-          description: Away team flag uri
+          description: Away team flag code
           type: string
+        awayTeamRanking:
+          description: Away team ranking
+          type: integer
+          format: int32
         homeScore:
           description: The home team final number of goals
           type: integer

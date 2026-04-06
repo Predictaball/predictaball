@@ -5,7 +5,7 @@ import {Match, MatchRoundEnum} from "@/client";
 import Entry from "@/app/components/ticket/entry";
 import {DROP_DOWN, DROP_UP} from "@/app/components/ticket/drop-downs";
 import TeamsHeader from "@/app/components/ticket/teams-header";
-import {COUNTRY_CODES, FIFA_RANKINGS} from "@/app/util/teams";
+import {COUNTRY_CODES} from "@/app/util/teams";
 import {LocalTime} from "./local-time";
 
 interface TicketProps {
@@ -51,7 +51,7 @@ export default function Ticket(props: TicketProps): React.JSX.Element {
                             FIFA RANKING
                         </div>
                         <div className="text-xs">
-                            {`${COUNTRY_CODES[props.match.homeTeam.toLowerCase()]}: ${FIFA_RANKINGS[props.match.homeTeam.toLowerCase()] ?? "—"}, ${COUNTRY_CODES[props.match.awayTeam.toLowerCase()]}: ${FIFA_RANKINGS[props.match.awayTeam.toLowerCase()] ?? "—"}`}
+                            {`${COUNTRY_CODES[props.match.homeTeam.toLowerCase()]}: ${props.match.homeTeamRanking ?? "—"}, ${COUNTRY_CODES[props.match.awayTeam.toLowerCase()]}: ${props.match.awayTeamRanking ?? "—"}`}
                         </div>
                     </div>
                     <div className="flex-row text-right">
