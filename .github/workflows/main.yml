@@ -4,42 +4,68 @@ concurrency:
   group: ${{ github.ref }}
 
 jobs:
-  aws_cdk:
-    runs-on: "ubuntu-latest"
+  build:
+    runs-on: ubuntu-latest
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
-      - name: Run build with Gradle Wrapper
-        run: |
-          cd lambdas
-          ./gradlew build
-      - name: Run test with Gradle Wrapper
-        run: |
-          cd lambdas
-          ./gradlew test
-      - name: cdk synth
-        uses: youyo/aws-cdk-github-actions@v2
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
         with:
-          cdk_subcommand: "synth"
-          working_dir: 'cdk'
+          distribution: temurin
+          java-version: 21
+      - uses: gradle/actions/setup-gradle@v3
+      - name: Build
+        run: cd lambdas && ./gradlew build
+      - name: Test
+        run: cd lambdas && ./gradlew test
+      - name: Integration test
+        run: |
+          docker compose up -d
+          sleep 3
+          cd lambdas && ./gradlew integrationTest
+          docker compose down
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Build frontend
+        run: cd frontend && npm ci && npm run build
+        env:
+          COGNITO_CLIENT_ID: dummy
+          COGNITO_USER_POOL_ID: eu-west-2_dummy
+      - name: Lint frontend
+        run: cd frontend && npm run lint
+
+  deploy:
+    needs: build
+    if: false # disabled until shared dev account is set up
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: gradle/actions/setup-gradle@v3
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Build jar
+        run: cd lambdas && ./gradlew shadowJar
+      - name: Install CDK dependencies
+        run: cd cdk && npm install
+      - name: CDK deploy
+        run: cd cdk && npx cdk deploy --require-approval never
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: "eu-west-2"
+          AWS_DEFAULT_REGION: eu-west-2
           CDK_ACCOUNT_ID: ${{ secrets.CDK_ACCOUNT_ID }}
           CDK_DB_PASSWORD: ${{ secrets.CDK_DB_PASSWORD }}
-      - name: cdk deploy
-        if: github.ref == 'refs/heads/main'
-        uses: youyo/aws-cdk-github-actions@v2
-        with:
-          cdk_subcommand: "deploy"
-          cdk_args: "--require-approval never"
-          working_dir: 'cdk'
+      - name: Health check
+        run: |
+          sleep 30
+          ALB_URL=$(aws elbv2 describe-load-balancers --query 'LoadBalancers[0].DNSName' --output text)
+          curl -f http://$ALB_URL/ping
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: "eu-west-2"
-          CDK_ACCOUNT_ID: ${{ secrets.CDK_ACCOUNT_ID }}
-          CDK_DB_PASSWORD: ${{ secrets.CDK_DB_PASSWORD }}
+          AWS_DEFAULT_REGION: eu-west-2

@@ -1,9 +1,10 @@
 package scorcerer.server.db.tables
 
-import org.jetbrains.exposed.sql.Table
+import org.jetbrains.exposed.v1.core.Table
 
 object TeamTable : Table("team") {
     val id = integer("id").uniqueIndex().autoIncrement()
     val name = varchar("name", 30).uniqueIndex()
-    val flagUri = varchar("flag_uri", 100)
+    val flagCode = varchar("flag_code", 100)
+    override val primaryKey = PrimaryKey(id)
 }

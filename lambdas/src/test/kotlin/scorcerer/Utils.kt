@@ -1,19 +1,18 @@
 package scorcerer
 
-import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.transactions.transaction
-import org.openapitools.server.models.State
+import org.jetbrains.exposed.v1.jdbc.insert
+import org.jetbrains.exposed.v1.jdbc.transactions.transaction
+import org.openapitools.server.models.Match
 import scorcerer.server.db.tables.*
 import java.time.OffsetDateTime
 
-fun givenUserExists(id: String, firstName: String, familyName: String = "Name", fixedPoints: Int = 0, livePoints: Int = 0) {
+fun givenUserExists(id: String, firstName: String, familyName: String = "Name", fixedPoints: Int = 0) {
     transaction {
         MemberTable.insert {
             it[this.id] = id
             it[this.firstName] = firstName
             it[this.familyName] = familyName
             it[this.fixedPoints] = fixedPoints
-            it[this.livePoints] = livePoints
         }
     }
 }
@@ -22,7 +21,7 @@ fun givenMatchExists(
     homeTeamId: String,
     awayTeamId: String,
     matchDatetime: OffsetDateTime = OffsetDateTime.now(),
-    matchState: State = State.UPCOMING,
+    matchState: Match.State = Match.State.UPCOMING,
     matchDay: Int = 1,
 ): String {
     return (
@@ -45,7 +44,7 @@ fun givenTeamExists(teamName: String): String {
         transaction {
             TeamTable.insert {
                 it[this.name] = teamName
-                it[this.flagUri] = ""
+                it[this.flagCode] = ""
             }
         } get TeamTable.id
         ).toString()

@@ -1,78 +1,92 @@
-# org.openapitools.server - Kotlin Server library for ScorePredictor
+# Predictaball API
 
-## Requires
+Kotlin/http4k backend for the Predictaball score prediction webapp.
 
-* Kotlin 1.4.31
-* Gradle 6.8.2
+## Tech Stack
+
+- Kotlin 2.3 / JVM 21
+- http4k v6 (Netty server)
+- Exposed ORM with Postgres
+- HikariCP connection pooling
+- Jackson for JSON serialization
+- OpenAPI Generator for model classes (generated from `contract/api-contract.yaml`)
+
+## Project Structure
+
+```
+src/main/kotlin/scorcerer/
+  server/
+    resources/     # HTTP route handlers
+    services/      # Business logic (match scoring)
+    db/tables/     # Exposed table definitions
+    schedule/      # MatchStarter and ScoreUpdater scheduled tasks
+    Server.kt      # Entry point, route wiring, filters
+    Filters.kt     # Logging, error handling, auth filters
+    Auth.kt        # Auth extraction utilities
+    Json.kt        # Jackson toJson/fromJson helpers
+    Environment.kt # Environment variable config
+  utils/           # Leaderboard, points calculation
+contract/
+  api-contract.yaml  # OpenAPI spec (source of truth for frontend client generation)
+src/main/resources/
+  db/migration/    # Flyway SQL migrations
+```
 
 ## Build
 
-First, create the gradle wrapper script:
-
-```
-gradle wrapper
-```
-
-Then, run:
-
-```
-./gradlew check assemble
+```bash
+./gradlew shadowJar    # fat jar at build/libs/scorcerer.jar
+./gradlew test         # run tests
 ```
 
-This runs all tests and packages the library.
+## Run Locally
 
-## Features/Implementation Notes
+See the root [README](../README.md) for local development setup.
 
-* Supports JSON inputs/outputs, File inputs, and Form inputs.
-* Supports collection formats for query parameters: csv, tsv, ssv, pipes.
-* Some Kotlin and Java types are fully qualified to avoid conflicts with types defined in OpenAPI definitions.
+## API Endpoints
 
-<a id="documentation-for-api-endpoints"></a>
-## Documentation for API Endpoints
+All endpoints except auth require a valid Cognito JWT. Locally, auth is disabled and all requests use a test user.
 
-All URIs are relative to *http://localhost*
+### Auth
+- `POST /auth/login` - Login with email/password
+- `POST /auth/refresh` - Refresh an expired ID token
+- `POST /auth/reset` - Request password reset
+- `POST /auth/reset-confirm` - Confirm password reset with OTP
+- `POST /user` - Sign up
 
-Class | Method | HTTP request | Description
------------- | ------------- | ------------- | -------------
-*AuthApi* | [**authLoginPost**](docs/AuthApi.md#authloginpost) | **POST** /auth/login | 
-*DefaultApi* | [**leaderboardGet**](docs/DefaultApi.md#leaderboardget) | **GET** /leaderboard | 
-*LeagueApi* | [**leagueLeagueIdGet**](docs/LeagueApi.md#leagueleagueidget) | **GET** /league/{leagueId} | 
-*LeagueApi* | [**leagueLeagueIdJoinPost**](docs/LeagueApi.md#leagueleagueidjoinpost) | **POST** /league/{leagueId}/join | 
-*LeagueApi* | [**leagueLeagueIdLeavePost**](docs/LeagueApi.md#leagueleagueidleavepost) | **POST** /league/{leagueId}/leave | 
-*LeagueApi* | [**leaguePost**](docs/LeagueApi.md#leaguepost) | **POST** /league | 
-*MatchApi* | [**matchListGet**](docs/MatchApi.md#matchlistget) | **GET** /match/list | 
-*MatchApi* | [**matchMatchIdPredictionsGet**](docs/MatchApi.md#matchmatchidpredictionsget) | **GET** /match/{matchId}/predictions | 
-*MatchApi* | [**matchMatchIdScorePost**](docs/MatchApi.md#matchmatchidscorepost) | **POST** /match/{matchId}/score | 
-*PredictionApi* | [**predictionPost**](docs/PredictionApi.md#predictionpost) | **POST** /prediction | 
-*UserApi* | [**userPost**](docs/UserApi.md#userpost) | **POST** /user | 
-*UserApi* | [**userUserIdPointsGet**](docs/UserApi.md#useruseridpointsget) | **GET** /user/{userId}/points | 
-*UserApi* | [**userUserIdPredictionsGet**](docs/UserApi.md#useruseridpredictionsget) | **GET** /user/{userId}/predictions | 
+### Matches
+- `GET /match/list` - List matches (filterable by state, includes user's predictions)
+- `GET /match/data/{matchId}` - Get a single match
+- `POST /match` - Create a match (admin)
+- `POST /match/{matchId}/score` - Update live score (admin)
+- `POST /match/{matchId}/complete` - Mark match as completed (admin)
+- `GET /match/{matchId}/predictions` - Get predictions for a match
 
+### Predictions
+- `POST /prediction` - Create or update a prediction
+- `GET /prediction/{matchId}` - Get your prediction for a match
 
-<a id="documentation-for-models"></a>
-## Documentation for Models
+### Leagues
+- `POST /league` - Create a league
+- `GET /league/{leagueId}` - Get league details
+- `GET /league/{leagueId}/leaderboard` - Get league leaderboard
+- `POST /league/{leagueId}/join` - Join a league
+- `POST /league/{leagueId}/leave` - Leave a league
 
- - [org.openapitools.server.models.AuthLoginPostRequest](docs/AuthLoginPostRequest.md)
- - [org.openapitools.server.models.LeaderboardInner](docs/LeaderboardInner.md)
- - [org.openapitools.server.models.League](docs/League.md)
- - [org.openapitools.server.models.LeaguePost200Response](docs/LeaguePost200Response.md)
- - [org.openapitools.server.models.LeaguePostRequest](docs/LeaguePostRequest.md)
- - [org.openapitools.server.models.Match](docs/Match.md)
- - [org.openapitools.server.models.MatchMatchIdScorePostRequest](docs/MatchMatchIdScorePostRequest.md)
- - [org.openapitools.server.models.Prediction](docs/Prediction.md)
- - [org.openapitools.server.models.PredictionPost200Response](docs/PredictionPost200Response.md)
- - [org.openapitools.server.models.PredictionPostRequest](docs/PredictionPostRequest.md)
- - [org.openapitools.server.models.User](docs/User.md)
- - [org.openapitools.server.models.UserUserIdPointsGet200Response](docs/UserUserIdPointsGet200Response.md)
+### Teams
+- `POST /team` - Create a team (admin)
+- `GET /team/{teamId}` - Get a team
+- `GET /team/name/{teamName}` - Get a team by name
 
+### User
+- `GET /user/leagues` - Get your leagues
+- `GET /user/{userId}/points` - Get user points
+- `GET /user/{userId}/predictions` - Get user predictions
 
-<a id="documentation-for-authorization"></a>
-## Documentation for Authorization
+### Health
+- `GET /ping` - Health check
 
-
-Authentication schemes defined for the API:
-<a id="bearerAuth"></a>
-### bearerAuth
-
-- **Type**: HTTP Bearer Token authentication (JWT)
-
+### Admin (internal, not in contract)
+- `POST /admin/start-matches` - Trigger match starter
+- `POST /admin/update-scores` - Trigger score updater
+- `POST /admin/recalculate-points` - Recalculate all member fixed points

@@ -6,15 +6,16 @@ import aws.sdk.kotlin.services.s3.model.ListObjectsV2Request
 import aws.sdk.kotlin.services.s3.model.PutObjectRequest
 import aws.smithy.kotlin.runtime.content.ByteStream
 import aws.smithy.kotlin.runtime.content.decodeToString
-import org.jetbrains.exposed.sql.transactions.transaction
-import org.openapitools.server.fromJson
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.jdbc.select
+import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.openapitools.server.models.LeaderboardInner
-import org.openapitools.server.models.Movement
 import org.openapitools.server.models.User
-import org.openapitools.server.toJson
 import scorcerer.server.db.tables.LeagueMembershipTable
 import scorcerer.server.db.tables.MemberTable
+import scorcerer.server.fromJson
 import scorcerer.server.log
+import scorcerer.server.toJson
 
 fun filterLeaderboardToLeague(
     globalLeaderboard: List<LeaderboardInner>?,
@@ -48,12 +49,12 @@ fun calculateMovement(
         val previous = previousPositions[current.user.userId]
         val movement = if (previous != null) {
             when {
-                current.position < previous.position -> Movement.IMPROVED
-                current.position > previous.position -> Movement.WORSENED
-                else -> Movement.UNCHANGED
+                current.position < previous.position -> LeaderboardInner.Movement.IMPROVED
+                current.position > previous.position -> LeaderboardInner.Movement.WORSENED
+                else -> LeaderboardInner.Movement.UNCHANGED
             }
         } else {
-            Movement.UNCHANGED
+            LeaderboardInner.Movement.UNCHANGED
         }
         current.copy(movement = movement)
     }
@@ -61,22 +62,24 @@ fun calculateMovement(
 
 fun calculateGlobalLeaderboard(previousGlobalLeaderboard: List<LeaderboardInner>?): List<LeaderboardInner> {
     val globalUsers = transaction {
+        val livePoints = livePointsByUser()
+
         (LeagueMembershipTable innerJoin MemberTable)
             .select(
                 MemberTable.id,
                 MemberTable.firstName,
                 MemberTable.familyName,
                 MemberTable.fixedPoints,
-                MemberTable.livePoints,
             )
             .where { LeagueMembershipTable.leagueId eq "global" }
             .map {
+                val userId = it[MemberTable.id]
                 User(
                     it[MemberTable.firstName],
                     it[MemberTable.familyName],
-                    it[MemberTable.id],
+                    userId,
                     it[MemberTable.fixedPoints],
-                    it[MemberTable.livePoints],
+                    livePoints[userId] ?: 0,
                 )
             }
     }
@@ -97,9 +100,9 @@ fun calculateGlobalLeaderboard(previousGlobalLeaderboard: List<LeaderboardInner>
 
         val previousPosition = previousPositions[user.userId]?.position ?: currentPosition
         val movement = when {
-            currentPosition > previousPosition -> Movement.WORSENED
-            currentPosition < previousPosition -> Movement.IMPROVED
-            else -> Movement.UNCHANGED
+            currentPosition > previousPosition -> LeaderboardInner.Movement.WORSENED
+            currentPosition < previousPosition -> LeaderboardInner.Movement.IMPROVED
+            else -> LeaderboardInner.Movement.UNCHANGED
         }
 
         LeaderboardInner(currentPosition, user, movement)
@@ -108,6 +111,16 @@ fun calculateGlobalLeaderboard(previousGlobalLeaderboard: List<LeaderboardInner>
 }
 
 class LeaderboardS3Service(val s3Client: S3Client, val s3BucketName: String) {
+    private var cachedLeaderboard: List<LeaderboardInner>? = null
+    private var cachedMatchDay: Int? = null
+    private var cacheTimestamp: Long = 0
+    private val cacheTtlMs = System.getenv("CACHE_TTL_SECONDS")?.toLongOrNull()?.let { it * 1000 } ?: Long.MAX_VALUE
+
+    fun invalidateCache() {
+        cachedLeaderboard = null
+        cachedMatchDay = null
+    }
+
     suspend fun writeLeaderboard(leaderboard: List<LeaderboardInner>, matchDay: Int) {
         val request = PutObjectRequest {
             bucket = s3BucketName
@@ -115,9 +128,15 @@ class LeaderboardS3Service(val s3Client: S3Client, val s3BucketName: String) {
             body = ByteStream.fromString(leaderboard.toJson())
         }
         s3Client.putObject(request)
+        cachedLeaderboard = leaderboard
+        cachedMatchDay = matchDay
+        cacheTimestamp = System.currentTimeMillis()
     }
 
     suspend fun getLatestLeaderboardMatchDay(): Int {
+        if (cachedMatchDay != null && System.currentTimeMillis() - cacheTimestamp < cacheTtlMs) {
+            return cachedMatchDay!!
+        }
         val listRequest = ListObjectsV2Request {
             bucket = s3BucketName
         }
@@ -127,10 +146,15 @@ class LeaderboardS3Service(val s3Client: S3Client, val s3BucketName: String) {
             ?.mapNotNull { it.key?.substringAfter("matchDay")?.substringBefore(".json")?.toIntOrNull() }
             ?.maxOrNull()
             ?: 0
+        cachedMatchDay = latestMatchDay
+        cacheTimestamp = System.currentTimeMillis()
         return latestMatchDay
     }
 
     suspend fun getLeaderboard(matchDay: Int): List<LeaderboardInner>? {
+        if (matchDay == cachedMatchDay && cachedLeaderboard != null && System.currentTimeMillis() - cacheTimestamp < cacheTtlMs) {
+            return cachedLeaderboard
+        }
         val request = GetObjectRequest {
             bucket = s3BucketName
             key = "matchDay$matchDay.json"
@@ -140,7 +164,11 @@ class LeaderboardS3Service(val s3Client: S3Client, val s3BucketName: String) {
             s3Client.getObject(request) { resp ->
                 val json = resp.body?.decodeToString()
                 requireNotNull(json) { "Leaderboard is empty" }
-                return@getObject json.fromJson()
+                val leaderboard: List<LeaderboardInner> = json.fromJson()
+                cachedLeaderboard = leaderboard
+                cachedMatchDay = matchDay
+                cacheTimestamp = System.currentTimeMillis()
+                return@getObject leaderboard
             }
         } catch (e: Exception) {
             log.info("Error fetching leaderboard for matchDay $matchDay: $e")

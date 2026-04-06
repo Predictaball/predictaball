@@ -1,0 +1,11 @@
+.flag {
+    width: 65px;
+    height: 100%;
+}
+
+@media (min-width: 800px) {
+    .flag {
+        width: 80px;
+        height: 100%;
+    }
+}

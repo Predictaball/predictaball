@@ -1,0 +1,29 @@
+import React from "react";
+import Leaderboard from "@/app/components/leaderboard/leaderboard";
+import Share from "./share";
+import Leave from "./leave";
+import BackButton from "@/app/components/back-button";
+
+
+export default async function Home({ params }: { params: Promise<{ leagueId: string }> }): Promise<React.JSX.Element> {
+    const { leagueId } = await params
+
+    return (
+        <div className="min-h-svh bg-gray-900">
+            <div className="w-full max-w-4xl mx-auto relative">
+                <div className="flex justify-between p-4">
+                    <div>
+                        <BackButton/>
+                    </div>
+                    <div className="flex justify-around">
+                        <Leave leagueId={leagueId}/>
+                        <Share leagueId={leagueId} />
+                    </div>
+                </div>
+                <div className="p-2 w-full bg-gray-900 flex flex-col items-center">
+                    <Leaderboard shouldPaginate={true} leagueId={leagueId} limit={false} />
+                </div>
+            </div>
+        </div>
+    );
+}

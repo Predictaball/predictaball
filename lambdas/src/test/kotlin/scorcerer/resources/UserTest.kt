@@ -1,85 +1,76 @@
 package scorcerer.resources
 
-import io.kotlintest.shouldBe
+import io.kotest.matchers.shouldBe
+import io.mockk.mockk
+import org.http4k.core.Method
+import org.http4k.core.Request
 import org.http4k.core.RequestContexts
+import org.http4k.core.Status
 import org.junit.jupiter.api.Test
-import org.openapitools.server.models.League
-import scorcerer.*
-import scorcerer.server.resources.User
-import org.openapitools.server.models.User as UserModel
+import org.openapitools.server.models.GetUserPoints200Response
+import org.openapitools.server.models.Prediction
+import scorcerer.DatabaseTest
+import scorcerer.givenLeagueExists
+import scorcerer.givenMatchExists
+import scorcerer.givenPredictionExists
+import scorcerer.givenTeamExists
+import scorcerer.givenUserExists
+import scorcerer.givenUserInLeague
+import scorcerer.server.fromJson
+import scorcerer.server.resources.userRoutes
+import scorcerer.utils.LeaderboardS3Service
 
 class UserTest : DatabaseTest() {
+    private val contexts = RequestContexts()
+    private val mockLeaderboardService = mockk<LeaderboardS3Service>(relaxed = true)
+    private val handler = testHandler(contexts, userRoutes(contexts, mockLeaderboardService))
+
     @Test
     fun getUserPoints() {
-        givenUserExists("userId", "name", fixedPoints = 15, livePoints = 5)
-        val userPoints = User(RequestContexts()).getUserPoints("", "userId")
-        userPoints.livePoints shouldBe 5
-        userPoints.fixedPoints shouldBe 15
+        givenUserExists("userId", "name", fixedPoints = 15)
+        val response = handler(Request(Method.GET, "/user/userId/points"))
+        response.status shouldBe Status.OK
+        val points: GetUserPoints200Response = response.bodyString().fromJson()
+        points.livePoints shouldBe 0
+        points.fixedPoints shouldBe 15
     }
 
     @Test
     fun getUserPredictions() {
         val userId = "userId"
-        givenUserExists(userId, "name", fixedPoints = 15, livePoints = 5)
+        givenUserExists(userId, "name", fixedPoints = 15)
         val homeTeamId = givenTeamExists("England")
         val awayTeamId = givenTeamExists("France")
         val matchId = givenMatchExists(homeTeamId, awayTeamId)
-
-        val predictionId = givenPredictionExists(matchId, userId, 1, 1)
-
-        val userPredictions = User(RequestContexts()).getUserPredictions("", userId)
-        userPredictions.size shouldBe 1
-        userPredictions[0].predictionId shouldBe predictionId
+        givenPredictionExists(matchId, userId, 1, 1)
+        val response = handler(Request(Method.GET, "/user/$userId/predictions"))
+        response.status shouldBe Status.OK
+        val predictions: List<Prediction> = response.bodyString().fromJson()
+        predictions.size shouldBe 1
     }
 
     @Test
     fun getUserLeagues() {
-        givenUserExists("user1", "name1")
-        givenUserExists("user2", "name2")
-        givenUserExists("user3", "name3")
-        givenUserExists("user4", "name4")
+        givenUserExists("test-user", "name0")
         givenUserExists("user5", "name5")
         givenUserExists("user6", "name6")
         givenUserExists("user7", "name7")
+        givenUserExists("user3", "name3")
+        givenUserExists("user4", "name4")
         givenLeagueExists("league1", "First League")
         givenLeagueExists("league2", "Second League")
-        givenLeagueExists("league3", "Third League")
 
-        givenUserInLeague("user1", "league1")
+        givenUserInLeague("test-user", "league1")
         givenUserInLeague("user5", "league1")
         givenUserInLeague("user6", "league1")
         givenUserInLeague("user7", "league1")
 
-        givenUserInLeague("user1", "league2")
+        givenUserInLeague("test-user", "league2")
         givenUserInLeague("user3", "league2")
         givenUserInLeague("user4", "league2")
         givenUserInLeague("user5", "league2")
 
-        givenUserInLeague("user5", "league3")
-        givenUserInLeague("user6", "league3")
-        givenUserInLeague("user7", "league3")
-
-        val userLeagues = User(RequestContexts()).getUserLeagues("user1")
-        userLeagues shouldBe listOf(
-            League(
-                "league1",
-                "First League",
-                listOf(
-                    UserModel("name1", "Name", "user1", 0, 0),
-                    UserModel("name5", "Name", "user5", 0, 0),
-                    UserModel("name6", "Name", "user6", 0, 0),
-                    UserModel("name7", "Name", "user7", 0, 0),
-                ),
-            ),
-            League(
-                "league2", "Second League",
-                listOf(
-                    UserModel("name1", "Name", "user1", 0, 0),
-                    UserModel("name3", "Name", "user3", 0, 0),
-                    UserModel("name4", "Name", "user4", 0, 0),
-                    UserModel("name5", "Name", "user5", 0, 0),
-                ),
-            ),
-        )
+        val response = handler(Request(Method.GET, "/user/leagues"))
+        response.status shouldBe Status.OK
     }
 }

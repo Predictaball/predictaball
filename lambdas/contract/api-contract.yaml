@@ -49,9 +49,9 @@ components:
       type: object
       required:
         - homeTeam
-        - homeTeamFlagUri
+        - homeTeamFlagCode
         - awayTeam
-        - awayTeamFlagUri
+        - awayTeamFlagCode
         - matchId
         - venue
         - datetime
@@ -62,13 +62,13 @@ components:
         homeTeam:
           description: Home team
           type: string
-        homeTeamFlagUri:
+        homeTeamFlagCode:
           description: Home team flag uri
           type: string
         awayTeam:
           description: Away team
           type: string
-        awayTeamFlagUri:
+        awayTeamFlagCode:
           description: Away team flag uri
           type: string
         homeScore:
@@ -135,7 +135,7 @@ components:
       required:
         - teamId
         - teamName
-        - flagUri
+        - flagCode
       properties:
         teamId:
           description: Team Id
@@ -143,7 +143,7 @@ components:
         teamName:
           description: Team name
           type: string
-        flagUri:
+        flagCode:
           description: Team flag uri
           type: string
     leaderboard:
@@ -239,11 +239,11 @@ paths:
               properties:
                 teamName:
                   type: string
-                flagUri:
+                flagCode:
                   type: string
               required:
                 - teamName
-                - flagUri
+                - flagCode
       responses:
         '200':
           description: Successful response
@@ -651,9 +651,49 @@ paths:
                     type: string
                   accessToken:
                     type: string
+                  refreshToken:
+                    type: string
                 required:
                   - idToken
+                  - refreshToken
 
+        '401':
+          description: Unauthorized
+  /auth/refresh:
+    post:
+      tags:
+        - auth
+      operationId: refreshToken
+      description: Refresh an expired ID token using a refresh token
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                refreshToken:
+                  type: string
+              required:
+                - refreshToken
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  idToken:
+                    type: string
+                  refreshToken:
+                    type: string
+                  accessToken:
+                    type: string
+                required:
+                  - idToken
+                  - refreshToken
         '401':
           description: Unauthorized
   /auth/reset:

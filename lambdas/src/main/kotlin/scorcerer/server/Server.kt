@@ -1,76 +1,49 @@
 package scorcerer.server
 
 import aws.sdk.kotlin.services.s3.S3Client
-import com.squareup.moshi.JsonDataException
-import org.http4k.core.Filter
 import org.http4k.core.Method
 import org.http4k.core.RequestContexts
-import org.http4k.core.Response
-import org.http4k.core.Status
 import org.http4k.core.then
 import org.http4k.filter.AllowAll
 import org.http4k.filter.CorsPolicy
 import org.http4k.filter.OriginPolicy
 import org.http4k.filter.ServerFilters.CatchAll
 import org.http4k.filter.ServerFilters.Cors
-import org.http4k.server.SunHttp
+import org.http4k.filter.ServerFilters.InitialiseRequestContext
+import org.http4k.routing.routes
+import org.http4k.server.Netty
 import org.http4k.server.asServer
-import org.openapitools.server.apis.allRoutes
-import scorcerer.server.db.Database
-import scorcerer.server.resources.Auth
-import scorcerer.server.resources.League
-import scorcerer.server.resources.MatchResource
-import scorcerer.server.resources.Misc
-import scorcerer.server.resources.Prediction
-import scorcerer.server.resources.Team
-import scorcerer.server.resources.User
+import scorcerer.server.db.DatabaseFactory
+import scorcerer.server.resources.adminRoutes
+import scorcerer.server.resources.authRoutes
+import scorcerer.server.resources.leagueRoutes
+import scorcerer.server.resources.matchRoutes
+import scorcerer.server.resources.miscRoutes
+import scorcerer.server.resources.predictionRoutes
+import scorcerer.server.resources.teamRoutes
+import scorcerer.server.resources.userRoutes
+import scorcerer.server.schedule.MatchStarter
+import scorcerer.server.schedule.ScoreUpdater
 import scorcerer.utils.LeaderboardS3Service
-
-data class ApiResponseError(val response: Response) : Exception("API failed while executing request handler and provided error response")
-
-class Server {
-    fun start() {
-        httpServer.asServer(SunHttp(8000)).start().block()
-    }
-}
-
-val loggingFilter = Filter { next -> { req -> next(req).also { log.info("${req.method} ${req.uri} ${it.status}") } } }
-
-fun main() {
-    Database.connectAndGenerateTables()
-
-    Server().start()
-}
-
-fun handleError(e: Throwable): Response =
-    when (e) {
-        is ApiResponseError -> e.response
-        is JsonDataException -> {
-            log.error(e.stackTraceToString())
-            Response(Status.BAD_REQUEST).body(e.message.toString())
-        }
-
-        else -> {
-            log.error(e.stackTraceToString())
-            Response(Status.INTERNAL_SERVER_ERROR).body("The API threw an error while processing the request")
-        }
-    }
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 
 private val requestContext = RequestContexts()
+private val s3Client = S3Client { region = "eu-west-2" }
+private val leaderboardService = LeaderboardS3Service(s3Client, Environment.LeaderboardBucketName)
 
-val s3Client = S3Client { region = "eu-west-2" }
-
-private val routes = allRoutes(
-    Auth(requestContext),
-    League(requestContext, LeaderboardS3Service(s3Client, Environment.LeaderboardBucketName)),
-    MatchResource(requestContext, LeaderboardS3Service(s3Client, Environment.LeaderboardBucketName)),
-    Misc(requestContext),
-    Prediction(requestContext),
-    Team(requestContext),
-    User(requestContext),
+private val allRoutes = routes(
+    authRoutes,
+    miscRoutes,
+    adminRoutes(leaderboardService),
+    leagueRoutes(requestContext, leaderboardService),
+    matchRoutes(requestContext, leaderboardService),
+    predictionRoutes(requestContext),
+    teamRoutes(requestContext),
+    userRoutes(requestContext, leaderboardService),
 )
 
-val cors = Cors(
+private val cors = Cors(
     CorsPolicy(
         OriginPolicy.AllowAll(),
         listOf(
@@ -86,14 +59,26 @@ val cors = Cors(
     ),
 )
 
-private val httpServer = cors.then(loggingFilter.then(CatchAll(::handleError).then(routes)))
+private val authDisabled = System.getenv("AUTH_DISABLED") == "true"
+private val schedulerEnabled = System.getenv("SCHEDULER_ENABLED") == "true"
 
-// Entrypoint for non auth lambda
-class ApiLambdaHandler : ApiGatewayRestAuthorizerLambdaFunction(httpServer, requestContext) {
-    init {
-        Database.connectAndGenerateTables()
+private val httpServer = cors
+    .then(InitialiseRequestContext(requestContext))
+    .then(loggingFilter)
+    .then(CatchAll(::handleError))
+    .let { if (authDisabled) it.then(localAuthFilter(requestContext)) else it.then(cognitoAuthFilter(requestContext)) }
+    .then(allRoutes)
+
+fun main() {
+    DatabaseFactory.connectAndGenerateTables()
+
+    if (schedulerEnabled) {
+        log.info("Starting scheduled tasks")
+        val scheduler = Executors.newScheduledThreadPool(1)
+        scheduler.scheduleAtFixedRate({ runCatching { MatchStarter(leaderboardService).run() }.onFailure { log.error(it.stackTraceToString()) } }, 0, 15, TimeUnit.MINUTES)
+        scheduler.scheduleAtFixedRate({ runCatching { ScoreUpdater(leaderboardService).run() }.onFailure { log.error(it.stackTraceToString()) } }, 0, 2, TimeUnit.MINUTES)
     }
-}
 
-// Entrypoint for auth lambda
-class ApiAuthLambdaHandler : ApiGatewayRestAuthorizerLambdaFunction(httpServer, requestContext)
+    log.info("Starting server on port 8080 (auth disabled: $authDisabled, scheduler: $schedulerEnabled)")
+    httpServer.asServer(Netty(8080)).start().block()
+}

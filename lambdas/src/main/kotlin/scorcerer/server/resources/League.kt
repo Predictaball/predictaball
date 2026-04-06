@@ -1,17 +1,24 @@
 package scorcerer.server.resources
 
 import kotlinx.coroutines.runBlocking
+import org.http4k.core.Method
 import org.http4k.core.RequestContexts
 import org.http4k.core.Response
 import org.http4k.core.Status
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
-import org.jetbrains.exposed.sql.and
-import org.jetbrains.exposed.sql.deleteWhere
-import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.selectAll
-import org.jetbrains.exposed.sql.transactions.transaction
-import org.openapitools.server.apis.LeagueApi
-import org.openapitools.server.models.*
+import org.http4k.routing.bind
+import org.http4k.routing.path
+import org.http4k.routing.routes
+import org.jetbrains.exposed.v1.core.and
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.jdbc.deleteWhere
+import org.jetbrains.exposed.v1.jdbc.insert
+import org.jetbrains.exposed.v1.jdbc.select
+import org.jetbrains.exposed.v1.jdbc.selectAll
+import org.jetbrains.exposed.v1.jdbc.transactions.transaction
+import org.openapitools.server.models.CreateLeague200Response
+import org.openapitools.server.models.CreateLeagueRequest
+import org.openapitools.server.models.GetLeagueLeaderboard200Response
+import org.openapitools.server.models.LeaderboardInner
 import org.openapitools.server.models.League
 import org.openapitools.server.models.User
 import org.postgresql.util.PSQLException
@@ -19,170 +26,125 @@ import scorcerer.server.ApiResponseError
 import scorcerer.server.db.tables.LeagueMembershipTable
 import scorcerer.server.db.tables.LeagueTable
 import scorcerer.server.db.tables.MemberTable
+import scorcerer.server.extractUserId
+import scorcerer.server.fromJson
+import scorcerer.server.toJson
 import scorcerer.utils.LeaderboardS3Service
+import scorcerer.utils.calculateGlobalLeaderboard
 import scorcerer.utils.calculateMovement
 import scorcerer.utils.filterLeaderboardToLeague
 import scorcerer.utils.throwDatabaseError
 import kotlin.math.min
 
-class League(
-    context: RequestContexts,
-    private val leaderboardService: LeaderboardS3Service,
-) : LeagueApi(context) {
-    override fun createLeague(
-        requesterUserId: String,
-        createLeagueRequest: CreateLeagueRequest,
-    ): CreateLeague200Response {
+fun leagueRoutes(contexts: RequestContexts, leaderboardService: LeaderboardS3Service) = routes(
+    "/league" bind Method.POST to { req ->
+        val requesterUserId = contexts.extractUserId(req)
+        val body: CreateLeagueRequest = req.bodyString().fromJson()
         val id = try {
             transaction {
                 LeagueTable.insert {
-                    it[this.name] = createLeagueRequest.leagueName
-                    it[this.id] = createLeagueRequest.leagueName.trim().lowercase().replace("\\s+".toRegex(), "-")
-                        .replace("[^a-zA-Z0-9-]".toRegex(), "")
+                    it[name] = body.leagueName
+                    it[id] = body.leagueName.trim().lowercase().replace("\\s+".toRegex(), "-").replace("[^a-zA-Z0-9-]".toRegex(), "")
                 } get LeagueTable.id
             }
         } catch (e: PSQLException) {
             throwDatabaseError(e, "League already exists")
         }
-
-        // Add the created user as a member of the new league
         transaction {
             LeagueMembershipTable.insert {
-                it[this.memberId] = requesterUserId
-                it[this.leagueId] = id
+                it[memberId] = requesterUserId
+                it[leagueId] = id
             }
         }
-
-        return CreateLeague200Response(id)
-    }
-
-    override fun getLeague(requesterUserId: String, leagueId: String): League {
+        Response(Status.OK).body(CreateLeague200Response(id).toJson())
+    },
+    "/league/{leagueId}" bind Method.GET to { req ->
+        val leagueId = req.path("leagueId")!!
         val leagueName = transaction {
-            LeagueTable.select(LeagueTable.name).where { LeagueTable.id eq leagueId }.singleOrNull()
-                ?.get(LeagueTable.name)
+            LeagueTable.select(LeagueTable.name).where { LeagueTable.id eq leagueId }.singleOrNull()?.get(LeagueTable.name)
         } ?: throw ApiResponseError(Response(Status.BAD_REQUEST).body("League does not exist"))
-
         val users = transaction {
-            (LeagueTable innerJoin LeagueMembershipTable innerJoin MemberTable).select(
-                MemberTable.firstName,
-                MemberTable.familyName,
-                MemberTable.id,
-                MemberTable.fixedPoints,
-                MemberTable.livePoints,
-            ).where { LeagueTable.id eq leagueId }.map {
-                User(
-                    it[MemberTable.firstName],
-                    it[MemberTable.familyName],
-                    it[MemberTable.id],
-                    it[MemberTable.fixedPoints],
-                    it[MemberTable.livePoints],
-                )
+            (LeagueTable innerJoin LeagueMembershipTable innerJoin MemberTable)
+                .select(MemberTable.firstName, MemberTable.familyName, MemberTable.id, MemberTable.fixedPoints)
+                .where { LeagueTable.id eq leagueId }
+                .map { User(it[MemberTable.firstName], it[MemberTable.familyName], it[MemberTable.id], it[MemberTable.fixedPoints], 0) }
+        }
+        Response(Status.OK).body(League(leagueId, leagueName, users).toJson())
+    },
+    "/league/{leagueId}/leaderboard" bind Method.GET to { req ->
+        val leagueId = req.path("leagueId")!!
+        val pageSize = req.query("pageSize")
+        val page = req.query("page")
+        val leagueName = transaction {
+            LeagueTable.select(LeagueTable.name).where { LeagueTable.id eq leagueId }.singleOrNull()?.get(LeagueTable.name)
+        } ?: throw ApiResponseError(Response(Status.BAD_REQUEST).body("League does not exist"))
+        val (latestMatchDay, latestGlobalLeaderboard) = runBlocking {
+            val matchDay = leaderboardService.getLatestLeaderboardMatchDay()
+            val leaderboard = leaderboardService.getLeaderboard(matchDay)
+            if (leaderboard != null) {
+                matchDay to leaderboard
+            } else {
+                val computed = calculateGlobalLeaderboard(null)
+                leaderboardService.writeLeaderboard(computed, 0)
+                0 to computed
             }
         }
-        return League(leagueId, leagueName, users)
-    }
-
-    override fun getLeagueLeaderboard(
-        requesterUserId: String,
-        leagueId: String,
-        pageSize: String?,
-        page: String?,
-    ): GetLeagueLeaderboard200Response {
-        val leagueName = transaction {
-            LeagueTable.select(LeagueTable.name).where { LeagueTable.id eq leagueId }.singleOrNull()
-                ?.get(LeagueTable.name)
-        } ?: throw ApiResponseError(Response(Status.BAD_REQUEST).body("League does not exist"))
-        val (latestLeaderboardMatchDay, latestGlobalLeaderboard) = runBlocking {
-            val latestMatchDay = leaderboardService.getLatestLeaderboardMatchDay()
-            val latestLeaderboard = leaderboardService.getLeaderboard(latestMatchDay)
-            latestMatchDay to (
-                latestLeaderboard ?: throw ApiResponseError(
-                    Response(Status.NOT_FOUND).body("Leaderboard does not exist"),
-                )
-                )
+        val response = if (leagueId == "global") {
+            paginateLeaderboard(leagueName, sortLeaderboard(latestGlobalLeaderboard), page, pageSize)
+        } else {
+            val leagueUserIds = getLeagueUserIds(leagueId)
+            val previousGlobalLeaderboard = runBlocking { leaderboardService.getPreviousLeaderboard(latestMatchDay) }
+            val filteredLeague = filterLeaderboardToLeague(latestGlobalLeaderboard, leagueUserIds)
+            val previousFilteredLeague = filterLeaderboardToLeague(previousGlobalLeaderboard, leagueUserIds)
+            paginateLeaderboard(leagueName, sortLeaderboard(calculateMovement(filteredLeague, previousFilteredLeague)), page, pageSize)
         }
-
-        if (leagueId == "global") {
-            return paginateLeaderboard(leagueName, sortLeaderboard(latestGlobalLeaderboard), page, pageSize)
-        }
-
-        val leagueUsersIds = getLeagueUserIds(leagueId)
-        val previousGlobalLeaderboard =
-            runBlocking { leaderboardService.getPreviousLeaderboard(latestLeaderboardMatchDay) }
-        val filteredLeague = filterLeaderboardToLeague(latestGlobalLeaderboard, leagueUsersIds)
-        val previousFilteredLeague = filterLeaderboardToLeague(previousGlobalLeaderboard, leagueUsersIds)
-
-        val leaderboard = calculateMovement(filteredLeague, previousFilteredLeague)
-        return paginateLeaderboard(leagueName, sortLeaderboard(leaderboard), page, pageSize)
-    }
-
-    override fun joinLeague(requesterUserId: String, leagueId: String) {
-        transaction {
-            LeagueMembershipTable
-                .selectAll()
+        Response(Status.OK).body(response.toJson())
+    },
+    "/league/{leagueId}/join" bind Method.POST to { req ->
+        val requesterUserId = contexts.extractUserId(req)
+        val leagueId = req.path("leagueId")!!
+        val existing = transaction {
+            LeagueMembershipTable.selectAll()
                 .where { (LeagueMembershipTable.leagueId eq leagueId) and (LeagueMembershipTable.memberId eq requesterUserId) }
                 .singleOrNull()
-        }?.let { return }
-
-        try {
-            transaction {
-                LeagueMembershipTable.insert {
-                    it[this.memberId] = requesterUserId
-                    it[this.leagueId] = leagueId
+        }
+        if (existing == null) {
+            try {
+                transaction {
+                    LeagueMembershipTable.insert {
+                        it[memberId] = requesterUserId
+                        it[this.leagueId] = leagueId
+                    }
                 }
-            }
-        } catch (e: Exception) {
-            throw ApiResponseError(Response(Status.NOT_FOUND).body("League does not exist"))
-        }
-    }
-
-    override fun leaveLeague(requesterUserId: String, leagueId: String) {
-        transaction {
-            LeagueMembershipTable.deleteWhere {
-                (LeagueMembershipTable.leagueId eq leagueId).and(LeagueMembershipTable.memberId eq requesterUserId)
+            } catch (e: Exception) {
+                throw ApiResponseError(Response(Status.NOT_FOUND).body("League does not exist"))
             }
         }
-    }
-}
+        Response(Status.OK)
+    },
+    "/league/{leagueId}/leave" bind Method.POST to { req ->
+        val requesterUserId = contexts.extractUserId(req)
+        val leagueId = req.path("leagueId")!!
+        transaction { LeagueMembershipTable.deleteWhere { (LeagueMembershipTable.leagueId eq leagueId).and(LeagueMembershipTable.memberId eq requesterUserId) } }
+        Response(Status.OK)
+    },
+)
 
 private const val DEFAULT_PAGE_SIZE = "100"
 private const val DEFAULT_PAGE = "1"
 
-private fun paginateLeaderboard(
-    leagueName: String,
-    leaderboard: List<LeaderboardInner>,
-    page: String?,
-    pageSize: String?,
-): GetLeagueLeaderboard200Response {
-    val pageSizeNum =
-        (pageSize ?: DEFAULT_PAGE_SIZE).toIntOrNull()
-            ?: throw ApiResponseError(Response(Status.BAD_REQUEST).body("Invalid pageSize"))
-    val pageNum =
-        (page ?: DEFAULT_PAGE).toIntOrNull()
-            ?: throw ApiResponseError(Response(Status.BAD_REQUEST).body("Invalid page"))
-
+private fun paginateLeaderboard(leagueName: String, leaderboard: List<LeaderboardInner>, page: String?, pageSize: String?): GetLeagueLeaderboard200Response {
+    val pageSizeNum = (pageSize ?: DEFAULT_PAGE_SIZE).toIntOrNull() ?: throw ApiResponseError(Response(Status.BAD_REQUEST).body("Invalid pageSize"))
+    val pageNum = (page ?: DEFAULT_PAGE).toIntOrNull() ?: throw ApiResponseError(Response(Status.BAD_REQUEST).body("Invalid page"))
     val start = pageSizeNum * (pageNum - 1)
     val end = start + pageSizeNum
-
     if (start > leaderboard.size) throw ApiResponseError(Response(Status.BAD_REQUEST).body("Page too high"))
-
-    return GetLeagueLeaderboard200Response(
-        leagueName,
-        leaderboard.subList(start, min(end, leaderboard.size)),
-        nextPage = if (end < leaderboard.size) (pageNum + 1).toString() else null,
-    )
+    return GetLeagueLeaderboard200Response(leagueName, leaderboard.subList(start, min(end, leaderboard.size)), nextPage = if (end < leaderboard.size) (pageNum + 1).toString() else null)
 }
 
 private fun getLeagueUserIds(leagueId: String): List<String> = transaction {
-    (LeagueMembershipTable innerJoin MemberTable)
-        .select(MemberTable.id)
-        .where { LeagueMembershipTable.leagueId eq leagueId }
-        .map { it[MemberTable.id] }
+    (LeagueMembershipTable innerJoin MemberTable).select(MemberTable.id).where { LeagueMembershipTable.leagueId eq leagueId }.map { it[MemberTable.id] }
 }
 
-private fun sortLeaderboard(leaderboard: List<LeaderboardInner>): List<LeaderboardInner> {
-    return leaderboard.sortedWith(
-        compareBy<LeaderboardInner> { it.position }.thenBy { it.movement }
-            .thenBy { it.user.familyName }.thenBy { it.user.firstName }.thenBy { it.user.userId },
-    )
-}
+private fun sortLeaderboard(leaderboard: List<LeaderboardInner>): List<LeaderboardInner> =
+    leaderboard.sortedWith(compareBy<LeaderboardInner> { it.position }.thenBy { it.movement }.thenBy { it.user.familyName }.thenBy { it.user.firstName }.thenBy { it.user.userId })

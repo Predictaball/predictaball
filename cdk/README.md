@@ -1,23 +1,39 @@
 # Predictaball CDK
 
-## Cost
-All the resources created defined *should* be included in the free tier assuming your AWS account is less than 12 months old.
-However, if multiple instances of these resources are deployed to the same account we would exceed the free tier limits.
-To avoid this each user should deploy to their own personal AWS account. 
+Infrastructure as code for the Predictaball webapp, deployed to AWS using CDK (TypeScript).
 
-## Environment
+## Architecture
 
-* `CDK_ACCOUNT_ID` The AWS account ID you want to deploy to
-* `CDK_REGION` The AWS region you want to deploy to. Defaults to `eu-west-2`
-* `CDK_DB_PASSWORD` The password for the database main user
+- ECS Fargate service behind an Application Load Balancer
+- RDS Postgres (t3.micro)
+- Cognito user pool for authentication
+- S3 bucket for leaderboard data
 
-## Useful commands
+## Prerequisites
 
-* `npm run cdk -- deploy`      This will synthesize and then deploy. Should be the only command you need
-* `npm run cdk -- --profile <your_profile> deploy` You will likely need to use an AWS credentials profile
-* `npm run lint` This will attempt to fix and lint errors in the code
+- Node.js
+- AWS CLI configured with a profile (e.g. `predictaball`)
+- [Finch](https://github.com/runfinch/finch) or Docker for building container images
+- The backend jar must be built first: `cd ../lambdas && ./gradlew shadowJar`
 
-## Accessing the bastion host
-We create an EC2 instance with a public IP which allows us to connect to the DB. 
-Inorder to connect you must first add a ssh keypair to the instance. 
-You can do this by following this [guide](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/replacing-key-pair.html)
+## Environment Variables
+
+| Variable | Description |
+|---|---|
+| `CDK_ACCOUNT_ID` | AWS account ID to deploy to |
+| `CDK_REGION` | AWS region (defaults to `eu-west-2`) |
+| `CDK_DB_PASSWORD` | Password for the RDS database |
+| `CDK_DOCKER` | Set to `finch` if using Finch instead of Docker |
+
+## Deploy
+
+```bash
+npm install
+CDK_DOCKER=finch CDK_ACCOUNT_ID=<account-id> CDK_DB_PASSWORD=<password> npx cdk deploy --profile predictaball
+```
+
+## Useful Commands
+
+- `npx cdk synth` - Synthesize the CloudFormation template
+- `npx cdk diff` - Preview changes before deploying
+- `npx cdk deploy --profile <profile>` - Deploy the stack
