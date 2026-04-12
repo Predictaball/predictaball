@@ -24,7 +24,14 @@ export class Predictaball extends Stack {
   constructor(scope: App, id: string, props?: StackProps) {
     super(scope, id, props)
 
-    const vpc = Vpc.fromLookup(this, "default-vpc", { isDefault: true })
+    const vpc = new Vpc(this, "predictaballVpc", {
+      maxAzs: 2,
+      natGateways: 0,
+      subnetConfiguration: [
+        { name: "public", subnetType: SubnetType.PUBLIC, cidrMask: 24 },
+        { name: "isolated", subnetType: SubnetType.PRIVATE_ISOLATED, cidrMask: 24 },
+      ],
+    })
 
     const s3BucketAccessPoint = vpc.addGatewayEndpoint("s3Endpoint", {
       service: GatewayVpcEndpointAwsService.S3,
@@ -43,12 +50,11 @@ export class Predictaball extends Stack {
     const db = new DatabaseInstance(this, "predictaballDatabase", {
       engine: DatabaseInstanceEngine.POSTGRES,
       vpc: vpc,
-      vpcSubnets: { subnets: vpc.publicSubnets },
+      vpcSubnets: { subnetType: SubnetType.PRIVATE_ISOLATED },
       port: dbPort,
       instanceType: InstanceType.of(InstanceClass.T3, InstanceSize.MICRO),
       storageType: StorageType.GP2,
       allocatedStorage: 20,
-      publiclyAccessible: true,
       credentials: Credentials.fromPassword(dbUser, SecretValue.unsafePlainText(dbPassword)),
     })
 
@@ -74,6 +80,7 @@ export class Predictaball extends Stack {
       desiredCount: 1,
       assignPublicIp: true,
       taskSubnets: { subnetType: SubnetType.PUBLIC },
+      enableExecuteCommand: true,
       taskImageOptions: {
         image: ContainerImage.fromAsset("../lambdas"),
         containerPort: 8080,
