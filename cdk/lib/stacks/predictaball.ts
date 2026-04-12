@@ -143,7 +143,7 @@ export class Predictaball extends Stack {
 
       const certificate = new Certificate(this, "certificate", {
         domainName: `*.${rootDomain}`,
-        subjectAlternativeNames: [rootDomain],
+        subjectAlternativeNames: [rootDomain, `*.dev.${rootDomain}`],
         validation: CertificateValidation.fromDns(hostedZone),
       })
 
