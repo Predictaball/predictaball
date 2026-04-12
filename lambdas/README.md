@@ -9,7 +9,7 @@ Kotlin/http4k backend for the Predictaball score prediction webapp.
 - Exposed ORM with Postgres
 - HikariCP connection pooling
 - Jackson for JSON serialization
-- OpenAPI Generator for model classes (generated from `contract/api-contract.yaml`)
+- OpenAPI Generator for model classes (generated from `../contract/api-contract.yaml`)
 
 ## Project Structure
 
@@ -26,7 +26,7 @@ src/main/kotlin/scorcerer/
     Json.kt        # Jackson toJson/fromJson helpers
     Environment.kt # Environment variable config
   utils/           # Leaderboard, points calculation
-contract/
+../contract/
   api-contract.yaml  # OpenAPI spec (source of truth for frontend client generation)
 src/main/resources/
   db/migration/    # Flyway SQL migrations

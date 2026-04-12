@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint --fix",
-    "build-client": "openapi-generator-cli generate -i ../lambdas/contract/api-contract.yaml -g typescript-fetch -o client/ > /dev/null 2>&1",
+    "build-client": "openapi-generator-cli generate -i ../contract/api-contract.yaml -g typescript-fetch -o client/ > /dev/null 2>&1",
     "prebuild": "npm run build-client"
   },
   "dependencies": {
