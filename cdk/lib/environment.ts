@@ -10,6 +10,8 @@ export const environment: Environment = {
 }
 
 export const dbPassword: string = getEnvVarOrError("CDK_DB_PASSWORD")
+export const apiDomain: string | undefined = process.env["CDK_API_DOMAIN"]
+export const rootDomain: string = process.env["CDK_ROOT_DOMAIN"] || "predictaball.live"
 
 function getEnvVarOrError(name: string):  string {
   const val = process.env[name]

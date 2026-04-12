@@ -57,6 +57,7 @@ jobs:
           AWS_DEFAULT_REGION: eu-west-2
           CDK_ACCOUNT_ID: ${{ secrets.DEV_CDK_ACCOUNT_ID }}
           CDK_DB_PASSWORD: ${{ secrets.DEV_CDK_DB_PASSWORD }}
+          CDK_API_DOMAIN: api.dev.predictaball.live
       - name: Health check
         run: |
           sleep 30

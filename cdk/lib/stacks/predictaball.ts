@@ -1,4 +1,5 @@
 import { App, Duration, RemovalPolicy, SecretValue, Stack, StackProps } from "aws-cdk-lib"
+import { Certificate, CertificateValidation } from "aws-cdk-lib/aws-certificatemanager"
 import {
   GatewayVpcEndpointAwsService,
   InstanceClass,
@@ -9,13 +10,16 @@ import {
   Vpc
 } from "aws-cdk-lib/aws-ec2"
 import { Credentials, DatabaseInstance, DatabaseInstanceEngine, StorageType } from "aws-cdk-lib/aws-rds"
-import { dbPassword } from "../environment"
+import { apiDomain, dbPassword, rootDomain } from "../environment"
 import { Cognito } from "./cognito"
 import { AnyPrincipal, Effect, PolicyStatement } from "aws-cdk-lib/aws-iam"
 import { BlockPublicAccess, Bucket, BucketEncryption } from "aws-cdk-lib/aws-s3"
 import { Cluster, ContainerImage, LogDrivers } from "aws-cdk-lib/aws-ecs"
 import { ApplicationLoadBalancedFargateService } from "aws-cdk-lib/aws-ecs-patterns"
+import { ApplicationProtocol } from "aws-cdk-lib/aws-elasticloadbalancingv2"
 import { LogGroup } from "aws-cdk-lib/aws-logs"
+import { ARecord, HostedZone, RecordTarget } from "aws-cdk-lib/aws-route53"
+import { LoadBalancerTarget } from "aws-cdk-lib/aws-route53-targets"
 
 const dbUser = "postgres"
 const dbPort = 5432
@@ -131,7 +135,11 @@ export class Predictaball extends Stack {
     // Allow ECS tasks to connect to RDS
     db.connections.allowFrom(ecsService.service, Port.tcp(dbPort))
 
-    // TODO: Add EventBridge scheduled triggers for /admin/start-matches and /admin/update-scores
-    // Requires HTTPS on the ALB (API Destinations only support HTTPS endpoints)
+    // Domain + HTTPS (when CDK_API_DOMAIN is set)
+    if (apiDomain) {
+      new HostedZone(this, "hostedZone", {
+        zoneName: rootDomain,
+      })
+    }
   }
 }
