@@ -137,8 +137,27 @@ export class Predictaball extends Stack {
 
     // Domain + HTTPS (when CDK_API_DOMAIN is set)
     if (apiDomain) {
-      new HostedZone(this, "hostedZone", {
+      const hostedZone = new HostedZone(this, "hostedZone", {
         zoneName: rootDomain,
+      })
+
+      const certificate = new Certificate(this, "certificate", {
+        domainName: `*.${rootDomain}`,
+        subjectAlternativeNames: [rootDomain],
+        validation: CertificateValidation.fromDns(hostedZone),
+      })
+
+      ecsService.loadBalancer.addListener("httpsListener", {
+        port: 443,
+        protocol: ApplicationProtocol.HTTPS,
+        certificates: [certificate],
+        defaultTargetGroups: [ecsService.targetGroup],
+      })
+
+      new ARecord(this, "apiDnsRecord", {
+        zone: hostedZone,
+        recordName: apiDomain,
+        target: RecordTarget.fromAlias(new LoadBalancerTarget(ecsService.loadBalancer)),
       })
     }
   }
