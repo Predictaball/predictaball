@@ -10,11 +10,11 @@ import scorcerer.server.db.tables.MatchTable
 import scorcerer.server.log
 import scorcerer.server.services.getMatchDay
 import scorcerer.server.services.setScore
-import scorcerer.utils.LeaderboardS3Service
+import scorcerer.utils.LeaderboardService
 import java.time.Clock
 import java.time.OffsetDateTime
 
-class MatchStarter(private val leaderboardService: LeaderboardS3Service) {
+class MatchStarter(private val leaderboardService: LeaderboardService) {
     fun run() {
         log.info("Checking for games which have started")
 

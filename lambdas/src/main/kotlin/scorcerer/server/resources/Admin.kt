@@ -9,9 +9,9 @@ import scorcerer.server.log
 import scorcerer.server.schedule.MatchStarter
 import scorcerer.server.schedule.ScoreUpdater
 import scorcerer.server.services.recalculateAllFixedPoints
-import scorcerer.utils.LeaderboardS3Service
+import scorcerer.utils.LeaderboardService
 
-fun adminRoutes(leaderboardService: LeaderboardS3Service) = routes(
+fun adminRoutes(leaderboardService: LeaderboardService) = routes(
     // TODO: Add API key validation (check X-Api-Key header against env var)
     "/admin/start-matches" bind Method.POST to {
         log.info("Admin: start-matches triggered")

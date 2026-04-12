@@ -18,11 +18,11 @@ import scorcerer.server.db.tables.MatchTable
 import scorcerer.server.db.tables.MemberTable
 import scorcerer.server.db.tables.PredictionTable
 import scorcerer.server.log
-import scorcerer.utils.LeaderboardS3Service
+import scorcerer.utils.LeaderboardService
 import scorcerer.utils.MatchResult
 import scorcerer.utils.PointsCalculator.calculatePoints
 
-fun endMatch(matchId: String, homeScore: Int, awayScore: Int, leaderboardService: LeaderboardS3Service) = transaction {
+fun endMatch(matchId: String, homeScore: Int, awayScore: Int, leaderboardService: LeaderboardService) = transaction {
     val matchDay = getMatchDay(matchId)
         ?: throw ApiResponseError(Response(Status.BAD_REQUEST).body("Match does not exist"))
 
@@ -46,7 +46,7 @@ fun endMatch(matchId: String, homeScore: Int, awayScore: Int, leaderboardService
     }
 }
 
-fun setScore(matchId: String, matchDay: Int, homeScore: Int, awayScore: Int, leaderboardService: LeaderboardS3Service) =
+fun setScore(matchId: String, matchDay: Int, homeScore: Int, awayScore: Int, leaderboardService: LeaderboardService) =
     transaction {
         val matchState = MatchTable.selectAll().where { MatchTable.id eq matchId.toInt() }.first()[MatchTable.state]
         if (matchState == Match.State.COMPLETED) {

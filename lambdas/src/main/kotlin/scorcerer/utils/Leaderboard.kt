@@ -110,18 +110,18 @@ fun calculateGlobalLeaderboard(previousGlobalLeaderboard: List<LeaderboardInner>
     return leaderboard
 }
 
-class LeaderboardS3Service(val s3Client: S3Client, val s3BucketName: String) {
+class LeaderboardS3Service(val s3Client: S3Client, val s3BucketName: String) : LeaderboardService {
     private var cachedLeaderboard: List<LeaderboardInner>? = null
     private var cachedMatchDay: Int? = null
     private var cacheTimestamp: Long = 0
     private val cacheTtlMs = System.getenv("CACHE_TTL_SECONDS")?.toLongOrNull()?.let { it * 1000 } ?: Long.MAX_VALUE
 
-    fun invalidateCache() {
+    override fun invalidateCache() {
         cachedLeaderboard = null
         cachedMatchDay = null
     }
 
-    suspend fun writeLeaderboard(leaderboard: List<LeaderboardInner>, matchDay: Int) {
+    override suspend fun writeLeaderboard(leaderboard: List<LeaderboardInner>, matchDay: Int) {
         val request = PutObjectRequest {
             bucket = s3BucketName
             key = "matchDay$matchDay.json"
@@ -133,7 +133,7 @@ class LeaderboardS3Service(val s3Client: S3Client, val s3BucketName: String) {
         cacheTimestamp = System.currentTimeMillis()
     }
 
-    suspend fun getLatestLeaderboardMatchDay(): Int {
+    override suspend fun getLatestLeaderboardMatchDay(): Int {
         if (cachedMatchDay != null && System.currentTimeMillis() - cacheTimestamp < cacheTtlMs) {
             return cachedMatchDay!!
         }
@@ -151,7 +151,7 @@ class LeaderboardS3Service(val s3Client: S3Client, val s3BucketName: String) {
         return latestMatchDay
     }
 
-    suspend fun getLeaderboard(matchDay: Int): List<LeaderboardInner>? {
+    override suspend fun getLeaderboard(matchDay: Int): List<LeaderboardInner>? {
         if (matchDay == cachedMatchDay && cachedLeaderboard != null && System.currentTimeMillis() - cacheTimestamp < cacheTtlMs) {
             return cachedLeaderboard
         }
@@ -176,7 +176,7 @@ class LeaderboardS3Service(val s3Client: S3Client, val s3BucketName: String) {
         }
     }
 
-    suspend fun getPreviousLeaderboard(matchDay: Int): List<LeaderboardInner>? {
+    override suspend fun getPreviousLeaderboard(matchDay: Int): List<LeaderboardInner>? {
         return if (matchDay == 0) {
             null
         } else {
@@ -184,7 +184,7 @@ class LeaderboardS3Service(val s3Client: S3Client, val s3BucketName: String) {
         }
     }
 
-    suspend fun updateGlobalLeaderboard(matchDay: Int) {
+    override suspend fun updateGlobalLeaderboard(matchDay: Int) {
         val previousDayLeaderboard = getPreviousLeaderboard(matchDay)
         val updatedGlobalLeaderboard = calculateGlobalLeaderboard(previousDayLeaderboard)
         writeLeaderboard(updatedGlobalLeaderboard, matchDay)

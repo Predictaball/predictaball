@@ -1,11 +1,5 @@
 package scorcerer.server.resources
 
-import aws.sdk.kotlin.services.cognitoidentityprovider.CognitoIdentityProviderClient
-import aws.sdk.kotlin.services.cognitoidentityprovider.model.AuthFlowType
-import aws.sdk.kotlin.services.cognitoidentityprovider.model.ConfirmForgotPasswordRequest
-import aws.sdk.kotlin.services.cognitoidentityprovider.model.ForgotPasswordRequest
-import aws.sdk.kotlin.services.cognitoidentityprovider.model.InitiateAuthRequest
-import aws.sdk.kotlin.services.cognitoidentityprovider.model.NotAuthorizedException
 import kotlinx.coroutines.runBlocking
 import org.http4k.core.Method
 import org.http4k.core.Response
@@ -18,85 +12,45 @@ import org.openapitools.server.models.RefreshTokenRequest
 import org.openapitools.server.models.ResetPasswordConfirmRequest
 import org.openapitools.server.models.ResetPasswordRequest
 import scorcerer.server.ApiResponseError
-import scorcerer.server.Environment
+import scorcerer.server.auth.AuthProvider
 import scorcerer.server.fromJson
 import scorcerer.server.log
 import scorcerer.server.toJson
 
-private val cognitoClient = CognitoIdentityProviderClient { region = "eu-west-2" }
-
-val authRoutes = routes(
+fun authRoutes(authProvider: AuthProvider) = routes(
     "/auth/login" bind Method.POST to { req ->
         val body: LoginRequest = req.bodyString().fromJson()
-        val request = InitiateAuthRequest {
-            authFlow = AuthFlowType.UserPasswordAuth
-            clientId = Environment.CognitoUserPoolClientId
-            authParameters = mapOf("USERNAME" to body.email, "PASSWORD" to body.password)
-        }
-        log.info("Using auth type - ${request.authFlow?.value}")
-        val response = runBlocking {
-            try {
-                cognitoClient.initiateAuth(request)
-            } catch (e: NotAuthorizedException) {
-                throw ApiResponseError(Response(Status.UNAUTHORIZED).body(e.message))
-            }
-        }
-        val result = response.authenticationResult ?: throw ApiResponseError(Response(Status.UNAUTHORIZED))
-        if (result.idToken == null) throw Exception("Cognito did not return an ID token")
-        Response(Status.OK).body(Login200Response(result.idToken!!, result.refreshToken ?: "", result.accessToken).toJson())
+        log.info("Login attempt for ${body.email}")
+        val tokens = runBlocking { authProvider.login(body.email, body.password) }
+        Response(Status.OK).body(Login200Response(tokens.idToken, tokens.refreshToken, tokens.accessToken).toJson())
     },
     "/auth/refresh" bind Method.POST to { req ->
         val body: RefreshTokenRequest = req.bodyString().fromJson()
-        val request = InitiateAuthRequest {
-            authFlow = AuthFlowType.RefreshTokenAuth
-            clientId = Environment.CognitoUserPoolClientId
-            authParameters = mapOf("REFRESH_TOKEN" to body.refreshToken)
-        }
-        val response = runBlocking {
-            try {
-                cognitoClient.initiateAuth(request)
-            } catch (e: NotAuthorizedException) {
-                throw ApiResponseError(Response(Status.UNAUTHORIZED).body(e.message))
-            }
-        }
-        val result = response.authenticationResult ?: throw ApiResponseError(Response(Status.UNAUTHORIZED))
-        if (result.idToken == null) throw Exception("Cognito did not return an ID token")
-        Response(Status.OK).body(Login200Response(result.idToken!!, body.refreshToken, result.accessToken).toJson())
+        val tokens = runBlocking { authProvider.refresh(body.refreshToken) }
+        Response(Status.OK).body(Login200Response(tokens.idToken, tokens.refreshToken, tokens.accessToken).toJson())
     },
     "/auth/reset" bind Method.POST to { req ->
         val body: ResetPasswordRequest = req.bodyString().fromJson()
-        log.info("Resetting password for email - ${body.email}")
+        log.info("Resetting password for ${body.email}")
         runBlocking {
             try {
-                cognitoClient.forgotPassword(
-                    ForgotPasswordRequest {
-                        username = body.email
-                        clientId = Environment.CognitoUserPoolClientId
-                    },
-                )
+                authProvider.resetPassword(body.email)
             } catch (e: Exception) {
-                log.error("Failed to reset users password - $e")
-                throw ApiResponseError(Response(Status.BAD_REQUEST).body("Failed to reset users password"))
+                log.error("Failed to reset password - $e")
+                throw ApiResponseError(Response(Status.BAD_REQUEST).body("Failed to reset password"))
             }
         }
         Response(Status.OK)
     },
     "/auth/reset-confirm" bind Method.POST to { req ->
         val body: ResetPasswordConfirmRequest = req.bodyString().fromJson()
-        log.info("Confirming password reset for email - ${body.email}")
+        log.info("Confirming password reset for ${body.email}")
         runBlocking {
             try {
-                cognitoClient.confirmForgotPassword(
-                    ConfirmForgotPasswordRequest {
-                        username = body.email
-                        confirmationCode = body.otp
-                        password = body.password
-                        clientId = Environment.CognitoUserPoolClientId
-                    },
-                )
+                authProvider.confirmReset(body.email, body.otp, body.password)
             } catch (e: Exception) {
                 log.error("Failed to confirm password reset - $e")
-                throw ApiResponseError(Response(Status.BAD_REQUEST).body("Failed to reset users password"))
+                throw ApiResponseError(Response(Status.BAD_REQUEST).body("Failed to reset password"))
             }
         }
         Response(Status.OK)

@@ -17,12 +17,22 @@ val loggingFilter = Filter { next ->
 
 fun localAuthFilter(requestContext: RequestContexts) = Filter { next ->
     { req ->
-        val testUserId = System.getenv("TEST_USER_ID") ?: "test-user"
-        requestContext[req][AUTHORIZER_KEY] = Authorizer(
-            claims = mapOf("sub" to testUserId, "custom:isAdmin" to "true"),
-            scopes = emptyList(),
-        )
-        next(req)
+        val token = req.header("Authorization")?.removePrefix("Bearer ")
+        if (token.isNullOrBlank()) {
+            next(req)
+        } else {
+            try {
+                val verifier = JWT.require(scorcerer.server.auth.LocalAuthProvider.algorithm).build()
+                val verified = verifier.verify(token)
+                requestContext[req][AUTHORIZER_KEY] = Authorizer(
+                    claims = verified.claims.mapValues { it.value.asString() ?: "" },
+                    scopes = emptyList(),
+                )
+            } catch (e: Exception) {
+                log.error("Local JWT verification failed: ${e.message}")
+            }
+            next(req)
+        }
     }
 }
 

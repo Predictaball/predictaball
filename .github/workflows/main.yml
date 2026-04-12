@@ -1,8 +1,5 @@
 on: [push]
 
-concurrency:
-  group: ${{ github.ref }}
-
 jobs:
   build:
     runs-on: ubuntu-latest

@@ -178,11 +178,9 @@ tasks {
         environment("DB_URL", "localhost")
         environment("DB_NAME", "postgres")
         environment("DB_PORT", "5432")
-        environment("USER_POOL_CLIENT_ID", "dummy")
-        environment("USER_POOL_ID", "dummy")
-        environment("LEADERBOARD_BUCKET_NAME", "dummy")
-        environment("AUTH_DISABLED", "true")
-        environment("TEST_USER_ID", "test-user-123")
+        environment("AUTH_MODE", "local")
+        environment("LEADERBOARD_MODE", "local")
+        environment("LOCAL_ADMIN_EMAILS", "admin@test.com")
     }
 }
 

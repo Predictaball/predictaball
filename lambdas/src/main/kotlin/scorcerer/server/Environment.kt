@@ -8,10 +8,10 @@ object Environment {
     val DatabaseUrl = getEnvVarOrFail("DB_URL")
     val DatabaseName = getEnvVarOrFail("DB_NAME")
     val DatabasePort: String = getEnvVarOrDefault("DB_PORT", DEFAULT_DATABASE_PORT)
-    val LeaderboardBucketName: String = getEnvVarOrFail("LEADERBOARD_BUCKET_NAME")
+    val LeaderboardBucketName: String by lazy { getEnvVarOrFail("LEADERBOARD_BUCKET_NAME") }
 
-    val CognitoUserPoolClientId = getEnvVarOrFail("USER_POOL_CLIENT_ID")
-    val CognitoUserPoolId = getEnvVarOrFail("USER_POOL_ID")
+    val CognitoUserPoolClientId: String by lazy { getEnvVarOrFail("USER_POOL_CLIENT_ID") }
+    val CognitoUserPoolId: String by lazy { getEnvVarOrFail("USER_POOL_ID") }
 
     private fun getEnvVarOrFail(name: String) = System.getenv(name) ?: throw Exception("Expected environment variable $name to be set")
 

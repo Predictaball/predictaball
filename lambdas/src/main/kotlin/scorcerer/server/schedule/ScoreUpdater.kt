@@ -14,7 +14,7 @@ import scorcerer.server.log
 import scorcerer.server.services.endMatch
 import scorcerer.server.services.getMatchDay
 import scorcerer.server.services.setScore
-import scorcerer.utils.LeaderboardS3Service
+import scorcerer.utils.LeaderboardService
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class Team(
@@ -45,7 +45,7 @@ data class LiveMatch(
     val externalMatchId: String,
 )
 
-class ScoreUpdater(private val leaderboardService: LeaderboardS3Service) {
+class ScoreUpdater(private val leaderboardService: LeaderboardService) {
     private val client = JavaHttpClient()
     private val endpoint = "https://www.fotmob.com/api/matchDetails?matchId="
 

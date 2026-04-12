@@ -27,10 +27,10 @@ import scorcerer.server.services.endMatch
 import scorcerer.server.services.getMatchDay
 import scorcerer.server.services.setScore
 import scorcerer.server.toJson
-import scorcerer.utils.LeaderboardS3Service
+import scorcerer.utils.LeaderboardService
 import scorcerer.utils.toTitleCase
 
-fun matchRoutes(contexts: RequestContexts, leaderboardService: LeaderboardS3Service) = routes(
+fun matchRoutes(contexts: RequestContexts, leaderboardService: LeaderboardService) = routes(
     "/match/{matchId}/predictions" bind Method.GET to { req ->
         val requesterUserId = contexts.extractUserId(req)
         val matchId = req.path("matchId")!!

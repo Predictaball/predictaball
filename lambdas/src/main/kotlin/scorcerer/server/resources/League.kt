@@ -29,14 +29,14 @@ import scorcerer.server.db.tables.MemberTable
 import scorcerer.server.extractUserId
 import scorcerer.server.fromJson
 import scorcerer.server.toJson
-import scorcerer.utils.LeaderboardS3Service
+import scorcerer.utils.LeaderboardService
 import scorcerer.utils.calculateGlobalLeaderboard
 import scorcerer.utils.calculateMovement
 import scorcerer.utils.filterLeaderboardToLeague
 import scorcerer.utils.throwDatabaseError
 import kotlin.math.min
 
-fun leagueRoutes(contexts: RequestContexts, leaderboardService: LeaderboardS3Service) = routes(
+fun leagueRoutes(contexts: RequestContexts, leaderboardService: LeaderboardService) = routes(
     "/league" bind Method.POST to { req ->
         val requesterUserId = contexts.extractUserId(req)
         val body: CreateLeagueRequest = req.bodyString().fromJson()
