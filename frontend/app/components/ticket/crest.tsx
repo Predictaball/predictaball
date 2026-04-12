@@ -14,9 +14,8 @@ export default function Crest(props: CrestProps): React.JSX.Element {
             <Image
                 src={getFlagUrl(props.flagCode)}
                 alt={props.country}
-                width={0}
-                height={0}
-                unoptimized={true}
+                width={80}
+                height={53}
                 style={{
                     width: props.large ? "80px" : "75px",
                     height: props.large ? "53px" : "50px",
