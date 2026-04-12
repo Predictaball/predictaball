@@ -1,45 +1,82 @@
 import React from "react";
 import AnimatedFlags from "@/app/components/flags/animated-flags";
 import {Header} from "@/app/components/landing-header";
-import {Button} from "@nextui-org/react";
-import {BUTTON_CLASS} from "@/app/util/css-classes";
-import Link from "next/link";
 
 export default async function Home(): Promise<React.JSX.Element> {
 
     function getFlags(): React.JSX.Element[] {
-        return Array.from(Array(3).keys())
-            .map(i => <AnimatedFlags
-                bottom={`${(i * 10) + 20}%`}
-                invert={i % 2 == 0}
-                key={i}
-            />)
+        return [
+            <AnimatedFlags bottom="70%" invert={false} key={0} />,
+            <AnimatedFlags bottom="80%" invert={true} key={1} />,
+            <AnimatedFlags bottom="20%" invert={false} key={2} />,
+            <AnimatedFlags bottom="10%" invert={true} key={3} />
+        ]
     }
 
     return (
-        <main
-            className="bg-gray-900 flex flex-col items-center justify-between p-10 h-svh overflow-hidden text-white">
-            <Header/>
-            <div className="w-full absolute text-center z-40">
-                <div className="relative top-0 text-6xl lg:mt-40 mt-30 pt-20">
-                    Football Just Got <p
-                    className="bg-gradient-to-r from-blue-600 to-green-300 inline-block text-transparent bg-clip-text">Funner</p>
+        <main className="bg-gray-900 text-white overflow-auto">
+            <section className="relative flex flex-col items-center justify-center p-10 h-svh overflow-hidden">
+                <div className="absolute top-0 left-0 right-0 p-10">
+                    <Header/>
                 </div>
-                <div>
-                    A World Cup 2026 Score Predictor.
+                <div className="w-full max-w-[800px] text-center z-40 -mt+140">
+                    <div className="text-7xl lg:text-8xl font-bold leading-tight">
+                        FOOTBALL
+                    </div>
+                    <div className="text-7xl lg:text-8xl font-bold leading-tight">
+                        JUST GOT
+                    </div>
+                    <div className="text-7xl lg:text-8xl font-bold leading-tight bg-gradient-to-r from-blue-600 to-green-300 inline-block text-transparent bg-clip-text">
+                        FUNNER
+                    </div>
                 </div>
-            </div>
+                {getFlags()}
+                <div className="absolute bottom-10 text-xl text-gray-300 z-40">
+                    World Cup 2026 Score Predictor
+                </div>
+            </section>
 
-            {getFlags()}
+            <section className="flex flex-col items-center px-10 py-20 min-h-svh">
+                <div className="max-w-4xl w-full">
+                    <h2 className="text-5xl lg:text-6xl font-bold mb-16 text-center">ABOUT</h2>
+                    
+                    <div className="space-y-8 text-lg text-gray-300">
+                        <p className="text-center text-xl">
+                            Predictaball is a game where you are challenged to predict the scores of <span className="font-bold text-white">every</span> game that takes place during World Cup 2026 &#9917;
+                        </p>
+                        <p className="text-center">
+                            The better your predictions are, the more points you will receive &#128175;
+                        </p>
+                        <p className="text-center">
+                            Upcoming games will be displayed for the next 2 match days, come back each day to submit your predictions
+                        </p>
+                    </div>
 
-            <div>
-                <Link href="/info">
-                    <Button
-                        className={BUTTON_CLASS}>
-                        Find Out More
-                    </Button>
-                </Link>
-            </div>
+                    <div className="grid md:grid-cols-3 gap-12 mt-20">
+                        <div className="text-center">
+                            <h3 className="text-3xl font-bold mb-4">THE PRIZE</h3>
+                            <p className="text-gray-300">Bragging rights &#128526;</p>
+                        </div>
+
+                        <div className="text-center">
+                            <h3 className="text-3xl font-bold mb-4">LEAGUES</h3>
+                            <p className="text-gray-300">Create leagues and invite friends if you want to stake a prize or come up with some forfeits &#127942;</p>
+                        </div>
+
+                        <div className="text-center">
+                            <h3 className="text-3xl font-bold mb-4">SCORING</h3>
+                            <p className="text-gray-300">5 points for a correct score &#129306;</p>
+                            <p className="text-gray-300 mt-2">2 points for a correct result &#9996;</p>
+                            <p className="text-gray-300 mt-4 text-sm">&#10024; Look out for an updated scoring system during knockout games &#10024;</p>
+                        </div>
+                    </div>
+
+                    <div className="text-center mt-20">
+                        <p className="text-3xl font-bold">READY TO PLAY?</p>
+                        <p className="text-xl text-gray-300 mt-4">Sign up now and start predicting!</p>
+                    </div>
+                </div>
+            </section>
         </main>
     );
 }
