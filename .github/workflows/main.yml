@@ -33,7 +33,7 @@ jobs:
 
   deploy:
     needs: build
-    if: false # disabled until shared dev account is set up
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -52,17 +52,17 @@ jobs:
       - name: CDK deploy
         run: cd cdk && npx cdk deploy --require-approval never
         env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.DEV_AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.DEV_AWS_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: eu-west-2
-          CDK_ACCOUNT_ID: ${{ secrets.CDK_ACCOUNT_ID }}
-          CDK_DB_PASSWORD: ${{ secrets.CDK_DB_PASSWORD }}
+          CDK_ACCOUNT_ID: ${{ secrets.DEV_CDK_ACCOUNT_ID }}
+          CDK_DB_PASSWORD: ${{ secrets.DEV_CDK_DB_PASSWORD }}
       - name: Health check
         run: |
           sleep 30
           ALB_URL=$(aws elbv2 describe-load-balancers --query 'LoadBalancers[0].DNSName' --output text)
           curl -f http://$ALB_URL/ping
         env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.DEV_AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.DEV_AWS_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: eu-west-2
