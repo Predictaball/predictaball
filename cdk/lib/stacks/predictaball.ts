@@ -10,7 +10,7 @@ import {
   Vpc
 } from "aws-cdk-lib/aws-ec2"
 import { Credentials, DatabaseInstance, DatabaseInstanceEngine, StorageType } from "aws-cdk-lib/aws-rds"
-import { apiDomain, dbPassword, rootDomain } from "../environment"
+import { apiDomain, dbPassword, frontendDomain, rootDomain, vercelCname } from "../environment"
 import { Cognito } from "./cognito"
 import { AnyPrincipal, Effect, PolicyStatement } from "aws-cdk-lib/aws-iam"
 import { BlockPublicAccess, Bucket, BucketEncryption } from "aws-cdk-lib/aws-s3"
@@ -18,7 +18,7 @@ import { Cluster, ContainerImage, LogDrivers } from "aws-cdk-lib/aws-ecs"
 import { ApplicationLoadBalancedFargateService } from "aws-cdk-lib/aws-ecs-patterns"
 import { ApplicationProtocol } from "aws-cdk-lib/aws-elasticloadbalancingv2"
 import { LogGroup } from "aws-cdk-lib/aws-logs"
-import { ARecord, HostedZone, RecordTarget } from "aws-cdk-lib/aws-route53"
+import { ARecord, CnameRecord, HostedZone, RecordTarget } from "aws-cdk-lib/aws-route53"
 import { LoadBalancerTarget } from "aws-cdk-lib/aws-route53-targets"
 
 const dbUser = "postgres"
@@ -159,6 +159,14 @@ export class Predictaball extends Stack {
         recordName: apiDomain,
         target: RecordTarget.fromAlias(new LoadBalancerTarget(ecsService.loadBalancer)),
       })
+
+      if (frontendDomain && vercelCname) {
+        new CnameRecord(this, "frontendDnsRecord", {
+          zone: hostedZone,
+          recordName: frontendDomain,
+          domainName: vercelCname,
+        })
+      }
     }
   }
 }
