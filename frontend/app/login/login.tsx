@@ -17,6 +17,7 @@ export default function Login({callbackUrl, leagueId}: {callbackUrl: string | un
     const [isVisible, setIsVisible] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
     const [didFail, setDidFail] = useState(false)
+    const [didSucceed, setDidSucceed] = useState(false)
 
     const toggleVisibility = () => setIsVisible(!isVisible);
 
@@ -39,6 +40,7 @@ export default function Login({callbackUrl, leagueId}: {callbackUrl: string | un
             if (response.refreshToken) {
                 setCookie(REFRESH_TOKEN_COOKIE_KEY, response.refreshToken, {maxAge: 60 * 60 * 24 * 30})
             }
+            setDidSucceed(true)
             await navigateTo(callbackUrl ?? (leagueId ? `app/league/${leagueId}/join` : "app"))
         } catch (error) {
             setIsLoading(false)
@@ -70,7 +72,7 @@ export default function Login({callbackUrl, leagueId}: {callbackUrl: string | un
                                 name="email"
                                 id="email"
                                 label="Email"
-                                isInvalid={didFail}
+                                isInvalid={didFail && !didSucceed}
                                 style={{fontSize: "18px"}}
                             />
                         </div>
@@ -94,7 +96,7 @@ export default function Login({callbackUrl, leagueId}: {callbackUrl: string | un
                                     </button>
                                 }
                                 type={isVisible ? "text" : "password"}
-                                isInvalid={didFail}
+                                isInvalid={didFail && !didSucceed}
                             />
                         </div>
                         <div className="flex items-center justify-between">
