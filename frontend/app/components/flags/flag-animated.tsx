@@ -23,8 +23,8 @@ export default function FlagAnimated(props: FlagAnimatedProps): React.JSX.Elemen
             <Image
                 alt="flag"
                 src={getFlagUrl(props.flagCode)}
-                width={0}
-                height={0}
+                width={80}
+                height={53}
                 className={styles.flag}
             />
         </div>
