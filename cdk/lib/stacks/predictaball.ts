@@ -10,13 +10,22 @@ import {
   Vpc
 } from "aws-cdk-lib/aws-ec2"
 import { Credentials, DatabaseInstance, DatabaseInstanceEngine, StorageType } from "aws-cdk-lib/aws-rds"
-import { apiDomain, dbPassword, frontendDomain, rootDomain, vercelCname } from "../environment"
+import { adminApiKey, apiDomain, dbPassword, frontendDomain, rootDomain, vercelCname } from "../environment"
 import { Cognito } from "./cognito"
 import { AnyPrincipal, Effect, PolicyStatement } from "aws-cdk-lib/aws-iam"
 import { BlockPublicAccess, Bucket, BucketEncryption } from "aws-cdk-lib/aws-s3"
 import { Cluster, ContainerImage, LogDrivers } from "aws-cdk-lib/aws-ecs"
 import { ApplicationLoadBalancedFargateService } from "aws-cdk-lib/aws-ecs-patterns"
 import { ApplicationProtocol } from "aws-cdk-lib/aws-elasticloadbalancingv2"
+import {
+  ApiDestination,
+  Authorization,
+  Connection,
+  HttpMethod,
+  Rule,
+  Schedule,
+} from "aws-cdk-lib/aws-events"
+import { ApiDestination as ApiDestinationTarget } from "aws-cdk-lib/aws-events-targets"
 import { LogGroup } from "aws-cdk-lib/aws-logs"
 import { ARecord, CnameRecord, HostedZone, RecordTarget } from "aws-cdk-lib/aws-route53"
 import { LoadBalancerTarget } from "aws-cdk-lib/aws-route53-targets"
@@ -97,7 +106,8 @@ export class Predictaball extends Stack {
           USER_POOL_CLIENT_ID: cognito.poolClient.userPoolClientId,
           USER_POOL_ID: cognito.userPool.userPoolId,
           LEADERBOARD_BUCKET_NAME: leaderboardBucket.bucketName,
-          SCHEDULER_ENABLED: "true",
+          SCHEDULER_MODE: adminApiKey ? "off" : "in_process",
+          ADMIN_API_KEY: adminApiKey || "",
         },
         logDriver: LogDrivers.awsLogs({
           logGroup: new LogGroup(this, "predictaballLogs"),
@@ -165,6 +175,35 @@ export class Predictaball extends Stack {
           zone: hostedZone,
           recordName: frontendDomain,
           domainName: vercelCname,
+        })
+      }
+
+      // EventBridge scheduled tasks (replaces in-process schedulers)
+      if (adminApiKey) {
+        const connection = new Connection(this, "adminConnection", {
+          authorization: Authorization.apiKey("X-Api-Key", SecretValue.unsafePlainText(adminApiKey)),
+        })
+
+        const startMatchesDest = new ApiDestination(this, "startMatchesDest", {
+          connection,
+          endpoint: `https://${apiDomain}/admin/start-matches`,
+          httpMethod: HttpMethod.POST,
+        })
+
+        const updateScoresDest = new ApiDestination(this, "updateScoresDest", {
+          connection,
+          endpoint: `https://${apiDomain}/admin/update-scores`,
+          httpMethod: HttpMethod.POST,
+        })
+
+        new Rule(this, "startMatchesRule", {
+          schedule: Schedule.cron({ minute: "*/15" }),
+          targets: [new ApiDestinationTarget(startMatchesDest)],
+        })
+
+        new Rule(this, "updateScoresRule", {
+          schedule: Schedule.rate(Duration.minutes(2)),
+          targets: [new ApiDestinationTarget(updateScoresDest)],
         })
       }
     }

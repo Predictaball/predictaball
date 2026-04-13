@@ -71,6 +71,7 @@ jobs:
           CDK_ACCOUNT_ID: ${{ secrets.DEV_CDK_ACCOUNT_ID }}
           CDK_DB_PASSWORD: ${{ secrets.DEV_CDK_DB_PASSWORD }}
           CDK_API_DOMAIN: api.dev.predictaball.live
+          CDK_ADMIN_API_KEY: ${{ secrets.DEV_ADMIN_API_KEY }}
           CDK_FRONTEND_DOMAIN: dev.predictaball.live
           CDK_VERCEL_CNAME: e99e15f96fe913bd.vercel-dns-017.com
       - name: Health check
