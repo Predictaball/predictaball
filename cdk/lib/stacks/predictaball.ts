@@ -122,6 +122,10 @@ export class Predictaball extends Stack {
       interval: Duration.seconds(30),
     })
 
+    if (desiredCount > 1) {
+      ecsService.targetGroup.enableCookieStickiness(Duration.seconds(30))
+    }
+
     // Grant permissions to the ECS task role
     const taskRole = ecsService.taskDefinition.taskRole
 
