@@ -6,10 +6,8 @@ export default async function Home(): Promise<React.JSX.Element> {
 
     function getFlags(): React.JSX.Element[] {
         return [
-            <AnimatedFlags bottom="70%" invert={false} hostCountries={true} key={0} />,
-            <AnimatedFlags bottom="80%" invert={true} hostCountries={true} key={1} />,
-            <AnimatedFlags bottom="20%" invert={false} key={2} />,
-            <AnimatedFlags bottom="10%" invert={true} key={3} />
+            <AnimatedFlags bottom="75%" invert={false} hostCountries={true} key={0} />,
+            <AnimatedFlags bottom="15%" invert={true} key={1} />
         ]
     }
 
