@@ -12,6 +12,8 @@
   },
   "dependencies": {
     "@nextui-org/react": "^2.6.11",
+    "@react-three/drei": "^10.7.7",
+    "@react-three/fiber": "^9.6.0",
     "cookies-next": "^4.2.1",
     "dateformat": "^5.0.3",
     "framer-motion": "^12.38.0",
@@ -20,7 +22,8 @@
     "react": "^19.2.5",
     "react-countup": "^6.5.3",
     "react-dom": "^19.2.5",
-    "react-hot-toast": "^2.6.0"
+    "react-hot-toast": "^2.6.0",
+    "three": "^0.183.2"
   },
   "devDependencies": {
     "@openapitools/openapi-generator-cli": "^2.29.0",
@@ -28,6 +31,7 @@
     "@types/node": "^20.19.39",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
+    "@types/three": "^0.183.1",
     "autoprefixer": "^10.4.27",
     "eslint": "^9.39.4",
     "eslint-config-next": "^15.5.14",

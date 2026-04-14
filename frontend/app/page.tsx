@@ -1,36 +1,38 @@
 import React from "react";
 import AnimatedFlags from "@/app/components/flags/animated-flags";
 import {Header} from "@/app/components/landing-header";
+import CustomCursor from "@/app/components/custom-cursor";
+import FlagGlobe from "@/app/components/flags/flag-globe-client";
 
 export default async function Home(): Promise<React.JSX.Element> {
 
-    function getFlags(): React.JSX.Element[] {
-        return [
-            <AnimatedFlags bottom="75%" invert={false} hostCountries={true} key={0} />,
-            <AnimatedFlags bottom="15%" invert={true} key={1} />
-        ]
-    }
-
     return (
         <main className="bg-gray-900 text-white overflow-auto">
-            <section className="relative flex flex-col items-center justify-center p-10 h-svh overflow-hidden">
-                <div className="absolute top-0 left-0 right-0 p-10">
+            <CustomCursor/>
+            <section className="relative flex flex-col p-10 h-svh">
+                <div className="absolute top-0 left-0 right-0 p-10 z-50">
                     <Header/>
                 </div>
-                <div className="w-full max-w-[800px] text-center z-40 -mt+140">
-                    <div className="text-6xl lg:text-8xl font-bold leading-tight">
-                        FOOTBALL
+
+                <div className="relative z-40 flex flex-1 flex-col lg:flex-row items-center gap-8 lg:gap-12 pt-20 lg:pt-0">
+                    <div className="flex-1 w-full max-w-[700px] text-center lg:text-left">
+                        <div className="text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold leading-[1.05]">
+                            FOOTBALL
+                        </div>
+                        <div className="text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold leading-[1.05]">
+                            JUST GOT
+                        </div>
+                        <div className="text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-bold leading-[1.05] bg-gradient-to-r from-blue-600 via-cyan-400 to-green-300 inline-block text-transparent bg-clip-text animate-gradient" style={{backgroundSize: '200% 200%'}}>
+                            FUNNER
+                        </div>
+                        <div className="mt-6 text-lg md:text-xl text-gray-300">
+                            World Cup 2026 Score Predictor
+                        </div>
                     </div>
-                    <div className="text-6xl lg:text-8xl font-bold leading-tight">
-                        JUST GOT
+
+                    <div className="relative flex-1 w-full min-h-[420px] md:min-h-[520px] lg:min-h-0 lg:h-full lg:self-stretch">
+                        <FlagGlobe/>
                     </div>
-                    <div className="text-7xl lg:text-9xl font-bold leading-tight bg-gradient-to-r from-blue-600 via-cyan-400 to-green-300 inline-block text-transparent bg-clip-text animate-gradient" style={{backgroundSize: '200% 200%'}}>
-                        FUNNER
-                    </div>
-                </div>
-                {getFlags()}
-                <div className="absolute bottom-10 text-xl text-gray-300 z-40">
-                    World Cup 2026 Score Predictor
                 </div>
             </section>
 
