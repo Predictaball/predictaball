@@ -22,8 +22,8 @@ const config: Config = {
                 slide: 'slide 10s linear infinite',
                 slideslow: 'slide 20s linear infinite',
                 fastpulse: 'pulsing 1s linear infinite',
-                scroll: 'scroll 15s linear infinite',
-                scrollReverse: 'scrollReverse 15s linear infinite'
+                scroll: 'scroll 25s linear infinite',
+                scrollReverse: 'scrollReverse 25s linear infinite'
             },
             keyframes: {
                 wiggle: {

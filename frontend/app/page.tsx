@@ -9,7 +9,7 @@ export default async function Home(): Promise<React.JSX.Element> {
             <AnimatedFlags bottom="70%" invert={false} hostCountries={true} key={0} />,
             <AnimatedFlags bottom="80%" invert={true} hostCountries={true} key={1} />,
             <AnimatedFlags bottom="20%" invert={false} key={2} />,
-            <AnimatedFlags bottom="10%" invert={true} key={3} className="hidden lg:block" />
+            <AnimatedFlags bottom="10%" invert={true} key={3} />
         ]
     }
 
