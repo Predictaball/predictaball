@@ -6,9 +6,6 @@ export function Header(): React.JSX.Element {
     return <div className="z-50 w-full items-center justify-center text-sm flex">
         <div className="w-full max-w-[800px] flex justify-between">
             <Link href="/" className="group flex items-center gap-2">
-                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 via-cyan-400 to-green-300 text-base font-black text-gray-900 shadow-lg shadow-cyan-500/20 transition-transform group-hover:scale-110">
-                    ⚽
-                </span>
                 <span className="flex items-baseline font-black tracking-tight">
                     <span className="text-lg bg-gradient-to-r from-blue-500 via-cyan-300 to-green-300 bg-clip-text text-transparent">
                         predicta
