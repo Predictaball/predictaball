@@ -23,7 +23,8 @@ const config: Config = {
                 slideslow: 'slide 20s linear infinite',
                 fastpulse: 'pulsing 1s linear infinite',
                 scroll: 'scroll 55s linear infinite',
-                scrollReverse: 'scrollReverse 45s linear infinite'
+                scrollReverse: 'scrollReverse 45s linear infinite',
+                gradient: 'gradient 6s ease infinite'
             },
             keyframes: {
                 wiggle: {
@@ -44,6 +45,10 @@ const config: Config = {
                 scrollReverse: {
                     '0%': {transform: 'translateX(-50%)'},
                     '100%': {transform: 'translateX(0)'},
+                },
+                gradient: {
+                    '0%, 100%': {'background-position': '0% 50%'},
+                    '50%': {'background-position': '100% 50%'},
                 },
                 pulsing: {
                     '0%,100%': {

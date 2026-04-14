@@ -1,11 +1,15 @@
 .flag {
     width: 100px;
     height: 66px;
+    border-radius: 6px;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+    object-fit: cover;
 }
 
 @media (min-width: 800px) {
     .flag {
         width: 140px;
         height: 93px;
+        border-radius: 8px;
     }
 }
