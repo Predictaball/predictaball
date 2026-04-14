@@ -4,6 +4,10 @@ import React, {useMemo, useRef} from "react"
 import {Canvas, useFrame} from "@react-three/fiber"
 import {Line, OrbitControls, useTexture} from "@react-three/drei"
 import * as THREE from "three"
+import {feature} from "topojson-client"
+import type {Topology, GeometryCollection} from "topojson-specification"
+import type {Feature, FeatureCollection, MultiPolygon, Polygon, Position} from "geojson"
+import landTopo from "world-atlas/land-110m.json"
 
 const GLOBE_RADIUS = 1.5
 const FLAG_RADIUS = 1.92
@@ -68,6 +72,54 @@ function relaxOnSphere(dirs: THREE.Vector3[], minAngle: number, iterations: numb
     return result
 }
 
+function buildContinentGeometry(radius: number): THREE.BufferGeometry {
+    const topo = landTopo as unknown as Topology
+    const result = feature(topo, topo.objects.land as GeometryCollection) as unknown as
+        | Feature<Polygon | MultiPolygon>
+        | FeatureCollection<Polygon | MultiPolygon>
+
+    const features: Feature<Polygon | MultiPolygon>[] =
+        "features" in result ? result.features : [result]
+
+    const positions: number[] = []
+    const addSegment = (a: Position, b: Position) => {
+        const p1 = latLngToVec3(a[1], a[0], radius)
+        const p2 = latLngToVec3(b[1], b[0], radius)
+        positions.push(p1.x, p1.y, p1.z, p2.x, p2.y, p2.z)
+    }
+
+    const addRing = (ring: Position[]) => {
+        for (let i = 0; i < ring.length - 1; i++) {
+            addSegment(ring[i], ring[i + 1])
+        }
+    }
+
+    for (const f of features) {
+        const geom = f.geometry
+        if (!geom) continue
+        if (geom.type === "Polygon") {
+            for (const ring of geom.coordinates) addRing(ring)
+        } else if (geom.type === "MultiPolygon") {
+            for (const polygon of geom.coordinates) {
+                for (const ring of polygon) addRing(ring)
+            }
+        }
+    }
+
+    const bufferGeom = new THREE.BufferGeometry()
+    bufferGeom.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3))
+    return bufferGeom
+}
+
+function Continents() {
+    const geometry = useMemo(() => buildContinentGeometry(GLOBE_RADIUS + 0.008), [])
+    return (
+        <lineSegments geometry={geometry}>
+            <lineBasicMaterial color="#22d3ee" transparent opacity={0.55}/>
+        </lineSegments>
+    )
+}
+
 function orientationForPosition(pos: THREE.Vector3): THREE.Euler {
     const normal = pos.clone().normalize()
     const quaternion = new THREE.Quaternion().setFromUnitVectors(
@@ -95,6 +147,16 @@ function cropSquare(source: THREE.Texture): THREE.Texture {
     return tex
 }
 
+function mirrorHorizontally(source: THREE.Texture): THREE.Texture {
+    const tex = source.clone()
+    tex.wrapS = THREE.ClampToEdgeWrapping
+    tex.wrapT = THREE.ClampToEdgeWrapping
+    tex.offset.set(source.offset.x + source.repeat.x, source.offset.y)
+    tex.repeat.set(-source.repeat.x, source.repeat.y)
+    tex.needsUpdate = true
+    return tex
+}
+
 function Flags() {
     const textures = useTexture(FLAG_URLS) as THREE.Texture[]
 
@@ -108,19 +170,21 @@ function Flags() {
         return COUNTRY_CODES.map((code, i) => {
             const anchorPos = anchors[i].clone().multiplyScalar(GLOBE_RADIUS + 0.005)
             const flagPos = relaxed[i].clone().multiplyScalar(FLAG_RADIUS)
+            const frontTex = cropSquare(textures[i])
             return {
                 code,
                 anchorPos,
                 flagPos,
                 rotation: orientationForPosition(flagPos),
-                texture: cropSquare(textures[i]),
+                frontTexture: frontTex,
+                backTexture: mirrorHorizontally(frontTex),
             }
         })
     }, [textures])
 
     return (
         <>
-            {markers.map(({code, anchorPos, flagPos, rotation, texture}) => (
+            {markers.map(({code, anchorPos, flagPos, rotation, frontTexture, backTexture}) => (
                 <group key={code}>
                     <mesh position={anchorPos}>
                         <sphereGeometry args={[0.012, 10, 10]}/>
@@ -134,13 +198,17 @@ function Flags() {
                         opacity={0.45}
                     />
                     <group position={flagPos} rotation={rotation}>
-                        <mesh position={[0, 0, -0.001]}>
+                        <mesh>
                             <circleGeometry args={[FLAG_DISC_RADIUS + FLAG_BORDER_WIDTH, 48]}/>
                             <meshBasicMaterial color="#ffffff" side={THREE.DoubleSide}/>
                         </mesh>
-                        <mesh>
+                        <mesh position={[0, 0, 0.001]}>
                             <circleGeometry args={[FLAG_DISC_RADIUS, 48]}/>
-                            <meshBasicMaterial map={texture} toneMapped={false} side={THREE.DoubleSide}/>
+                            <meshBasicMaterial map={frontTexture} toneMapped={false} side={THREE.FrontSide}/>
+                        </mesh>
+                        <mesh position={[0, 0, -0.001]} rotation={[0, Math.PI, 0]}>
+                            <circleGeometry args={[FLAG_DISC_RADIUS, 48]}/>
+                            <meshBasicMaterial map={backTexture} toneMapped={false} side={THREE.FrontSide}/>
                         </mesh>
                     </group>
                 </group>
@@ -175,9 +243,11 @@ function Globe() {
                     color="#22d3ee"
                     wireframe
                     transparent
-                    opacity={0.15}
+                    opacity={0.08}
                 />
             </mesh>
+
+            <Continents/>
 
             <React.Suspense fallback={null}>
                 <Flags/>
