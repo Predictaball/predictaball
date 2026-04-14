@@ -22,7 +22,7 @@ const config: Config = {
                 slide: 'slide 10s linear infinite',
                 slideslow: 'slide 20s linear infinite',
                 fastpulse: 'pulsing 1s linear infinite',
-                scroll: 'scroll 45s linear infinite',
+                scroll: 'scroll 55s linear infinite',
                 scrollReverse: 'scrollReverse 45s linear infinite'
             },
             keyframes: {
