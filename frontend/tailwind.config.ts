@@ -21,7 +21,9 @@ const config: Config = {
                 wiggle: 'wiggle 1s ease-in-out infinite',
                 slide: 'slide 10s linear infinite',
                 slideslow: 'slide 20s linear infinite',
-                fastpulse: 'pulsing 1s linear infinite'
+                fastpulse: 'pulsing 1s linear infinite',
+                scroll: 'scroll 15s linear infinite',
+                scrollReverse: 'scrollReverse 15s linear infinite'
             },
             keyframes: {
                 wiggle: {
@@ -34,6 +36,14 @@ const config: Config = {
                         transform: 'translateX(calc(100vw))'
                     },
                     '100%': {transform: 'translateX(calc(-100vw))'},
+                },
+                scroll: {
+                    '0%': {transform: 'translateX(0)'},
+                    '100%': {transform: 'translateX(-50%)'},
+                },
+                scrollReverse: {
+                    '0%': {transform: 'translateX(-50%)'},
+                    '100%': {transform: 'translateX(0)'},
                 },
                 pulsing: {
                     '0%,100%': {

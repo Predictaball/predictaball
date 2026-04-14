@@ -4,22 +4,13 @@ import styles from "@/app/styles/Flag.module.css"
 import {getFlagUrl} from "@/app/util/flag";
 
 interface FlagAnimatedProps {
-    index: number,
-    invert: boolean,
-    bottom: string,
     flagCode: string
 }
 
 export default function FlagAnimated(props: FlagAnimatedProps): React.JSX.Element {
 
-    const animationStyle = {
-        animationDelay: `${props.index * -1000}ms`,
-        animationDirection: props.invert ? "reverse" : "normal",
-        bottom: props.bottom
-    };
-
     return (
-        <div className={'z-0 absolute lg:animate-slideslow animate-slide overflow-hidden invisible'} style={animationStyle}>
+        <div className={'flex-shrink-0 mx-4'}>
             <Image
                 alt="flag"
                 src={getFlagUrl(props.flagCode)}

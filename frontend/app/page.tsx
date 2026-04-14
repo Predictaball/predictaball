@@ -9,7 +9,7 @@ export default async function Home(): Promise<React.JSX.Element> {
             <AnimatedFlags bottom="70%" invert={false} hostCountries={true} key={0} />,
             <AnimatedFlags bottom="80%" invert={true} hostCountries={true} key={1} />,
             <AnimatedFlags bottom="20%" invert={false} key={2} />,
-            <AnimatedFlags bottom="10%" invert={true} key={3} />
+            <AnimatedFlags bottom="10%" invert={true} key={3} className="hidden lg:block" />
         ]
     }
 
@@ -20,13 +20,13 @@ export default async function Home(): Promise<React.JSX.Element> {
                     <Header/>
                 </div>
                 <div className="w-full max-w-[800px] text-center z-40 -mt+140">
-                    <div className="text-7xl lg:text-8xl font-bold leading-tight">
+                    <div className="text-6xl lg:text-8xl font-bold leading-tight">
                         FOOTBALL
                     </div>
-                    <div className="text-7xl lg:text-8xl font-bold leading-tight">
+                    <div className="text-6xl lg:text-8xl font-bold leading-tight">
                         JUST GOT
                     </div>
-                    <div className="text-7xl lg:text-8xl font-bold leading-tight bg-gradient-to-r from-blue-600 to-green-300 inline-block text-transparent bg-clip-text">
+                    <div className="text-6xl lg:text-8xl font-bold leading-tight bg-gradient-to-r from-blue-600 to-green-300 inline-block text-transparent bg-clip-text">
                         FUNNER
                     </div>
                 </div>

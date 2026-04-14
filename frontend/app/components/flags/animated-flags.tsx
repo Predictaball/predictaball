@@ -5,30 +5,34 @@ import {FLAG_CODES} from "@/app/util/teams";
 interface AnimatedFlagProps {
     bottom: string,
     invert: boolean,
-    hostCountries?: boolean
+    hostCountries?: boolean,
+    className?: string
 }
 
 export default function AnimatedFlags(props: AnimatedFlagProps): React.JSX.Element {
 
     function getFlags(): React.JSX.Element[] {
-        const codes = props.hostCountries 
-            ? Array(20).fill(['us', 'ca', 'mx']).flat().slice(0, 20)
-            : FLAG_CODES.sort(() => 0.5 - Math.random()).slice(0, 20);
-        
+        const count = 20;
+        const codes = props.hostCountries
+            ? Array(count).fill(['us', 'ca', 'mx']).flat().slice(0, count)
+            : [...FLAG_CODES].slice(0, count);
+
         return codes.map((code, i) =>
-            <FlagAnimated
-                bottom={props.bottom}
-                index={i}
-                key={i}
-                invert={props.invert}
-                flagCode={code}
-            />
+            <FlagAnimated key={i} flagCode={code}/>
         )
     }
 
+    const flags = getFlags();
+
     return(
-        <>
-            {getFlags()}
-        </>
+        <div
+            className={`absolute left-0 right-0 overflow-hidden pointer-events-none ${props.className ?? ''}`}
+            style={{bottom: props.bottom}}
+        >
+            <div className={`flex w-max ${props.invert ? 'animate-scrollReverse' : 'animate-scroll'}`}>
+                {flags}
+                {flags}
+            </div>
+        </div>
     )
 }
