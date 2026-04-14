@@ -30,7 +30,7 @@ export default async function Home(): Promise<React.JSX.Element> {
                         </div>
                     </div>
 
-                    <div className="relative flex-1 w-full min-h-[420px] md:min-h-[520px] lg:min-h-0 lg:h-full lg:self-stretch">
+                    <div className="relative flex-1 w-screen -mx-10 md:w-full md:mx-0 min-h-[420px] md:min-h-[520px] lg:min-h-0 lg:h-full lg:self-stretch">
                         <FlagGlobe/>
                     </div>
                 </div>

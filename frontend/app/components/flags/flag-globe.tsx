@@ -188,9 +188,9 @@ function Globe() {
 
 export default function FlagGlobe(): React.JSX.Element {
     return (
-        <div className="relative h-full w-full overflow-visible">
+        <div className="relative h-full w-full">
             <Canvas
-                camera={{position: [0, 0, 5], fov: 45}}
+                camera={{position: [0, 0, 5.2], fov: 45}}
                 gl={{antialias: true, alpha: true}}
                 dpr={[1, 1.5]}
             >
