@@ -26,7 +26,7 @@ export default async function Home(): Promise<React.JSX.Element> {
                     <div className="text-6xl lg:text-8xl font-bold leading-tight">
                         JUST GOT
                     </div>
-                    <div className="text-6xl lg:text-8xl font-bold leading-tight bg-gradient-to-r from-blue-600 to-green-300 inline-block text-transparent bg-clip-text">
+                    <div className="text-7xl lg:text-9xl font-bold leading-tight bg-gradient-to-r from-blue-600 to-green-300 inline-block text-transparent bg-clip-text">
                         FUNNER
                     </div>
                 </div>
