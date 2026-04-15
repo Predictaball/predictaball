@@ -1,6 +1,6 @@
 'use client'
 
-import React, {useMemo, useRef} from "react"
+import React, {useEffect, useMemo, useRef, useState} from "react"
 import {Canvas, useFrame, useThree} from "@react-three/fiber"
 import {Line, useTexture} from "@react-three/drei"
 import * as THREE from "three"
@@ -55,20 +55,34 @@ function buildContinentGeometry(radius: number): THREE.BufferGeometry {
     return bufferGeom
 }
 
-function greatCircleArc(aDir: THREE.Vector3, bDir: THREE.Vector3, steps = 64, lift = 0.35): THREE.Vector3[] {
-    const a = aDir.clone().normalize()
-    const b = bDir.clone().normalize()
-    const angle = a.angleTo(b)
-    const axis = new THREE.Vector3().crossVectors(a, b)
-    if (axis.lengthSq() < 1e-8) axis.set(0, 1, 0)
-    axis.normalize()
+function visibleArc(aDir: THREE.Vector3, bDir: THREE.Vector3, steps = 64): THREE.Vector3[] {
+    const aN = aDir.clone().normalize()
+    const bN = bDir.clone().normalize()
+
+    const mid = aN.clone().add(bN)
+    if (mid.lengthSq() < 1e-4) {
+        const fallback = new THREE.Vector3().crossVectors(aN, new THREE.Vector3(0, 1, 0))
+        if (fallback.lengthSq() < 1e-4) fallback.set(1, 0, 0)
+        mid.copy(fallback)
+    }
+    mid.normalize()
+
+    const angle = aN.angleTo(bN)
+    const bulge = 0.25 + angle * 0.55
+    const control = mid.clone().multiplyScalar(GLOBE_RADIUS + bulge)
+
+    const aPos = aN.clone().multiplyScalar(GLOBE_RADIUS + 0.012)
+    const bPos = bN.clone().multiplyScalar(GLOBE_RADIUS + 0.012)
 
     const points: THREE.Vector3[] = []
     for (let i = 0; i <= steps; i++) {
         const t = i / steps
-        const dir = a.clone().applyAxisAngle(axis, angle * t)
-        const r = GLOBE_RADIUS + 0.012 + lift * Math.sin(Math.PI * t)
-        points.push(dir.multiplyScalar(r))
+        const one = 1 - t
+        const p = new THREE.Vector3()
+            .addScaledVector(aPos, one * one)
+            .addScaledVector(control, 2 * one * t)
+            .addScaledVector(bPos, t * t)
+        points.push(p)
     }
     return points
 }
@@ -95,6 +109,43 @@ function orientationForPosition(pos: THREE.Vector3): THREE.Euler {
     const normal = pos.clone().normalize()
     const quaternion = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, 1), normal)
     return new THREE.Euler().setFromQuaternion(quaternion)
+}
+
+const ARC_DRAW_SECONDS = 0.9
+
+function AnimatedArc({points, triggerKey}: {points: THREE.Vector3[]; triggerKey: string}) {
+    const progressRef = useRef(0)
+    const [, setTick] = useState(0)
+
+    useEffect(() => {
+        progressRef.current = 0
+        setTick(t => t + 1)
+    }, [triggerKey])
+
+    useFrame((_, delta) => {
+        if (progressRef.current < 1) {
+            progressRef.current = Math.min(1, progressRef.current + delta / ARC_DRAW_SECONDS)
+            setTick(t => t + 1)
+        }
+    })
+
+    const visiblePoints = useMemo(() => {
+        const progress = progressRef.current
+        if (progress >= 1) return points
+        const segments = points.length - 1
+        const t = progress * segments
+        const lastIndex = Math.floor(t)
+        const frac = t - lastIndex
+        const result = points.slice(0, lastIndex + 1)
+        const head = points[Math.min(lastIndex, segments)]
+            .clone()
+            .lerp(points[Math.min(lastIndex + 1, segments)], frac)
+        result.push(head)
+        if (result.length < 2) result.push(points[0])
+        return result
+    }, [points, progressRef.current]) // eslint-disable-line react-hooks/exhaustive-deps
+
+    return <Line points={visiblePoints} color="#fbbf24" lineWidth={2.2} transparent opacity={0.95}/>
 }
 
 function Continents() {
@@ -126,40 +177,59 @@ function FocusFlag({code, position}: {code: string; position: THREE.Vector3}) {
     )
 }
 
-function cameraTargetFor(homeCode: string, awayCode: string): {pos: THREE.Vector3; up: THREE.Vector3} {
+function cameraPath(homeCode: string, awayCode: string): {startPos: THREE.Vector3; endPos: THREE.Vector3} {
     const hc = COUNTRY_COORDS[homeCode]
     const ac = COUNTRY_COORDS[awayCode]
-    if (!hc || !ac) {
-        return {pos: new THREE.Vector3(0, 0, 5), up: new THREE.Vector3(0, 1, 0)}
-    }
+    const fallback = new THREE.Vector3(0, 0, 5)
+    if (!hc || !ac) return {startPos: fallback, endPos: fallback}
+
     const aDir = latLngToVec3(hc[0], hc[1], 1)
     const bDir = latLngToVec3(ac[0], ac[1], 1)
-    const midpoint = aDir.clone().add(bDir)
-    if (midpoint.lengthSq() < 1e-6) {
+    const mid = aDir.clone().add(bDir)
+    if (mid.lengthSq() < 1e-6) {
         const axis = new THREE.Vector3().crossVectors(aDir, new THREE.Vector3(0, 1, 0)).normalize()
-        midpoint.copy(aDir).applyAxisAngle(axis, Math.PI / 2)
+        mid.copy(aDir).applyAxisAngle(axis, Math.PI / 2)
     }
-    midpoint.normalize()
+    mid.normalize()
 
     const angle = aDir.angleTo(bDir)
     const distance = THREE.MathUtils.clamp(2.7 + angle * 1.35, 3.0, 5.6)
-    const pos = midpoint.clone().multiplyScalar(distance)
-    return {pos, up: new THREE.Vector3(0, 1, 0)}
+    const startPos = aDir.clone().normalize().multiplyScalar(distance)
+    const endPos = mid.clone().multiplyScalar(distance)
+    return {startPos, endPos}
 }
 
 function CameraRig({homeCode, awayCode}: {homeCode: string; awayCode: string}) {
     const {camera} = useThree()
-    const target = useMemo(() => cameraTargetFor(homeCode, awayCode), [homeCode, awayCode])
-    const initialized = useRef(false)
+    const {startPos, endPos} = useMemo(() => cameraPath(homeCode, awayCode), [homeCode, awayCode])
+    const progressRef = useRef(0)
 
-    useFrame(() => {
-        if (!initialized.current) {
-            camera.position.copy(target.pos)
-            camera.lookAt(0, 0, 0)
-            initialized.current = true
-            return
+    useEffect(() => {
+        progressRef.current = 0
+        camera.position.copy(startPos)
+        camera.lookAt(0, 0, 0)
+    }, [camera, startPos])
+
+    useFrame((_, delta) => {
+        if (progressRef.current < 1) {
+            progressRef.current = Math.min(1, progressRef.current + delta / ARC_DRAW_SECONDS)
         }
-        camera.position.lerp(target.pos, 0.06)
+        const t = progressRef.current
+        const eased = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2
+
+        const startDir = startPos.clone().normalize()
+        const endDir = endPos.clone().normalize()
+        const axis = new THREE.Vector3().crossVectors(startDir, endDir)
+        const angle = startDir.angleTo(endDir)
+        let dir: THREE.Vector3
+        if (axis.lengthSq() < 1e-8 || angle < 1e-4) {
+            dir = startDir
+        } else {
+            axis.normalize()
+            dir = startDir.clone().applyAxisAngle(axis, angle * eased)
+        }
+        const mag = startPos.length() + (endPos.length() - startPos.length()) * eased
+        camera.position.copy(dir.multiplyScalar(mag))
         camera.lookAt(0, 0, 0)
     })
 
@@ -172,7 +242,7 @@ function Scene({homeCode, awayCode}: {homeCode: string; awayCode: string}) {
         const ac = COUNTRY_COORDS[awayCode]
         const aDir = hc ? latLngToVec3(hc[0], hc[1], 1) : new THREE.Vector3(1, 0, 0)
         const bDir = ac ? latLngToVec3(ac[0], ac[1], 1) : new THREE.Vector3(-1, 0, 0)
-        const arcPoints = greatCircleArc(aDir, bDir)
+        const arcPoints = visibleArc(aDir, bDir)
         const aPos = aDir.clone().multiplyScalar(GLOBE_RADIUS)
         const bPos = bDir.clone().multiplyScalar(GLOBE_RADIUS)
         return {aDir, bDir, arcPoints, aPos, bPos}
@@ -195,7 +265,7 @@ function Scene({homeCode, awayCode}: {homeCode: string; awayCode: string}) {
                 <meshBasicMaterial color="#22d3ee" wireframe transparent opacity={0.08}/>
             </mesh>
             <Continents/>
-            <Line points={arcPoints} color="#fbbf24" lineWidth={2.2} transparent opacity={0.95}/>
+            <AnimatedArc points={arcPoints} triggerKey={`${homeCode}-${awayCode}`}/>
             {hasHome && (
                 <mesh position={aPos}>
                     <sphereGeometry args={[0.018, 12, 12]}/>
