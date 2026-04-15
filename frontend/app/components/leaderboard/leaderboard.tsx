@@ -10,7 +10,7 @@ interface LeaderboardProps {
 
 export default function Leaderboard(props: LeaderboardProps): React.JSX.Element {
     return (
-        <div className="w-full p-5 text-center mx-auto flex flex-col items-center">
+        <div className="w-full mx-auto flex flex-col items-center">
             <Suspense fallback={<LeaderboardSkeleton />}>
                 <Entries shouldPaginate={props.shouldPaginate} leagueId={props.leagueId} limit={props.limit} />
             </Suspense>

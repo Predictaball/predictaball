@@ -46,9 +46,17 @@ export default async function Entries(props: EntriesProps): Promise<React.JSX.El
     }
 
     return (
-        <>
-            <p className="pb-2 text-white text-l font-bold">{leaderboardData?.leagueName} Standings</p>
-            <LeaderboardPagination shouldPaginate={props.shouldPaginate} leaderboardInners={await leaderboard()} userId={userId}/>
-        </>
+        <div className="w-full max-w-2xl mx-auto">
+            {leaderboardData?.leagueName && (
+                <p className="pb-3 text-center text-sm font-semibold tracking-wide text-gray-300">
+                    {leaderboardData.leagueName}
+                </p>
+            )}
+            <LeaderboardPagination
+                shouldPaginate={props.shouldPaginate}
+                leaderboardInners={await leaderboard()}
+                userId={userId}
+            />
+        </div>
     )
 }

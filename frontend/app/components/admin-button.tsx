@@ -5,7 +5,7 @@ import { getCookie } from "cookies-next"
 import { TOKEN_COOKIE_KEY } from "@/app/api/api"
 import Link from "next/link"
 import { Button } from "@nextui-org/react"
-import { BUTTON_CLASS } from "@/app/util/css-classes"
+import { GHOST_BUTTON_CLASS } from "@/app/util/css-classes"
 
 export default function AdminButton() {
     const token = getCookie(TOKEN_COOKIE_KEY)
@@ -19,8 +19,10 @@ export default function AdminButton() {
     }
 
     return (
-        <div className="absolute left-4 top-3">
-            <Link href="/app/admin"><Button size="sm" className={BUTTON_CLASS}>Admin</Button></Link>
-        </div>
+        <Link href="/app/admin">
+            <Button size="sm" radius="full" className={GHOST_BUTTON_CLASS}>
+                Admin
+            </Button>
+        </Link>
     )
 }
