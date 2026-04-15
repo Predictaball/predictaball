@@ -9,8 +9,7 @@ import LinkToHistory from "@/app/components/link-to-history"
 import AdminButton from "@/app/components/admin-button";
 import {getConfigWithAuthHeader} from "@/app/api/client-config";
 import {ListMatchesFilterTypeEnum, MatchApi} from "@/client";
-import Ticket from "@/app/components/ticket/ticket";
-import {MatchesHeader} from "@/app/components/ticket/matches-header";
+import PredictionPanel from "@/app/components/predictions/prediction-panel";
 
 const Home = async () => {
     const config = await getConfigWithAuthHeader()
@@ -32,19 +31,9 @@ const Home = async () => {
                 <p className="text-xl font-bold mt-4 text-white text-center">PREDICTABALL</p>
                 <HeadlineSuspense />
 
-                {liveMatches.length > 0 && <div className="flex flex-wrap w-full content-center justify-center">
-                    <MatchesHeader showInfoButton={false} title="Live Matches" />
-                    {liveMatches.map((match, i) => (
-                        <Ticket match={match} key={match.matchId} collapse={i !== 0} admin={false} forPredictionPage={false} />
-                    ))}
-                </div>}
-
-                {upcomingMatches.length > 0 && <div className="flex flex-wrap w-full content-center justify-center">
-                    <MatchesHeader showInfoButton title="Upcoming Matches" extraInfo="Predict the score when the match ends, including any extra time." />
-                    {upcomingMatches.map((match, i) => (
-                        <Ticket match={match} key={match.matchId} collapse={i !== 0} admin={false} forPredictionPage={false} />
-                    ))}
-                </div>}
+                <div className="w-full my-6">
+                    <PredictionPanel liveMatches={liveMatches} upcomingMatches={upcomingMatches}/>
+                </div>
 
                 <LinkToHistory/>
                 <Dashboard />
