@@ -314,16 +314,16 @@ function Globe({matches}: {matches: Match[]}) {
     )
 }
 
-const DEFAULT_MATCHES: Match[] = [
-    {home: "us", away: "nz"},
-    {home: "fr", away: "mx"},
-    {home: "br", away: "jp"},
-    {home: "de", away: "ar"},
-]
+const DEFAULT_MATCHES: Match[] = []
 
-export default function FlagGlobe({matches = DEFAULT_MATCHES}: {matches?: Match[]} = {}): React.JSX.Element {
+interface FlagGlobeProps {
+    matches?: Match[]
+    interactive?: boolean
+}
+
+export default function FlagGlobe({matches = DEFAULT_MATCHES, interactive = true}: FlagGlobeProps = {}): React.JSX.Element {
     return (
-        <div className="relative h-full w-full">
+        <div className={`relative h-full w-full ${interactive ? "" : "pointer-events-none"}`}>
             <Canvas
                 camera={{position: [0, 0, 5.2], fov: 45}}
                 gl={{antialias: true, alpha: true}}
@@ -333,13 +333,15 @@ export default function FlagGlobe({matches = DEFAULT_MATCHES}: {matches?: Match[
                 <directionalLight position={[5, 3, 5]} intensity={1.1}/>
                 <pointLight position={[-5, -3, -5]} intensity={0.4} color="#22d3ee"/>
                 <Globe matches={matches}/>
-                <OrbitControls
-                    enableZoom={false}
-                    enablePan={false}
-                    rotateSpeed={0.5}
-                    enableDamping
-                    dampingFactor={0.08}
-                />
+                {interactive && (
+                    <OrbitControls
+                        enableZoom={false}
+                        enablePan={false}
+                        rotateSpeed={0.5}
+                        enableDamping
+                        dampingFactor={0.08}
+                    />
+                )}
             </Canvas>
         </div>
     )
