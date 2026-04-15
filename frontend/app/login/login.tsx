@@ -6,9 +6,9 @@ import {AUTH_CLIENT, TOKEN_COOKIE_KEY, REFRESH_TOKEN_COOKIE_KEY} from "@/app/api
 import {navigateTo} from "@/app/actions";
 import {Button, Input} from "@nextui-org/react";
 import {EyeFilledIcon, EyeSlashFilledIcon} from "@nextui-org/shared-icons";
-import {BUTTON_CLASS} from "@/app/util/css-classes";
+import {AUTH_INPUT_CLASS_NAMES, BUTTON_CLASS} from "@/app/util/css-classes";
 import {setCookie} from "cookies-next";
-import Link from "next/link";
+import AuthShell from "@/app/components/auth-shell";
 
 export default function Login({callbackUrl, leagueId}: {callbackUrl: string | undefined, leagueId: string | undefined}) {
 
@@ -51,75 +51,62 @@ export default function Login({callbackUrl, leagueId}: {callbackUrl: string | un
     const signUpLink = "/signup" + ((leagueId && `?leagueId=${leagueId}`) || "")
 
     return (
-        <section>
-            <div className="bg-gray-900 flex flex-col items-center justify-center px-6 py-8 mx-auto h-screen lg:py-0">
-                <h1 className="text-white pb-20">
-                    <Link href="/">PREDICTABALL.LIVE</Link>
-                </h1>
-                <div
-                    className="w-full bg-white rounded-lg shadow dark:border md:mt-0 sm:max-w-md xl:p-0 dark:bg-gray-800 dark:border-gray-700">
-                    <div className="p-6 space-y-4 items-center justify-between md:space-y-6 sm:p-8">
-                        <h1 className="text-xl text-center font-bold leading-tight tracking-tight text-gray-900 md:text-2xl">
-                            Sign in to your account
-                        </h1>
-                        <div>
-                            <Input
-                                onChange={(event) => {
-                                    setDidFail(false)
-                                    setEmail(event.target.value)
-                                }}
-                                type="email"
-                                name="email"
-                                id="email"
-                                label="Email"
-                                isInvalid={didFail && !didSucceed}
-                                style={{fontSize: "18px"}}
-                            />
-                        </div>
-                        <div>
-                            <Input
-                                label="Password"
-                                onChange={(event) => {
-                                    setPassword(event.target.value)
-                                    setDidFail(false)
-                                }}
-                                style={{fontSize: "18px"}}
-                                endContent={
-                                    <button className="focus:outline-none" type="button" onClick={toggleVisibility}>
-                                        {isVisible ? (
-                                            <EyeSlashFilledIcon
-                                                className="text-2xl text-default-400 pointer-events-none"/>
-                                        ) : (
-                                            <EyeFilledIcon
-                                                className="text-2xl text-default-400 pointer-events-none"/>
-                                        )}
-                                    </button>
-                                }
-                                type={isVisible ? "text" : "password"}
-                                isInvalid={didFail && !didSucceed}
-                            />
-                        </div>
-                        <div className="flex items-center justify-between">
-                            <a href="/reset"
-                               className="text-sm font-medium text-indigo-600 hover:underline">
-                                Forgot password?
-                            </a>
-                        </div>
-                        <Button
-                            onPress={handleEvent}
-                            isLoading={isLoading}
-                            type="submit"
-                            className={"w-full " + BUTTON_CLASS}>
-                            Sign in
-                        </Button>
-                        <p className="text-center text-sm font-light text-gray-500">
-                            {"Don't have an account yet?"} <a href={signUpLink}
-                                                          className="font-medium hover:underline text-indigo-600">Sign
-                            up</a>
-                        </p>
-                    </div>
+        <AuthShell title="Sign in to your account">
+            <div className="space-y-5">
+                <Input
+                    onChange={(event) => {
+                        setDidFail(false)
+                        setEmail(event.target.value)
+                    }}
+                    type="email"
+                    name="email"
+                    id="email"
+                    label="Email"
+                    variant="bordered"
+                    isInvalid={didFail && !didSucceed}
+                    classNames={AUTH_INPUT_CLASS_NAMES}
+                    style={{fontSize: "18px"}}
+                />
+                <Input
+                    label="Password"
+                    variant="bordered"
+                    onChange={(event) => {
+                        setPassword(event.target.value)
+                        setDidFail(false)
+                    }}
+                    style={{fontSize: "18px"}}
+                    classNames={AUTH_INPUT_CLASS_NAMES}
+                    endContent={
+                        <button className="focus:outline-none" type="button" onClick={toggleVisibility}>
+                            {isVisible ? (
+                                <EyeSlashFilledIcon className="text-2xl text-gray-400 pointer-events-none"/>
+                            ) : (
+                                <EyeFilledIcon className="text-2xl text-gray-400 pointer-events-none"/>
+                            )}
+                        </button>
+                    }
+                    type={isVisible ? "text" : "password"}
+                    isInvalid={didFail && !didSucceed}
+                />
+                <div className="flex items-center justify-end">
+                    <a href="/reset" className="text-sm font-medium text-cyan-300 hover:text-cyan-200 hover:underline">
+                        Forgot password?
+                    </a>
                 </div>
+                <Button
+                    onPress={handleEvent}
+                    isLoading={isLoading}
+                    type="submit"
+                    className={"w-full " + BUTTON_CLASS}>
+                    Sign in
+                </Button>
+                <p className="text-center text-sm text-gray-400">
+                    Don&apos;t have an account yet?{" "}
+                    <a href={signUpLink} className="font-semibold text-cyan-300 hover:text-cyan-200 hover:underline">
+                        Sign up
+                    </a>
+                </p>
             </div>
-        </section>
+        </AuthShell>
     );
 }

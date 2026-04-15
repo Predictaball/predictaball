@@ -111,6 +111,62 @@ function buildContinentGeometry(radius: number): THREE.BufferGeometry {
     return bufferGeom
 }
 
+export type Match = {home: string; away: string}
+
+function greatCircleArc(
+    aDir: THREE.Vector3,
+    bDir: THREE.Vector3,
+    steps = 48,
+    lift = 0.18,
+): THREE.Vector3[] {
+    const a = aDir.clone().normalize()
+    const b = bDir.clone().normalize()
+    const angle = a.angleTo(b)
+    const axis = new THREE.Vector3().crossVectors(a, b)
+    if (axis.lengthSq() < 1e-8) axis.set(0, 1, 0)
+    axis.normalize()
+
+    const points: THREE.Vector3[] = []
+    for (let i = 0; i <= steps; i++) {
+        const t = i / steps
+        const dir = a.clone().applyAxisAngle(axis, angle * t)
+        const r = GLOBE_RADIUS + 0.012 + lift * Math.sin(Math.PI * t)
+        points.push(dir.multiplyScalar(r))
+    }
+    return points
+}
+
+function Matches({matches}: {matches: Match[]}) {
+    const arcs = useMemo(() =>
+        matches.flatMap(m => {
+            const a = COUNTRY_COORDS[m.home]
+            const b = COUNTRY_COORDS[m.away]
+            if (!a || !b) return []
+            const aDir = latLngToVec3(a[0], a[1], 1)
+            const bDir = latLngToVec3(b[0], b[1], 1)
+            return [{
+                key: `${m.home}-${m.away}`,
+                points: greatCircleArc(aDir, bDir),
+            }]
+        }),
+    [matches])
+
+    return (
+        <>
+            {arcs.map(arc => (
+                <Line
+                    key={arc.key}
+                    points={arc.points}
+                    color="#fbbf24"
+                    lineWidth={1.6}
+                    transparent
+                    opacity={0.9}
+                />
+            ))}
+        </>
+    )
+}
+
 function Continents() {
     const geometry = useMemo(() => buildContinentGeometry(GLOBE_RADIUS + 0.008), [])
     return (
@@ -217,7 +273,7 @@ function Flags() {
     )
 }
 
-function Globe() {
+function Globe({matches}: {matches: Match[]}) {
     const groupRef = useRef<THREE.Group>(null)
 
     useFrame((_, delta) => {
@@ -249,6 +305,8 @@ function Globe() {
 
             <Continents/>
 
+            <Matches matches={matches}/>
+
             <React.Suspense fallback={null}>
                 <Flags/>
             </React.Suspense>
@@ -256,7 +314,14 @@ function Globe() {
     )
 }
 
-export default function FlagGlobe(): React.JSX.Element {
+const DEFAULT_MATCHES: Match[] = [
+    {home: "us", away: "nz"},
+    {home: "fr", away: "mx"},
+    {home: "br", away: "jp"},
+    {home: "de", away: "ar"},
+]
+
+export default function FlagGlobe({matches = DEFAULT_MATCHES}: {matches?: Match[]} = {}): React.JSX.Element {
     return (
         <div className="relative h-full w-full">
             <Canvas
@@ -267,7 +332,7 @@ export default function FlagGlobe(): React.JSX.Element {
                 <ambientLight intensity={0.7}/>
                 <directionalLight position={[5, 3, 5]} intensity={1.1}/>
                 <pointLight position={[-5, -3, -5]} intensity={0.4} color="#22d3ee"/>
-                <Globe/>
+                <Globe matches={matches}/>
                 <OrbitControls
                     enableZoom={false}
                     enablePan={false}

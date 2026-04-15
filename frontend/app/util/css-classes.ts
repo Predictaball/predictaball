@@ -1,1 +1,14 @@
-export const BUTTON_CLASS = "bg-gradient-to-r from-indigo-500 from-10% via-sky-500 via-30% to-emerald-500 to-90% text-white"
+export const BUTTON_CLASS = "bg-gradient-to-r from-blue-600 via-cyan-400 to-green-300 text-gray-900 font-semibold shadow-lg shadow-cyan-500/20 transition-transform hover:scale-[1.02]"
+
+export const AUTH_INPUT_CLASS_NAMES = {
+    label: "text-gray-300 group-data-[filled-within=true]:text-cyan-300",
+    input: "text-white placeholder:text-gray-500",
+    inputWrapper: [
+        "bg-white/5",
+        "border border-white/10",
+        "hover:bg-white/10",
+        "group-data-[focus=true]:bg-white/10",
+        "group-data-[focus=true]:border-cyan-400",
+        "shadow-none",
+    ].join(" "),
+}
