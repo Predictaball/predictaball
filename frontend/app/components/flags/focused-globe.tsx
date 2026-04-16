@@ -189,7 +189,7 @@ function mirrorHorizontally(source: THREE.Texture): THREE.Texture {
 }
 
 function FocusFlag({code, position}: {code: string; position: THREE.Vector3}) {
-    const texture = useTexture(`https://flagcdn.com/w160/${code}.png`) as THREE.Texture
+    const texture = useTexture(`https://flagcdn.com/w320/${code}.png`) as THREE.Texture
     const front = useMemo(() => cropSquare(texture), [texture])
     const back = useMemo(() => mirrorHorizontally(front), [front])
     const {anchorPos, flagPos, surfaceNormal} = useMemo(() => {

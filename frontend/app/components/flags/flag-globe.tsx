@@ -1,6 +1,6 @@
 'use client'
 
-import React, {useMemo, useRef} from "react"
+import React, {useEffect, useMemo, useRef, useState} from "react"
 import {Canvas, useFrame} from "@react-three/fiber"
 import {Line, OrbitControls, useTexture} from "@react-three/drei"
 import * as THREE from "three"
@@ -190,15 +190,29 @@ interface FlagGlobeProps {
     interactive?: boolean
 }
 
+function useCoarsePointer(): boolean {
+    const [coarse, setCoarse] = useState(false)
+    useEffect(() => {
+        const mq = window.matchMedia("(pointer: coarse)")
+        const update = () => setCoarse(mq.matches)
+        update()
+        mq.addEventListener("change", update)
+        return () => mq.removeEventListener("change", update)
+    }, [])
+    return coarse
+}
+
 export default function FlagGlobe({matches = DEFAULT_MATCHES, interactive = true}: FlagGlobeProps = {}): React.JSX.Element {
+    const coarsePointer = useCoarsePointer()
+    const effectiveInteractive = interactive && !coarsePointer
     return (
-        <div className={`relative h-full w-full ${interactive ? "" : "pointer-events-none"}`}>
+        <div className={`relative h-full w-full ${effectiveInteractive ? "" : "pointer-events-none"}`}>
             <Canvas camera={{position: [0, 0, 5.2], fov: 45}} gl={{antialias: true, alpha: true}} dpr={[1, 1.5]}>
                 <ambientLight intensity={0.7}/>
                 <directionalLight position={[5, 3, 5]} intensity={1.1}/>
                 <pointLight position={[-5, -3, -5]} intensity={0.4} color="#22d3ee"/>
                 <Globe matches={matches}/>
-                {interactive && (
+                {effectiveInteractive && (
                     <OrbitControls enableZoom={false} enablePan={false} rotateSpeed={0.5} enableDamping dampingFactor={0.08}/>
                 )}
             </Canvas>
