@@ -35,9 +35,40 @@ export default function PredictionPanel({liveMatches, upcomingMatches}: Predicti
         )
     }
 
+    function advanceToNext() {
+        const idx = allMatches.findIndex(m => m.matchId === selected.matchId)
+        const next = allMatches[(idx + 1) % allMatches.length]
+        if (next) setSelectedId(next.matchId)
+    }
+
+    const homeCode = selected.homeTeamFlagCode.toLowerCase()
+    const awayCode = selected.awayTeamFlagCode.toLowerCase()
+
     return (
         <div className="w-full max-w-5xl mx-auto space-y-6">
-            <FocusCard match={selected} key={selected.matchId}/>
+            <div className="relative rounded-3xl bg-gradient-to-br from-white/15 to-white/5 p-[1px] shadow-2xl shadow-cyan-500/10">
+                <div className="relative rounded-3xl bg-gray-900/80 backdrop-blur-xl overflow-hidden">
+                    <div className="flex flex-col md:flex-row">
+                        <div className="relative w-full md:w-[62%] aspect-square md:aspect-auto md:min-h-[480px] bg-gradient-to-br from-gray-900 via-slate-900 to-gray-900">
+                            <div className="absolute inset-0">
+                                <FocusedGlobeClient homeCode={homeCode} awayCode={awayCode}/>
+                            </div>
+                            <div className="absolute top-4 left-4 right-4 flex items-center justify-between pointer-events-none">
+                                <span className="inline-flex items-center gap-2 rounded-full bg-black/50 border border-white/10 px-3 py-1 text-xs font-semibold text-gray-200 backdrop-blur">
+                                    {selected.state === MatchStateEnum.Live && (
+                                        <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse"/>
+                                    )}
+                                    {selected.state === MatchStateEnum.Live ? "Live" : ROUND_LABEL[selected.round]}
+                                </span>
+                                <span className="hidden sm:inline rounded-full bg-black/50 border border-white/10 px-3 py-1 text-xs text-gray-300 backdrop-blur">
+                                    {selected.venue}
+                                </span>
+                            </div>
+                        </div>
+                        <FocusCardForm match={selected} key={selected.matchId} onPredictionSaved={advanceToNext}/>
+                    </div>
+                </div>
+            </div>
             <MatchStrip
                 liveMatches={liveMatches}
                 upcomingMatches={upcomingMatches}
@@ -48,7 +79,9 @@ export default function PredictionPanel({liveMatches, upcomingMatches}: Predicti
     )
 }
 
-function FocusCard({match}: {match: Match}) {
+const ADVANCE_DELAY_MS = 800
+
+function FocusCardForm({match, onPredictionSaved}: {match: Match; onPredictionSaved: () => void}) {
     const isUpcoming = match.state === MatchStateEnum.Upcoming
     const [homeScore, setHomeScore] = useState<string>(match.prediction?.homeScore?.toString() ?? "")
     const [awayScore, setAwayScore] = useState<string>(match.prediction?.awayScore?.toString() ?? "")
@@ -80,6 +113,7 @@ function FocusCard({match}: {match: Match}) {
             await handlePrediction(h, a, match.matchId)
             setSavedPrediction({home: h, away: a})
             toast.success("Prediction saved")
+            setTimeout(onPredictionSaved, ADVANCE_DELAY_MS)
         } catch {
             toast.error("Couldn't save prediction — try again")
         } finally {
@@ -92,65 +126,42 @@ function FocusCard({match}: {match: Match}) {
         || savedPrediction.away !== Number(awayScore)
 
     return (
-        <div className="relative rounded-3xl bg-gradient-to-br from-white/15 to-white/5 p-[1px] shadow-2xl shadow-cyan-500/10">
-            <div className="relative rounded-3xl bg-gray-900/80 backdrop-blur-xl overflow-hidden">
-                <div className="flex flex-col md:flex-row">
-                    <div className="relative w-full md:w-[62%] aspect-square md:aspect-auto md:min-h-[480px] bg-gradient-to-br from-gray-900 via-slate-900 to-gray-900">
-                        <div className="absolute inset-0">
-                            <FocusedGlobeClient homeCode={homeCode} awayCode={awayCode}/>
-                        </div>
-                        <div className="absolute top-4 left-4 right-4 flex items-center justify-between pointer-events-none">
-                            <span className="inline-flex items-center gap-2 rounded-full bg-black/50 border border-white/10 px-3 py-1 text-xs font-semibold text-gray-200 backdrop-blur">
-                                {match.state === MatchStateEnum.Live && (
-                                    <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse"/>
-                                )}
-                                {match.state === MatchStateEnum.Live ? "Live" : ROUND_LABEL[match.round]}
-                            </span>
-                            <span className="hidden sm:inline rounded-full bg-black/50 border border-white/10 px-3 py-1 text-xs text-gray-300 backdrop-blur">
-                                {match.venue}
-                            </span>
-                        </div>
-                    </div>
-
-                    <div className="flex-1 p-6 sm:p-8 flex flex-col justify-center">
-                        <div className="text-center md:text-left text-xs uppercase tracking-[0.2em] text-gray-400 mb-2">
-                            {isUpcoming ? "Predict the score" : "Your prediction"}
-                        </div>
-                        <div className="text-xs text-gray-400 mb-6 text-center md:text-left">
-                            <LocalTime date={match.datetime}/>
-                        </div>
-
-                        <div className="flex items-center justify-between gap-2">
-                            <TeamSide code={homeCode} name={match.homeTeam}/>
-                            <div className="flex items-center gap-2">
-                                <ScoreInput value={homeScore} onChange={handleDigit(setHomeScore)} disabled={!isUpcoming}/>
-                                <span className="text-3xl font-black text-gray-500">:</span>
-                                <ScoreInput value={awayScore} onChange={handleDigit(setAwayScore)} disabled={!isUpcoming}/>
-                            </div>
-                            <TeamSide code={awayCode} name={match.awayTeam} reverse/>
-                        </div>
-
-                        {isUpcoming && (
-                            <Button
-                                onPress={submit}
-                                isLoading={isSending}
-                                isDisabled={!hasChanges}
-                                className={"mt-6 w-full " + BUTTON_CLASS}
-                            >
-                                {savedPrediction ? "Update prediction" : "Submit prediction"}
-                            </Button>
-                        )}
-
-                        {!isUpcoming && (
-                            <div className="mt-6 text-center text-sm text-gray-400">
-                                {match.state === MatchStateEnum.Live
-                                    ? `Live score: ${match.homeScore ?? 0} - ${match.awayScore ?? 0}`
-                                    : `Final: ${match.homeScore ?? 0} - ${match.awayScore ?? 0}`}
-                            </div>
-                        )}
-                    </div>
-                </div>
+        <div className="flex-1 p-6 sm:p-8 flex flex-col justify-center">
+            <div className="text-center md:text-left text-xs uppercase tracking-[0.2em] text-gray-400 mb-2">
+                {isUpcoming ? "Predict the score" : "Your prediction"}
             </div>
+            <div className="text-xs text-gray-400 mb-6 text-center md:text-left">
+                <LocalTime date={match.datetime}/>
+            </div>
+
+            <div className="flex items-center justify-between gap-2">
+                <TeamSide code={homeCode} name={match.homeTeam}/>
+                <div className="flex items-center gap-2">
+                    <ScoreInput value={homeScore} onChange={handleDigit(setHomeScore)} disabled={!isUpcoming}/>
+                    <span className="text-3xl font-black text-gray-500">:</span>
+                    <ScoreInput value={awayScore} onChange={handleDigit(setAwayScore)} disabled={!isUpcoming}/>
+                </div>
+                <TeamSide code={awayCode} name={match.awayTeam} reverse/>
+            </div>
+
+            {isUpcoming && (
+                <Button
+                    onPress={submit}
+                    isLoading={isSending}
+                    isDisabled={!hasChanges}
+                    className={"mt-6 w-full " + BUTTON_CLASS}
+                >
+                    {savedPrediction ? "Update prediction" : "Submit prediction"}
+                </Button>
+            )}
+
+            {!isUpcoming && (
+                <div className="mt-6 text-center text-sm text-gray-400">
+                    {match.state === MatchStateEnum.Live
+                        ? `Live score: ${match.homeScore ?? 0} - ${match.awayScore ?? 0}`
+                        : `Final: ${match.homeScore ?? 0} - ${match.awayScore ?? 0}`}
+                </div>
+            )}
         </div>
     )
 }

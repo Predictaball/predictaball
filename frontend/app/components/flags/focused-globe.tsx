@@ -111,29 +111,30 @@ function orientationForPosition(pos: THREE.Vector3): THREE.Euler {
     return new THREE.Euler().setFromQuaternion(quaternion)
 }
 
+const TRAVEL_SECONDS = 0.7
 const ARC_DRAW_SECONDS = 0.9
 
-function AnimatedArc({points, triggerKey}: {points: THREE.Vector3[]; triggerKey: string}) {
-    const progressRef = useRef(0)
+type Phase = "travel" | "draw" | "done"
+
+interface AnimState {
+    phase: Phase
+    progress: number
+}
+
+function AnimatedArc({points, anim}: {points: THREE.Vector3[]; anim: React.RefObject<AnimState>}) {
     const [, setTick] = useState(0)
 
-    useEffect(() => {
-        progressRef.current = 0
-        setTick(t => t + 1)
-    }, [triggerKey])
-
-    useFrame((_, delta) => {
-        if (progressRef.current < 1) {
-            progressRef.current = Math.min(1, progressRef.current + delta / ARC_DRAW_SECONDS)
-            setTick(t => t + 1)
-        }
+    useFrame(() => {
+        if (anim.current.phase !== "done") setTick(t => t + 1)
     })
 
     const visiblePoints = useMemo(() => {
-        const progress = progressRef.current
-        if (progress >= 1) return points
+        const {phase, progress} = anim.current
+        if (phase === "travel") return [points[0], points[0]]
+        const p = phase === "done" ? 1 : progress
+        if (p >= 1) return points
         const segments = points.length - 1
-        const t = progress * segments
+        const t = p * segments
         const lastIndex = Math.floor(t)
         const frac = t - lastIndex
         const result = points.slice(0, lastIndex + 1)
@@ -143,7 +144,7 @@ function AnimatedArc({points, triggerKey}: {points: THREE.Vector3[]; triggerKey:
         result.push(head)
         if (result.length < 2) result.push(points[0])
         return result
-    }, [points, progressRef.current]) // eslint-disable-line react-hooks/exhaustive-deps
+    }, [points, anim.current.phase, anim.current.progress]) // eslint-disable-line react-hooks/exhaustive-deps
 
     return <Line points={visiblePoints} color="#fbbf24" lineWidth={2.2} transparent opacity={0.95}/>
 }
@@ -199,44 +200,74 @@ function cameraPath(homeCode: string, awayCode: string): {startPos: THREE.Vector
     return {startPos, endPos}
 }
 
-function CameraRig({homeCode, awayCode}: {homeCode: string; awayCode: string}) {
+function slerpVec(from: THREE.Vector3, to: THREE.Vector3, mag: number, t: number): THREE.Vector3 {
+    const fromDir = from.clone().normalize()
+    const toDir = to.clone().normalize()
+    const axis = new THREE.Vector3().crossVectors(fromDir, toDir)
+    const angle = fromDir.angleTo(toDir)
+    if (axis.lengthSq() < 1e-8 || angle < 1e-4) return fromDir.multiplyScalar(mag)
+    axis.normalize()
+    return fromDir.clone().applyAxisAngle(axis, angle * t).multiplyScalar(mag)
+}
+
+function easeInOut(t: number): number {
+    return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2
+}
+
+function CameraRig({homeCode, awayCode, anim}: {homeCode: string; awayCode: string; anim: React.RefObject<AnimState>}) {
     const {camera} = useThree()
     const {startPos, endPos} = useMemo(() => cameraPath(homeCode, awayCode), [homeCode, awayCode])
-    const progressRef = useRef(0)
+    const travelOrigin = useRef(new THREE.Vector3(0, 0, 5))
+    const initialized = useRef(false)
 
     useEffect(() => {
-        progressRef.current = 0
-        camera.position.copy(startPos)
-        camera.lookAt(0, 0, 0)
-    }, [camera, startPos])
+        if (!initialized.current) {
+            camera.position.copy(startPos)
+            camera.lookAt(0, 0, 0)
+            initialized.current = true
+            anim.current.phase = "draw"
+            anim.current.progress = 0
+            travelOrigin.current.copy(startPos)
+            return
+        }
+        travelOrigin.current.copy(camera.position)
+        anim.current.phase = "travel"
+        anim.current.progress = 0
+    }, [camera, startPos, endPos, anim])
 
     useFrame((_, delta) => {
-        if (progressRef.current < 1) {
-            progressRef.current = Math.min(1, progressRef.current + delta / ARC_DRAW_SECONDS)
-        }
-        const t = progressRef.current
-        const eased = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2
+        const a = anim.current
+        if (a.phase === "done") return
 
-        const startDir = startPos.clone().normalize()
-        const endDir = endPos.clone().normalize()
-        const axis = new THREE.Vector3().crossVectors(startDir, endDir)
-        const angle = startDir.angleTo(endDir)
-        let dir: THREE.Vector3
-        if (axis.lengthSq() < 1e-8 || angle < 1e-4) {
-            dir = startDir
+        const duration = a.phase === "travel" ? TRAVEL_SECONDS : ARC_DRAW_SECONDS
+        a.progress = Math.min(1, a.progress + delta / duration)
+        const eased = easeInOut(a.progress)
+
+        if (a.phase === "travel") {
+            const mag = travelOrigin.current.length() + (startPos.length() - travelOrigin.current.length()) * eased
+            camera.position.copy(slerpVec(travelOrigin.current, startPos, mag, eased))
         } else {
-            axis.normalize()
-            dir = startDir.clone().applyAxisAngle(axis, angle * eased)
+            const mag = startPos.length() + (endPos.length() - startPos.length()) * eased
+            camera.position.copy(slerpVec(startPos, endPos, mag, eased))
         }
-        const mag = startPos.length() + (endPos.length() - startPos.length()) * eased
-        camera.position.copy(dir.multiplyScalar(mag))
         camera.lookAt(0, 0, 0)
+
+        if (a.progress >= 1) {
+            if (a.phase === "travel") {
+                a.phase = "draw"
+                a.progress = 0
+            } else {
+                a.phase = "done"
+            }
+        }
     })
 
     return null
 }
 
 function Scene({homeCode, awayCode}: {homeCode: string; awayCode: string}) {
+    const anim = useRef<AnimState>({phase: "draw", progress: 0})
+
     const {aDir, bDir, arcPoints, aPos, bPos} = useMemo(() => {
         const hc = COUNTRY_COORDS[homeCode]
         const ac = COUNTRY_COORDS[awayCode]
@@ -256,6 +287,7 @@ function Scene({homeCode, awayCode}: {homeCode: string; awayCode: string}) {
 
     return (
         <>
+            <CameraRig homeCode={homeCode} awayCode={awayCode} anim={anim}/>
             <mesh>
                 <sphereGeometry args={[GLOBE_RADIUS, 64, 64]}/>
                 <meshStandardMaterial color="#1e3a5f" roughness={0.75} metalness={0.15}/>
@@ -265,7 +297,7 @@ function Scene({homeCode, awayCode}: {homeCode: string; awayCode: string}) {
                 <meshBasicMaterial color="#22d3ee" wireframe transparent opacity={0.08}/>
             </mesh>
             <Continents/>
-            <AnimatedArc points={arcPoints} triggerKey={`${homeCode}-${awayCode}`}/>
+            <AnimatedArc points={arcPoints} anim={anim}/>
             {hasHome && (
                 <mesh position={aPos}>
                     <sphereGeometry args={[0.018, 12, 12]}/>
@@ -302,7 +334,6 @@ export default function FocusedGlobe({homeCode, awayCode}: FocusedGlobeProps): R
                 <ambientLight intensity={0.75}/>
                 <directionalLight position={[5, 3, 5]} intensity={1.1}/>
                 <pointLight position={[-5, -3, -5]} intensity={0.4} color="#22d3ee"/>
-                <CameraRig homeCode={homeCode} awayCode={awayCode}/>
                 <Scene homeCode={homeCode} awayCode={awayCode}/>
             </Canvas>
         </div>
