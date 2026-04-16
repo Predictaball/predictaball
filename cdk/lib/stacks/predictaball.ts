@@ -139,6 +139,7 @@ export class Predictaball extends Stack {
           "cognito-idp:AdminCreateUser",
           "cognito-idp:AdminSetUserPassword",
           "cognito-idp:AdminDeleteUser",
+          "cognito-idp:AdminGetUser",
         ],
         resources: [cognito.userPool.userPoolArn],
       }),
