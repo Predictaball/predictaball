@@ -5,10 +5,13 @@ import {Canvas, useFrame, useThree} from "@react-three/fiber"
 import {Line, useTexture} from "@react-three/drei"
 import * as THREE from "three"
 import {COUNTRY_COORDS} from "./country-coords"
-import {GLOBE_RADIUS, latLngToVec3, buildContinentGeometry, orientationForPosition, cropSquare} from "./globe-utils"
+import {GLOBE_RADIUS, latLngToVec3, buildContinentGeometry, cropSquare} from "./globe-utils"
 
-const FLAG_DISC_RADIUS = 0.14
-const FLAG_BORDER_WIDTH = 0.018
+const FLAG_DISC_RADIUS = 0.09
+const FLAG_BORDER_WIDTH = 0.012
+const FLAG_ANCHOR_OFFSET = 0.005
+const FLAG_LIFT = 0.42
+const FLAG_CAMERA_TILT = 0.45
 const TRAVEL_SECONDS = 0.7
 const ARC_DRAW_SECONDS = 0.9
 
@@ -175,23 +178,61 @@ function Continents() {
     )
 }
 
+function mirrorHorizontally(source: THREE.Texture): THREE.Texture {
+    const tex = source.clone()
+    tex.wrapS = THREE.ClampToEdgeWrapping
+    tex.wrapT = THREE.ClampToEdgeWrapping
+    tex.offset.set(source.offset.x + source.repeat.x, source.offset.y)
+    tex.repeat.set(-source.repeat.x, source.repeat.y)
+    tex.needsUpdate = true
+    return tex
+}
+
 function FocusFlag({code, position}: {code: string; position: THREE.Vector3}) {
     const texture = useTexture(`https://flagcdn.com/w160/${code}.png`) as THREE.Texture
     const front = useMemo(() => cropSquare(texture), [texture])
-    const rotation = useMemo(() => orientationForPosition(position), [position])
-    const raised = useMemo(() => position.clone().normalize().multiplyScalar(GLOBE_RADIUS + 0.05), [position])
+    const back = useMemo(() => mirrorHorizontally(front), [front])
+    const {anchorPos, flagPos, surfaceNormal} = useMemo(() => {
+        const dir = position.clone().normalize()
+        return {
+            anchorPos: dir.clone().multiplyScalar(GLOBE_RADIUS + FLAG_ANCHOR_OFFSET),
+            flagPos: dir.clone().multiplyScalar(GLOBE_RADIUS + FLAG_LIFT),
+            surfaceNormal: dir.clone(),
+        }
+    }, [position])
+
+    const groupRef = useRef<THREE.Group>(null)
+    const {camera} = useThree()
+
+    useFrame(() => {
+        if (!groupRef.current) return
+        const camDir = camera.position.clone().sub(flagPos).normalize()
+        const faceDir = surfaceNormal.clone().lerp(camDir, FLAG_CAMERA_TILT).normalize()
+        groupRef.current.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), faceDir)
+    })
 
     return (
-        <group position={raised} rotation={rotation}>
-            <mesh>
-                <circleGeometry args={[FLAG_DISC_RADIUS + FLAG_BORDER_WIDTH, 48]}/>
-                <meshBasicMaterial color="#ffffff" side={THREE.DoubleSide}/>
+        <>
+            <mesh position={anchorPos}>
+                <sphereGeometry args={[0.012, 10, 10]}/>
+                <meshBasicMaterial color="#22d3ee"/>
             </mesh>
-            <mesh position={[0, 0, 0.001]}>
-                <circleGeometry args={[FLAG_DISC_RADIUS, 48]}/>
-                <meshBasicMaterial map={front} toneMapped={false} side={THREE.FrontSide}/>
-            </mesh>
-        </group>
+            <Line points={[anchorPos, flagPos]} color="#22d3ee" lineWidth={0.8} transparent opacity={0.45}/>
+            <group ref={groupRef} position={flagPos}>
+                <mesh>
+                    <circleGeometry args={[FLAG_DISC_RADIUS + FLAG_BORDER_WIDTH, 48]}/>
+                    <meshBasicMaterial color="#ffffff" side={THREE.DoubleSide}/>
+                </mesh>
+                <mesh position={[0, 0, 0.001]}>
+                    <circleGeometry args={[FLAG_DISC_RADIUS, 48]}/>
+                    <meshBasicMaterial map={front} toneMapped={false} side={THREE.FrontSide}/>
+                </mesh>
+                <mesh position={[0, 0, -0.001]} rotation={[0, Math.PI, 0]}>
+                    <circleGeometry args={[FLAG_DISC_RADIUS, 48]}/>
+                    <meshBasicMaterial map={back} toneMapped={false} side={THREE.FrontSide}/>
+                </mesh>
+            </group>
+        </>
     )
 }
 
@@ -226,18 +267,6 @@ function Scene({homeCode, awayCode}: {homeCode: string; awayCode: string}) {
             </mesh>
             <Continents/>
             <AnimatedArc points={arcPoints} anim={anim}/>
-            {hasHome && (
-                <mesh position={aPos}>
-                    <sphereGeometry args={[0.018, 12, 12]}/>
-                    <meshBasicMaterial color="#fbbf24"/>
-                </mesh>
-            )}
-            {hasAway && (
-                <mesh position={bPos}>
-                    <sphereGeometry args={[0.018, 12, 12]}/>
-                    <meshBasicMaterial color="#fbbf24"/>
-                </mesh>
-            )}
             <React.Suspense fallback={null}>
                 {hasHome && <FocusFlag code={homeCode} position={aPos}/>}
                 {hasAway && <FocusFlag code={awayCode} position={bPos}/>}
