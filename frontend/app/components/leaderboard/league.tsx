@@ -21,7 +21,7 @@ export default function LeagueComponent(props: LeagueProps): React.JSX.Element {
         getPositionForLeague(props.leagueId, props.config, getUserIdClient()).then(
             res => setPosition(res.toString())
         )
-    })
+    }, [props.leagueId, props.config])
 
     return (
         <Link href={`app/league/${props.leagueId}/leaderboard`} className="block">
