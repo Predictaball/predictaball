@@ -1,6 +1,6 @@
 'use client'
 
-import React, {useRef} from "react"
+import React, {useEffect, useRef} from "react"
 import {Match} from "@/client"
 import {LocalTime} from "@/app/components/ticket/local-time"
 import {FlagImage} from "@/app/components/predictions/flag-image"
@@ -33,35 +33,53 @@ function StripRow({title, matches, selectedId, onSelect, live}: {
     live?: boolean
 }) {
     const scrollRef = useRef<HTMLDivElement>(null)
+    const selectedRef = useRef<HTMLButtonElement>(null)
+
+    useEffect(() => {
+        const el = selectedRef.current
+        const container = scrollRef.current
+        if (!el || !container) return
+        const scrollTarget = el.offsetLeft - (container.offsetWidth - el.offsetWidth) / 2
+        container.scrollTo({left: scrollTarget, behavior: "smooth"})
+    }, [selectedId])
+
     return (
         <div>
-            <div className="flex items-center gap-2 mb-2 px-1">
+            <div className="flex items-center gap-2 mb-2 px-4 sm:px-6">
                 {live && <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse"/>}
                 <h3 className="text-sm font-bold uppercase tracking-[0.2em] text-gray-400">{title}</h3>
             </div>
             <div
                 ref={scrollRef}
-                className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1 snap-x snap-mandatory scrollbar-thin"
+                className="flex gap-3 overflow-x-auto pb-2 px-4 sm:px-6 snap-x snap-mandatory scrollbar-thin"
                 style={{scrollbarWidth: "thin"}}
             >
                 {matches.map(m => (
-                    <MatchPill key={m.matchId} match={m} selected={m.matchId === selectedId} onSelect={() => onSelect(m.matchId)}/>
+                    <MatchPill
+                        key={m.matchId}
+                        ref={m.matchId === selectedId ? selectedRef : undefined}
+                        match={m}
+                        selected={m.matchId === selectedId}
+                        onSelect={() => onSelect(m.matchId)}
+                    />
                 ))}
             </div>
         </div>
     )
 }
 
-function MatchPill({match, selected, onSelect}: {match: Match; selected: boolean; onSelect: () => void}) {
+const MatchPill = React.forwardRef<HTMLButtonElement, {match: Match; selected: boolean; onSelect: () => void}>(
+    function MatchPill({match, selected, onSelect}, ref) {
     const homeCode = match.homeTeamFlagCode.toLowerCase()
     const awayCode = match.awayTeamFlagCode.toLowerCase()
     const predicted = match.prediction
 
     return (
         <button
+            ref={ref}
             type="button"
             onClick={onSelect}
-            className={`snap-start shrink-0 rounded-2xl p-[1.5px] transition-transform ${
+            className={`snap-center shrink-0 rounded-2xl p-[1.5px] transition-transform ${
                 selected
                     ? "bg-gradient-to-br from-blue-500 via-cyan-400 to-green-300 scale-[1.02]"
                     : "bg-white/10 hover:bg-white/20"
@@ -86,7 +104,7 @@ function MatchPill({match, selected, onSelect}: {match: Match; selected: boolean
             </div>
         </button>
     )
-}
+})
 
 function PillFlag({code, name}: {code: string; name: string}) {
     return (

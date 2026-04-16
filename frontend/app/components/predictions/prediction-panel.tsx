@@ -42,27 +42,29 @@ export default function PredictionPanel({liveMatches, upcomingMatches}: Predicti
     const awayCode = selected.awayTeamFlagCode.toLowerCase()
 
     return (
-        <div className="w-full max-w-5xl mx-auto space-y-6">
-            <div className="relative rounded-3xl bg-gradient-to-br from-white/15 to-white/5 p-[1px] shadow-2xl shadow-cyan-500/10">
-                <div className="relative rounded-3xl bg-gray-900/80 backdrop-blur-xl overflow-hidden">
-                    <div className="flex flex-col md:flex-row">
-                        <div className="relative w-full md:w-[62%] aspect-square md:aspect-auto md:min-h-[480px] bg-gradient-to-br from-gray-900 via-slate-900 to-gray-900">
-                            <div className="absolute inset-0">
-                                <FocusedGlobeClient homeCode={homeCode} awayCode={awayCode}/>
+        <div className="w-full space-y-6">
+            <div className="max-w-5xl mx-auto">
+                <div className="relative rounded-3xl bg-gradient-to-br from-white/15 to-white/5 p-[1px] shadow-2xl shadow-cyan-500/10">
+                    <div className="relative rounded-3xl bg-gray-900/80 backdrop-blur-xl overflow-hidden">
+                        <div className="flex flex-col md:flex-row">
+                            <div className="relative w-full md:w-[62%] aspect-square md:aspect-auto md:min-h-[480px] bg-gradient-to-br from-gray-900 via-slate-900 to-gray-900">
+                                <div className="absolute inset-0">
+                                    <FocusedGlobeClient homeCode={homeCode} awayCode={awayCode}/>
+                                </div>
+                                <div className="absolute top-4 left-4 right-4 flex items-center justify-between pointer-events-none">
+                                    <span className="inline-flex items-center gap-2 rounded-full bg-black/50 border border-white/10 px-3 py-1 text-xs font-semibold text-gray-200 backdrop-blur">
+                                        {selected.state === MatchStateEnum.Live && (
+                                            <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse"/>
+                                        )}
+                                        {selected.state === MatchStateEnum.Live ? "Live" : ROUND_LABEL[selected.round]}
+                                    </span>
+                                    <span className="hidden sm:inline rounded-full bg-black/50 border border-white/10 px-3 py-1 text-xs text-gray-300 backdrop-blur">
+                                        {selected.venue}
+                                    </span>
+                                </div>
                             </div>
-                            <div className="absolute top-4 left-4 right-4 flex items-center justify-between pointer-events-none">
-                                <span className="inline-flex items-center gap-2 rounded-full bg-black/50 border border-white/10 px-3 py-1 text-xs font-semibold text-gray-200 backdrop-blur">
-                                    {selected.state === MatchStateEnum.Live && (
-                                        <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse"/>
-                                    )}
-                                    {selected.state === MatchStateEnum.Live ? "Live" : ROUND_LABEL[selected.round]}
-                                </span>
-                                <span className="hidden sm:inline rounded-full bg-black/50 border border-white/10 px-3 py-1 text-xs text-gray-300 backdrop-blur">
-                                    {selected.venue}
-                                </span>
-                            </div>
+                            <PredictionForm match={selected} key={selected.matchId} onPredictionSaved={advanceToNext}/>
                         </div>
-                        <PredictionForm match={selected} key={selected.matchId} onPredictionSaved={advanceToNext}/>
                     </div>
                 </div>
             </div>
