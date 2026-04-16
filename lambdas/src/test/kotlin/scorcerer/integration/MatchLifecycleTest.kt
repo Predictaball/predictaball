@@ -311,4 +311,34 @@ class MatchLifecycleTest : PostgresTest() {
         leaderboard[2].user.userId shouldBe "newbie"
         leaderboard[2].position shouldBe 3
     }
+
+    @Test
+    fun `new signup appears on global leaderboard immediately`() {
+        val localLeaderboard = scorcerer.utils.LocalLeaderboardService()
+
+        // First user signs up
+        givenUserExists("user1", "Alice", "Smith")
+        givenLeagueExists("global", "Global")
+        givenUserInLeague("user1", "global")
+        kotlinx.coroutines.runBlocking {
+            localLeaderboard.updateGlobalLeaderboard(localLeaderboard.getLatestLeaderboardMatchDay())
+        }
+
+        // Verify first user on leaderboard
+        val leaderboard1 = kotlinx.coroutines.runBlocking { localLeaderboard.getLeaderboard(0) }
+        leaderboard1!!.size shouldBe 1
+        leaderboard1[0].user.userId shouldBe "user1"
+
+        // Second user signs up
+        givenUserExists("user2", "Bob", "Jones")
+        givenUserInLeague("user2", "global")
+        kotlinx.coroutines.runBlocking {
+            localLeaderboard.updateGlobalLeaderboard(localLeaderboard.getLatestLeaderboardMatchDay())
+        }
+
+        // Verify both users on leaderboard
+        val leaderboard2 = kotlinx.coroutines.runBlocking { localLeaderboard.getLeaderboard(0) }
+        leaderboard2!!.size shouldBe 2
+        leaderboard2.map { it.user.userId }.toSet() shouldBe setOf("user1", "user2")
+    }
 }

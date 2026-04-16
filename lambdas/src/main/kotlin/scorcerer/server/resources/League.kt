@@ -81,13 +81,13 @@ fun leagueRoutes(contexts: RequestContexts, leaderboardService: LeaderboardServi
         val (latestMatchDay, latestGlobalLeaderboard) = runBlocking {
             val matchDay = leaderboardService.getLatestLeaderboardMatchDay()
             val leaderboard = leaderboardService.getLeaderboard(matchDay)
-            if (leaderboard != null) {
-                matchDay to leaderboard
-            } else {
-                val computed = calculateGlobalLeaderboard(null)
-                leaderboardService.writeLeaderboard(computed, 0)
-                0 to computed
-            }
+            matchDay to (
+                leaderboard ?: run {
+                    val computed = calculateGlobalLeaderboard(null)
+                    leaderboardService.writeLeaderboard(computed, 0)
+                    computed
+                }
+                )
         }
         val response = if (leagueId == "global") {
             paginateLeaderboard(leagueName, sortLeaderboard(latestGlobalLeaderboard), page, pageSize)
