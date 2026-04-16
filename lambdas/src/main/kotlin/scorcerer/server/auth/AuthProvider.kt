@@ -12,4 +12,5 @@ interface AuthProvider {
     suspend fun refresh(refreshToken: String): AuthTokens
     suspend fun resetPassword(email: String)
     suspend fun confirmReset(email: String, code: String, newPassword: String)
+    suspend fun emailExists(email: String): Boolean
 }

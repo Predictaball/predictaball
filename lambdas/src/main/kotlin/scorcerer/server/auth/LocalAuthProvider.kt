@@ -46,6 +46,8 @@ class LocalAuthProvider : AuthProvider {
         return generateTokens(user)
     }
 
+    override suspend fun emailExists(email: String): Boolean = users.containsKey(email)
+
     override suspend fun resetPassword(email: String) {}
 
     override suspend fun confirmReset(email: String, code: String, newPassword: String) {

@@ -765,6 +765,37 @@ paths:
       responses:
         '200':
           description: Successful response
+  /auth/check-email:
+    get:
+      tags:
+        - auth
+      operationId: checkEmail
+      description: Check whether an account exists for the given email
+      security: []
+      x-amazon-apigateway-integration:
+        type: "aws_proxy"
+        httpMethod: "POST"
+        uri: "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${apiAuthHandlerArn}/invocations"
+        credentials: "${apiGatewayRoleArn}"
+        payloadFormatVersion: "1.0"
+      parameters:
+        - in: query
+          name: email
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - exists
+                properties:
+                  exists:
+                    type: boolean
   /auth/ping:
     get:
       tags:

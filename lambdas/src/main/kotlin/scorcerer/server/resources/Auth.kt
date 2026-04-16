@@ -6,6 +6,7 @@ import org.http4k.core.Response
 import org.http4k.core.Status
 import org.http4k.routing.bind
 import org.http4k.routing.routes
+import org.openapitools.server.models.CheckEmail200Response
 import org.openapitools.server.models.Login200Response
 import org.openapitools.server.models.LoginRequest
 import org.openapitools.server.models.RefreshTokenRequest
@@ -54,6 +55,12 @@ fun authRoutes(authProvider: AuthProvider) = routes(
             }
         }
         Response(Status.OK)
+    },
+    "/auth/check-email" bind Method.GET to { req ->
+        val email = req.query("email")
+            ?: throw ApiResponseError(Response(Status.BAD_REQUEST).body("email query parameter is required"))
+        val exists = runBlocking { authProvider.emailExists(email) }
+        Response(Status.OK).body(CheckEmail200Response(exists).toJson())
     },
     "/auth/ping" bind Method.GET to { Response(Status.OK) },
 )

@@ -120,4 +120,18 @@ class CognitoAuthProvider : AuthProvider {
             },
         )
     }
+
+    override suspend fun emailExists(email: String): Boolean {
+        return try {
+            client.adminGetUser(
+                AdminGetUserRequest {
+                    userPoolId = Environment.CognitoUserPoolId
+                    username = email
+                },
+            )
+            true
+        } catch (_: UserNotFoundException) {
+            false
+        }
+    }
 }

@@ -39,6 +39,7 @@ export default function AuthForm({callbackUrl, leagueId}: AuthFormProps): React.
     const [isVisible, setIsVisible] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
     const [didFail, setDidFail] = useState(false)
+    const [checkError, setCheckError] = useState(false)
 
     const validEmail = EMAIL_REGEX.test(email)
     const validLength = password.length >= 6
@@ -47,16 +48,22 @@ export default function AuthForm({callbackUrl, leagueId}: AuthFormProps): React.
 
     const toggleVisibility = () => setIsVisible(v => !v)
 
-    const title = mode === "signup" ? "Create your account" : "Sign in to your account"
     const subtitle = mode === "email"
         ? "Enter your email to get started"
-        : mode === "login"
-            ? email
-            : email
+        : email
 
-    const handleContinue = () => {
+    const handleContinue = async () => {
         if (!validEmail) return
-        setMode("login")
+        setIsLoading(true)
+        setCheckError(false)
+        try {
+            const response = await AUTH_CLIENT.authApi.checkEmail({email})
+            setMode(response._exists ? "login" : "signup")
+        } catch {
+            setCheckError(true)
+        } finally {
+            setIsLoading(false)
+        }
     }
 
     const handleLogin = async () => {
@@ -121,7 +128,10 @@ export default function AuthForm({callbackUrl, leagueId}: AuthFormProps): React.
                     <p className="text-center text-sm text-gray-400 -mt-2 mb-2">{subtitle}</p>
                     <Input
                         value={email}
-                        onChange={(e) => setEmail(e.target.value.toLowerCase())}
+                        onChange={(e) => {
+                            setEmail(e.target.value.toLowerCase())
+                            setCheckError(false)
+                        }}
                         onKeyDown={(e) => {
                             if (e.key === "Enter" && validEmail) {
                                 e.preventDefault()
@@ -138,9 +148,15 @@ export default function AuthForm({callbackUrl, leagueId}: AuthFormProps): React.
                         style={{fontSize: "18px"}}
                         autoFocus
                     />
+                    {checkError && (
+                        <p className="text-sm text-red-400 text-center">
+                            Something went wrong. Please try again.
+                        </p>
+                    )}
                     <Button
                         onPress={handleContinue}
                         isDisabled={!validEmail}
+                        isLoading={isLoading}
                         type="button"
                         className={"w-full " + BUTTON_CLASS}
                     >
@@ -190,16 +206,6 @@ export default function AuthForm({callbackUrl, leagueId}: AuthFormProps): React.
                     >
                         Sign in
                     </Button>
-                    <p className="text-center text-sm text-gray-400">
-                        Don&apos;t have an account?{" "}
-                        <button
-                            type="button"
-                            onClick={() => { setMode("signup"); setDidFail(false) }}
-                            className="font-semibold text-cyan-300 hover:text-cyan-200 hover:underline"
-                        >
-                            Create one
-                        </button>
-                    </p>
                 </>
             )}
 
@@ -257,16 +263,6 @@ export default function AuthForm({callbackUrl, leagueId}: AuthFormProps): React.
                     >
                         Create account
                     </Button>
-                    <p className="text-center text-sm text-gray-400">
-                        Already have an account?{" "}
-                        <button
-                            type="button"
-                            onClick={() => setMode("login")}
-                            className="font-semibold text-cyan-300 hover:text-cyan-200 hover:underline"
-                        >
-                            Sign in
-                        </button>
-                    </p>
                 </>
             )}
         </div>
