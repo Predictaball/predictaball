@@ -1,5 +1,4 @@
 import React from "react";
-import AnimatedFlags from "@/app/components/flags/animated-flags";
 import {Header} from "@/app/components/landing-header";
 import CustomCursor from "@/app/components/custom-cursor";
 import FlagGlobe from "@/app/components/flags/flag-globe-client";
