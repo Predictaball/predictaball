@@ -5,6 +5,7 @@ import {Canvas, useFrame} from "@react-three/fiber"
 import {Line, OrbitControls, useTexture} from "@react-three/drei"
 import * as THREE from "three"
 import {COUNTRY_COORDS} from "./country-coords"
+import {WORLD_CUP_2026_STADIUMS} from "./stadium-coords"
 import {GLOBE_RADIUS, latLngToVec3, buildContinentGeometry, orientationForPosition, cropSquare} from "./globe-utils"
 
 const FLAG_RADIUS = 1.92
@@ -95,6 +96,23 @@ function Matches({matches}: {matches: Match[]}) {
     )
 }
 
+function Stadiums() {
+    const positions = useMemo(
+        () => WORLD_CUP_2026_STADIUMS.map(s => latLngToVec3(s.lat, s.lng, GLOBE_RADIUS + 0.006)),
+        [],
+    )
+    return (
+        <>
+            {positions.map((pos, i) => (
+                <mesh key={WORLD_CUP_2026_STADIUMS[i].city} position={pos}>
+                    <sphereGeometry args={[0.014, 12, 12]}/>
+                    <meshBasicMaterial color="#fbbf24"/>
+                </mesh>
+            ))}
+        </>
+    )
+}
+
 function Continents() {
     const geometry = useMemo(() => buildContinentGeometry(GLOBE_RADIUS + 0.008), [])
     return (
@@ -175,6 +193,7 @@ function Globe({matches}: {matches: Match[]}) {
                 <meshBasicMaterial color="#22d3ee" wireframe transparent opacity={0.08}/>
             </mesh>
             <Continents/>
+            <Stadiums/>
             <Matches matches={matches}/>
             <React.Suspense fallback={null}>
                 <Flags/>
