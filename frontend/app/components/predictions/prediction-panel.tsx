@@ -49,7 +49,7 @@ export default function PredictionPanel({liveMatches, upcomingMatches}: Predicti
                         <div className="flex flex-col md:flex-row">
                             <div className="relative w-full md:w-[62%] aspect-square md:aspect-auto md:min-h-[480px] bg-gradient-to-br from-slate-100 via-slate-50 to-slate-100 dark:from-gray-900 dark:via-slate-900 dark:to-gray-900">
                                 <div className="absolute inset-0">
-                                    <FocusedGlobeClient homeCode={homeCode} awayCode={awayCode}/>
+                                    <FocusedGlobeClient homeCode={homeCode} awayCode={awayCode} venue={selected.venue}/>
                                 </div>
                                 <div className="absolute top-4 left-4 right-4 flex items-center justify-between pointer-events-none">
                                     <span className="inline-flex items-center gap-2 rounded-full bg-white/80 border border-slate-200 text-slate-700 dark:bg-black/50 dark:border-white/10 dark:text-gray-200 px-3 py-1 text-xs font-semibold backdrop-blur">

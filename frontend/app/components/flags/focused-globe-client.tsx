@@ -8,6 +8,7 @@ const FocusedGlobe = dynamic(() => import("@/app/components/flags/focused-globe"
 interface FocusedGlobeClientProps {
     homeCode: string
     awayCode: string
+    venue?: string
 }
 
 export default function FocusedGlobeClient(props: FocusedGlobeClientProps): React.JSX.Element {

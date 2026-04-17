@@ -5,6 +5,7 @@ import {Canvas, useFrame, useThree} from "@react-three/fiber"
 import {Line, useTexture} from "@react-three/drei"
 import * as THREE from "three"
 import {COUNTRY_COORDS} from "./country-coords"
+import {resolveStadium, Stadium} from "./stadium-coords"
 import {GLOBE_RADIUS, latLngToVec3, buildContinentGeometry, cropSquare} from "./globe-utils"
 
 const FLAG_DISC_RADIUS = 0.09
@@ -71,7 +72,7 @@ function slerpVec(from: THREE.Vector3, to: THREE.Vector3, mag: number, t: number
     return fromDir.clone().applyAxisAngle(axis, angle * t).multiplyScalar(mag)
 }
 
-function cameraPath(homeCode: string, awayCode: string): {startPos: THREE.Vector3; endPos: THREE.Vector3} {
+function cameraPath(homeCode: string, awayCode: string, stadium?: Stadium): {startPos: THREE.Vector3; endPos: THREE.Vector3} {
     const hc = COUNTRY_COORDS[homeCode]
     const ac = COUNTRY_COORDS[awayCode]
     const fallback = new THREE.Vector3(0, 0, 5)
@@ -79,15 +80,18 @@ function cameraPath(homeCode: string, awayCode: string): {startPos: THREE.Vector
 
     const aDir = latLngToVec3(hc[0], hc[1], 1)
     const bDir = latLngToVec3(ac[0], ac[1], 1)
-    const mid = aDir.clone().add(bDir)
+    const dirs = [aDir, bDir]
+    if (stadium) dirs.push(latLngToVec3(stadium.lat, stadium.lng, 1))
+
+    const mid = dirs.reduce((acc, d) => acc.add(d), new THREE.Vector3())
     if (mid.lengthSq() < 1e-6) {
         const axis = new THREE.Vector3().crossVectors(aDir, new THREE.Vector3(0, 1, 0)).normalize()
         mid.copy(aDir).applyAxisAngle(axis, Math.PI / 2)
     }
     mid.normalize()
 
-    const angle = aDir.angleTo(bDir)
-    const half = angle / 2
+    const maxHalf = dirs.reduce((m, d) => Math.max(m, d.angleTo(mid)), 0)
+    const half = maxHalf
     const fovHalfTan = Math.tan((CAMERA_FOV / 2) * Math.PI / 180)
     const fitDistance = FLAG_OUTER_RADIUS * (Math.cos(half) + Math.sin(half) / fovHalfTan) * CAMERA_FIT_MARGIN
     const distance = Math.max(CAMERA_MIN_DISTANCE, fitDistance)
@@ -125,9 +129,9 @@ function AnimatedArc({points, anim}: {points: THREE.Vector3[]; anim: React.RefOb
     return <Line points={visiblePoints} color="#fbbf24" lineWidth={2.2} transparent opacity={0.95}/>
 }
 
-function CameraRig({homeCode, awayCode, anim}: {homeCode: string; awayCode: string; anim: React.RefObject<AnimState>}) {
+function CameraRig({homeCode, awayCode, stadium, anim}: {homeCode: string; awayCode: string; stadium?: Stadium; anim: React.RefObject<AnimState>}) {
     const {camera} = useThree()
-    const {startPos, endPos} = useMemo(() => cameraPath(homeCode, awayCode), [homeCode, awayCode])
+    const {startPos, endPos} = useMemo(() => cameraPath(homeCode, awayCode, stadium), [homeCode, awayCode, stadium])
     const travelOrigin = useRef(new THREE.Vector3(0, 0, 5))
     const initialized = useRef(false)
 
@@ -243,27 +247,47 @@ function FocusFlag({code, position}: {code: string; position: THREE.Vector3}) {
     )
 }
 
-function Scene({homeCode, awayCode}: {homeCode: string; awayCode: string}) {
-    const anim = useRef<AnimState>({phase: "draw", progress: 0})
+function StadiumMarker({position}: {position: THREE.Vector3}) {
+    return (
+        <mesh position={position}>
+            <sphereGeometry args={[0.024, 14, 14]}/>
+            <meshBasicMaterial color="#fbbf24"/>
+        </mesh>
+    )
+}
 
-    const {arcPoints, aPos, bPos} = useMemo(() => {
+function Scene({homeCode, awayCode, venue}: {homeCode: string; awayCode: string; venue?: string}) {
+    const anim = useRef<AnimState>({phase: "draw", progress: 0})
+    const stadium = useMemo(() => resolveStadium(venue), [venue])
+
+    const {arcs, aPos, bPos, stadiumPos} = useMemo(() => {
         const hc = COUNTRY_COORDS[homeCode]
         const ac = COUNTRY_COORDS[awayCode]
         const aDir = hc ? latLngToVec3(hc[0], hc[1], 1) : new THREE.Vector3(1, 0, 0)
         const bDir = ac ? latLngToVec3(ac[0], ac[1], 1) : new THREE.Vector3(-1, 0, 0)
+        if (stadium) {
+            const sDir = latLngToVec3(stadium.lat, stadium.lng, 1)
+            return {
+                arcs: [visibleArc(aDir, sDir), visibleArc(bDir, sDir)],
+                aPos: aDir.clone().multiplyScalar(GLOBE_RADIUS),
+                bPos: bDir.clone().multiplyScalar(GLOBE_RADIUS),
+                stadiumPos: sDir.clone().multiplyScalar(GLOBE_RADIUS + 0.01),
+            }
+        }
         return {
-            arcPoints: visibleArc(aDir, bDir),
+            arcs: [visibleArc(aDir, bDir)],
             aPos: aDir.clone().multiplyScalar(GLOBE_RADIUS),
             bPos: bDir.clone().multiplyScalar(GLOBE_RADIUS),
+            stadiumPos: undefined,
         }
-    }, [homeCode, awayCode])
+    }, [homeCode, awayCode, stadium])
 
     const hasHome = Boolean(COUNTRY_COORDS[homeCode])
     const hasAway = Boolean(COUNTRY_COORDS[awayCode])
 
     return (
         <>
-            <CameraRig homeCode={homeCode} awayCode={awayCode} anim={anim}/>
+            <CameraRig homeCode={homeCode} awayCode={awayCode} stadium={stadium} anim={anim}/>
             <mesh>
                 <sphereGeometry args={[GLOBE_RADIUS, 64, 64]}/>
                 <meshStandardMaterial color="#1e3a5f" roughness={0.75} metalness={0.15}/>
@@ -273,7 +297,10 @@ function Scene({homeCode, awayCode}: {homeCode: string; awayCode: string}) {
                 <meshBasicMaterial color="#22d3ee" wireframe transparent opacity={0.08}/>
             </mesh>
             <Continents/>
-            <AnimatedArc points={arcPoints} anim={anim}/>
+            {arcs.map((points, i) => (
+                <AnimatedArc key={i} points={points} anim={anim}/>
+            ))}
+            {stadiumPos && <StadiumMarker position={stadiumPos}/>}
             <React.Suspense fallback={null}>
                 {hasHome && <FocusFlag code={homeCode} position={aPos}/>}
                 {hasAway && <FocusFlag code={awayCode} position={bPos}/>}
@@ -282,14 +309,14 @@ function Scene({homeCode, awayCode}: {homeCode: string; awayCode: string}) {
     )
 }
 
-export default function FocusedGlobe({homeCode, awayCode}: {homeCode: string; awayCode: string}): React.JSX.Element {
+export default function FocusedGlobe({homeCode, awayCode, venue}: {homeCode: string; awayCode: string; venue?: string}): React.JSX.Element {
     return (
         <div className="relative h-full w-full pointer-events-none">
             <Canvas camera={{position: [0, 0, 5], fov: 42}} gl={{antialias: true, alpha: true}} dpr={[1, 1.5]}>
                 <ambientLight intensity={0.75}/>
                 <directionalLight position={[5, 3, 5]} intensity={1.1}/>
                 <pointLight position={[-5, -3, -5]} intensity={0.4} color="#22d3ee"/>
-                <Scene homeCode={homeCode} awayCode={awayCode}/>
+                <Scene homeCode={homeCode} awayCode={awayCode} venue={venue}/>
             </Canvas>
         </div>
     )

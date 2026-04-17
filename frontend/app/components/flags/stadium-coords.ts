@@ -24,3 +24,11 @@ export const WORLD_CUP_2026_STADIUMS: Stadium[] = [
     {city: "Mexico City", name: "Estadio Azteca", country: "mex", lat: 19.3029, lng: -99.1505},
     {city: "Monterrey", name: "Estadio BBVA", country: "mex", lat: 25.6692, lng: -100.2447},
 ]
+
+export function resolveStadium(venue: string | undefined | null): Stadium | undefined {
+    if (!venue) return undefined
+    const v = venue.toLowerCase()
+    return WORLD_CUP_2026_STADIUMS.find(s =>
+        v.includes(s.name.toLowerCase()) || v.includes(s.city.toLowerCase()),
+    )
+}
