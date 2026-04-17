@@ -12,6 +12,10 @@ const FLAG_BORDER_WIDTH = 0.012
 const FLAG_ANCHOR_OFFSET = 0.005
 const FLAG_LIFT = 0.42
 const FLAG_CAMERA_TILT = 0.45
+const CAMERA_FOV = 42
+const CAMERA_FIT_MARGIN = 1.12
+const CAMERA_MIN_DISTANCE = 2.8
+const FLAG_OUTER_RADIUS = GLOBE_RADIUS + FLAG_LIFT + FLAG_DISC_RADIUS + FLAG_BORDER_WIDTH
 const TRAVEL_SECONDS = 0.7
 const ARC_DRAW_SECONDS = 0.9
 
@@ -83,7 +87,10 @@ function cameraPath(homeCode: string, awayCode: string): {startPos: THREE.Vector
     mid.normalize()
 
     const angle = aDir.angleTo(bDir)
-    const distance = THREE.MathUtils.clamp(2.7 + angle * 1.35, 3.0, 5.6)
+    const half = angle / 2
+    const fovHalfTan = Math.tan((CAMERA_FOV / 2) * Math.PI / 180)
+    const fitDistance = FLAG_OUTER_RADIUS * (Math.cos(half) + Math.sin(half) / fovHalfTan) * CAMERA_FIT_MARGIN
+    const distance = Math.max(CAMERA_MIN_DISTANCE, fitDistance)
     return {
         startPos: aDir.clone().normalize().multiplyScalar(distance),
         endPos: mid.clone().multiplyScalar(distance),
