@@ -47,7 +47,7 @@ function StripRow({title, matches, selectedId, onSelect, live}: {
         <div>
             <div className="flex items-center gap-2 mb-2 px-4 sm:px-6">
                 {live && <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse"/>}
-                <h3 className="text-sm font-bold uppercase tracking-[0.2em] text-gray-400">{title}</h3>
+                <h3 className="text-sm font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-gray-400">{title}</h3>
             </div>
             <div
                 ref={scrollRef}
@@ -82,23 +82,23 @@ const MatchPill = React.forwardRef<HTMLButtonElement, {match: Match; selected: b
             className={`snap-center shrink-0 rounded-2xl p-[1.5px] transition-transform ${
                 selected
                     ? "bg-gradient-to-br from-blue-500 via-cyan-400 to-green-300 scale-[1.02]"
-                    : "bg-white/10 hover:bg-white/20"
+                    : "bg-slate-900/10 hover:bg-slate-900/20 dark:bg-white/10 dark:hover:bg-white/20"
             }`}
         >
-            <div className="rounded-2xl bg-gray-900/90 px-4 py-3 min-w-[200px] text-left">
+            <div className="rounded-2xl bg-white dark:bg-gray-900/90 px-4 py-3 min-w-[200px] text-left">
                 <div className="flex items-center justify-between gap-3">
                     <PillFlag code={homeCode} name={match.homeTeam}/>
-                    <span className="text-xs font-semibold text-gray-500">vs</span>
+                    <span className="text-xs font-semibold text-slate-400 dark:text-gray-500">vs</span>
                     <PillFlag code={awayCode} name={match.awayTeam}/>
                 </div>
                 <div className="mt-2 flex items-center justify-between text-[11px]">
-                    <div className="text-gray-500">
+                    <div className="text-slate-500 dark:text-gray-500">
                         <LocalTime date={match.datetime}/>
                     </div>
                     {predicted ? (
-                        <span className="font-bold text-cyan-300">{predicted.homeScore} - {predicted.awayScore}</span>
+                        <span className="font-bold text-cyan-600 dark:text-cyan-300">{predicted.homeScore} - {predicted.awayScore}</span>
                     ) : (
-                        <span className="text-gray-500">No prediction</span>
+                        <span className="text-slate-400 dark:text-gray-500">No prediction</span>
                     )}
                 </div>
             </div>
@@ -110,7 +110,7 @@ function PillFlag({code, name}: {code: string; name: string}) {
     return (
         <div className="flex items-center gap-2 min-w-0">
             <FlagImage code={code} name={name} size={24}/>
-            <span className="text-xs font-bold text-gray-200 truncate">{name}</span>
+            <span className="text-xs font-bold text-slate-700 dark:text-gray-200 truncate">{name}</span>
         </div>
     )
 }

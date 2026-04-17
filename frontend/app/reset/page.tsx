@@ -85,8 +85,8 @@ export default function Reset() {
     return (
         <section>
             <Toaster/>
-            <div className="bg-gray-900 flex flex-col items-center justify-center px-6 py-8 mx-auto h-screen lg:py-0">
-                <h1 className="text-white pb-20">
+            <div className="bg-slate-50 dark:bg-gray-900 flex flex-col items-center justify-center px-6 py-8 mx-auto h-screen lg:py-0">
+                <h1 className="text-slate-900 dark:text-white pb-20">
                     <Link href="/">PREDICTABALL.LIVE</Link>
                 </h1>
                 <div

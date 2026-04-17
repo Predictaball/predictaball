@@ -9,7 +9,7 @@ export default async function Home({ params }: { params: Promise<{ leagueId: str
     const { leagueId } = await params
 
     return (
-        <div className="min-h-svh bg-gray-900">
+        <div className="min-h-svh bg-slate-50 dark:bg-gray-900">
             <div className="w-full max-w-4xl mx-auto relative">
                 <div className="flex justify-between p-4">
                     <div>
@@ -20,7 +20,7 @@ export default async function Home({ params }: { params: Promise<{ leagueId: str
                         <Share leagueId={leagueId} />
                     </div>
                 </div>
-                <div className="p-2 w-full bg-gray-900 flex flex-col items-center">
+                <div className="p-2 w-full bg-slate-50 dark:bg-gray-900 flex flex-col items-center">
                     <Leaderboard shouldPaginate={true} leagueId={leagueId} limit={false} />
                 </div>
             </div>

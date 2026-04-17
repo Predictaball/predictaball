@@ -22,10 +22,10 @@ interface AuthFormProps {
 function PasswordRule({ok, label}: {ok: boolean; label: string}) {
     return (
         <p className="flex items-center gap-2">
-            <span className={`inline-flex h-4 w-4 items-center justify-center rounded-full text-[10px] font-bold ${ok ? "bg-green-400/20 text-green-300" : "bg-red-400/20 text-red-300"}`}>
+            <span className={`inline-flex h-4 w-4 items-center justify-center rounded-full text-[10px] font-bold ${ok ? "bg-green-500/20 text-green-700 dark:bg-green-400/20 dark:text-green-300" : "bg-red-500/20 text-red-700 dark:bg-red-400/20 dark:text-red-300"}`}>
                 {ok ? "✓" : "×"}
             </span>
-            <span className={ok ? "text-gray-300" : "text-gray-400"}>{label}</span>
+            <span className={ok ? "text-slate-700 dark:text-gray-300" : "text-slate-500 dark:text-gray-400"}>{label}</span>
         </p>
     )
 }
@@ -116,7 +116,7 @@ export default function AuthForm({callbackUrl, leagueId}: AuthFormProps): React.
                         setPassword("")
                         setDidFail(false)
                     }}
-                    className="flex items-center gap-2 text-sm text-gray-400 hover:text-cyan-300 transition-colors"
+                    className="flex items-center gap-2 text-sm text-slate-500 dark:text-gray-400 hover:text-cyan-600 dark:hover:text-cyan-300 transition-colors"
                 >
                     <span aria-hidden>←</span>
                     <span className="truncate">{subtitle}</span>
@@ -125,7 +125,7 @@ export default function AuthForm({callbackUrl, leagueId}: AuthFormProps): React.
 
             {mode === "email" && (
                 <>
-                    <p className="text-center text-sm text-gray-400 -mt-2 mb-2">{subtitle}</p>
+                    <p className="text-center text-sm text-slate-500 dark:text-gray-400 -mt-2 mb-2">{subtitle}</p>
                     <Input
                         value={email}
                         onChange={(e) => {
@@ -149,7 +149,7 @@ export default function AuthForm({callbackUrl, leagueId}: AuthFormProps): React.
                         autoFocus
                     />
                     {checkError && (
-                        <p className="text-sm text-red-400 text-center">
+                        <p className="text-sm text-red-600 dark:text-red-400 text-center">
                             Something went wrong. Please try again.
                         </p>
                     )}
@@ -188,13 +188,13 @@ export default function AuthForm({callbackUrl, leagueId}: AuthFormProps): React.
                         endContent={
                             <button className="focus:outline-none" type="button" onClick={toggleVisibility}>
                                 {isVisible
-                                    ? <EyeSlashFilledIcon className="text-2xl text-gray-400 pointer-events-none"/>
-                                    : <EyeFilledIcon className="text-2xl text-gray-400 pointer-events-none"/>}
+                                    ? <EyeSlashFilledIcon className="text-2xl text-slate-500 dark:text-gray-400 pointer-events-none"/>
+                                    : <EyeFilledIcon className="text-2xl text-slate-500 dark:text-gray-400 pointer-events-none"/>}
                             </button>
                         }
                     />
                     <div className="flex items-center justify-end">
-                        <a href="/reset" className="text-sm font-medium text-cyan-300 hover:text-cyan-200 hover:underline">
+                        <a href="/reset" className="text-sm font-medium text-cyan-600 dark:text-cyan-300 hover:text-cyan-700 dark:hover:text-cyan-200 hover:underline">
                             Forgot password?
                         </a>
                     </div>
@@ -241,8 +241,8 @@ export default function AuthForm({callbackUrl, leagueId}: AuthFormProps): React.
                             endContent={
                                 <button className="focus:outline-none" type="button" onClick={toggleVisibility}>
                                     {isVisible
-                                        ? <EyeSlashFilledIcon className="text-2xl text-gray-400 pointer-events-none"/>
-                                        : <EyeFilledIcon className="text-2xl text-gray-400 pointer-events-none"/>}
+                                        ? <EyeSlashFilledIcon className="text-2xl text-slate-500 dark:text-gray-400 pointer-events-none"/>
+                                        : <EyeFilledIcon className="text-2xl text-slate-500 dark:text-gray-400 pointer-events-none"/>}
                                 </button>
                             }
                         />

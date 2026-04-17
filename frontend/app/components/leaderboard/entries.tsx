@@ -48,7 +48,7 @@ export default async function Entries(props: EntriesProps): Promise<React.JSX.El
     return (
         <div className="w-full max-w-2xl mx-auto">
             {leaderboardData?.leagueName && (
-                <p className="pb-3 text-center text-sm font-semibold tracking-wide text-gray-300">
+                <p className="pb-3 text-center text-sm font-semibold tracking-wide text-slate-600 dark:text-gray-300">
                     {leaderboardData.leagueName}
                 </p>
             )}

@@ -13,12 +13,12 @@ const Admin = async () => {
     if (!isUserAdmin) redirect("/app")
 
     return (
-        <main className="flex min-h-screen flex-col items-center justify-between bg-gray-900">
+        <main className="flex min-h-screen flex-col items-center justify-between bg-slate-50 dark:bg-gray-900">
             <Toaster position="top-center"/>
             <div className="absolute right-4 top-3">
                 <Link href="/"><SignOutButton/></Link>
             </div>
-            <p className="text-xl font-bold mt-4 text-white">PREDICTABALL</p>
+            <p className="text-xl font-bold mt-4 text-slate-900 dark:text-white">PREDICTABALL</p>
             <div className="max-w-3xl absolute text-center pt-40">
                 <LiveMatches admin/>
                 <Link href="/app"><Button size="sm" className={"mt-10 " + BUTTON_CLASS}>Back to App</Button></Link>

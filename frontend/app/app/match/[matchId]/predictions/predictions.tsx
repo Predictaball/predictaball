@@ -63,7 +63,7 @@ export default function Predictions(
     }, [leagueId, props.matchId])
 
     return (
-        <div className="min-h-svh bg-gray-900">
+        <div className="min-h-svh bg-slate-50 dark:bg-gray-900">
             <div className="w-full max-w-4xl mx-auto relative">
                 <div className="flex justify-between p-4">
                     <div>
@@ -86,7 +86,7 @@ export default function Predictions(
                         })}
                     </Select>
                 </div>
-                <div className="p-2 -mt-4 w-full bg-gray-900 flex flex-col items-center">
+                <div className="p-2 -mt-4 w-full bg-slate-50 dark:bg-gray-900 flex flex-col items-center">
                     {<Ticket forPredictionPage match={props.match} collapse admin={false}/>}
                     {getPaginatedPredictions(predictions).map((predictionWithUser, index) => <PredictionData key={index}
                                                                                                              predictionWithUser={predictionWithUser}/>)}
@@ -96,7 +96,7 @@ export default function Predictions(
                                     className="fixed bottom-4"
                                     classNames={{
                                         cursor: BUTTON_CLASS,
-                                        item: "bg-transparent text-white hover:text-black hover:bg-white"
+                                        item: "bg-transparent text-slate-900 dark:text-white hover:text-white dark:hover:text-black hover:bg-slate-900 dark:hover:bg-white"
                                     }}
                         />}
                 </div>

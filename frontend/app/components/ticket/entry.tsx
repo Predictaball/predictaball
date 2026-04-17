@@ -150,10 +150,10 @@ export default function Entry(props: EntryProps): React.JSX.Element {
                 return !props.forPredictionPage && (
                     <>
                         <div className="text-center">
-                            <p className="text-white text-sm">
+                            <p className="text-slate-900 dark:text-white text-sm">
                                 {(entryState === EntryState.LIVE ? "Live" : "Final") + " Score"}
                             </p>
-                            <p className="text-white text-sm">
+                            <p className="text-slate-900 dark:text-white text-sm">
                                 {props.match.homeScore} - {props.match.awayScore}
                             </p>
                         </div>
@@ -226,7 +226,7 @@ export default function Entry(props: EntryProps): React.JSX.Element {
                             maxLength={1}
                             placeholder={"_"}
                             disabled={!canInput}
-                            className="w-[50px] h-[50px] rounded-full bg-[#102C4C] text-center text-white border-none outline-none"
+                            className="w-[50px] h-[50px] rounded-full bg-[#102C4C] text-center text-white border-none outline-none dark:text-white"
                         />
                     </div>
                     <div className="inline-block rounded-full bg-gradient-to-tr from-[#10abff] to-[#1beabd] p-[3px] text-2xl">
@@ -239,7 +239,7 @@ export default function Entry(props: EntryProps): React.JSX.Element {
                                maxLength={1}
                                placeholder={"_"}
                                disabled={!canInput}
-                               className="w-[50px] h-[50px] rounded-full bg-[#102C4C] text-center text-white border-none outline-none"
+                               className="w-[50px] h-[50px] rounded-full bg-[#102C4C] text-center text-white border-none outline-none dark:text-white"
                         />
                     </div>
                 </div>

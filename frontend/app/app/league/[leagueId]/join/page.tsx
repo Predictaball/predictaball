@@ -20,9 +20,9 @@ export default async function Home({params}: { params: Promise<{ leagueId: strin
     if (joined) redirect(`/app/league/${leagueId}/leaderboard`)
 
     return (
-        <main className="flex min-h-screen flex-col items-center justify-between bg-gray-900">
-            <p className="text-xl font-bold mt-4 text-white">PREDICTABALL</p>
-            <div className="max-w-3xl absolute text-center pt-40 text-white m-20">
+        <main className="flex min-h-screen flex-col items-center justify-between bg-slate-50 dark:bg-gray-900">
+            <p className="text-xl font-bold mt-4 text-slate-900 dark:text-white">PREDICTABALL</p>
+            <div className="max-w-3xl absolute text-center pt-40 text-slate-900 dark:text-white m-20">
                 Error Joining {leagueId}, refresh to try again.
                 <div>
                     <Link href="/app"><Button size="sm" className={"mt-10 " + BUTTON_CLASS}>Back to App</Button></Link>

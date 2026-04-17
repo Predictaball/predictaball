@@ -11,7 +11,7 @@ export function FlagImage({code, name, size = 48}: FlagImageProps): React.JSX.El
     const ringWidth = size > 40 ? "ring-2" : "ring-1"
     return (
         <div
-            className={`rounded-full ${ringWidth} ring-white/20 overflow-hidden shrink-0 bg-white/10`}
+            className={`rounded-full ${ringWidth} ring-slate-900/15 dark:ring-white/20 overflow-hidden shrink-0 bg-slate-900/5 dark:bg-white/10`}
             style={{width: size, height: size}}
         >
             {/* eslint-disable-next-line @next/next/no-img-element */}

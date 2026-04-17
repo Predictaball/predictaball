@@ -14,15 +14,15 @@ export function MatchesHeader(props: {
                     ? (
                         <>
                             <div className="w-1/4"></div>
-                            <span className="w-1/2 text-white text-l font-bold mr-4">{props.title}</span>
+                            <span className="w-1/2 text-slate-900 dark:text-white text-l font-bold mr-4">{props.title}</span>
                             <Link href="/info">
                                 <div className="w-1/4 inline-block"><InfoIcon/></div>
                             </Link>
                         </>)
-                    : <p className="w-full text-center text-white text-l font-bold mt-3">{props.title}</p>
+                    : <p className="w-full text-center text-slate-900 dark:text-white text-l font-bold mt-3">{props.title}</p>
                 }
             </div>
-            {props.extraInfo !== undefined && <div className="text-white p-2 text-center">{props.extraInfo}</div>}
+            {props.extraInfo !== undefined && <div className="text-slate-900 dark:text-white p-2 text-center">{props.extraInfo}</div>}
         </div>
     )
 }

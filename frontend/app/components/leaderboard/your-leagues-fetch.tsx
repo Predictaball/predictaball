@@ -26,8 +26,8 @@ export default function YourLeaguesFetch(): React.JSX.Element {
         return (
             <div className="space-y-2.5">
                 {[...Array(2)].map((_, i) => (
-                    <div key={i} className="rounded-2xl bg-white/10 p-[1px]">
-                        <div className="h-16 rounded-2xl bg-gray-900/80 animate-pulse"/>
+                    <div key={i} className="rounded-2xl bg-slate-900/10 dark:bg-white/10 p-[1px]">
+                        <div className="h-16 rounded-2xl bg-white dark:bg-gray-900/80 animate-pulse"/>
                     </div>
                 ))}
             </div>
@@ -36,7 +36,7 @@ export default function YourLeaguesFetch(): React.JSX.Element {
 
     if (leagues.length === 0) {
         return (
-            <div className="rounded-2xl bg-white/5 border border-white/10 px-4 py-6 text-center text-sm text-gray-400">
+            <div className="rounded-2xl bg-white border border-slate-200 dark:bg-white/5 dark:border-white/10 px-4 py-6 text-center text-sm text-slate-500 dark:text-gray-400">
                 You haven&apos;t joined any leagues yet.
             </div>
         )

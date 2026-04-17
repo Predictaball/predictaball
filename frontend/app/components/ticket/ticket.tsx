@@ -28,9 +28,9 @@ export default function Ticket(props: TicketProps): React.JSX.Element {
 
     return (
         <div
-            className="w-full max-w-lg p-3 text-gray-600 relative"
+            className="w-full max-w-lg p-3 text-slate-600 dark:text-gray-600 relative"
         >
-            <div className="w-full p-3 flex-row justify-between max-w-xl rounded-large bg-gray-200"
+            <div className="w-full p-3 flex-row justify-between max-w-xl rounded-large bg-slate-100 dark:bg-gray-200"
                  style={{height: "6.5rem"}} onClick={() => {
                 if (props.forPredictionPage) return
                 setCollapse(!collapse)
@@ -44,7 +44,7 @@ export default function Ticket(props: TicketProps): React.JSX.Element {
                 </div>}
             </div>
             {!collapse && !props.forPredictionPage && <div
-                className="w-full p-3 flex-row justify-between max-w-xl rounded-large bg-gray-200 animate-appearance-in">
+                className="w-full p-3 flex-row justify-between max-w-xl rounded-large bg-slate-100 dark:bg-gray-200 animate-appearance-in">
                 <div className="w-full flex justify-between">
                     <div className="flex-row">
                         <div className="font-bold">
@@ -83,7 +83,7 @@ export default function Ticket(props: TicketProps): React.JSX.Element {
                 </div>
             </div>}
             <div
-                className="w-full max-w-xl p-3 rounded-large border-gray-200 border-2 animate-appearance-in animation-delay-0">
+                className="w-full max-w-xl p-3 rounded-large border-slate-200 dark:border-gray-200 border-2 animate-appearance-in animation-delay-0">
                 <Entry match={props.match} admin={props.admin} forPredictionPage={props.forPredictionPage}/>
             </div>
         </div>

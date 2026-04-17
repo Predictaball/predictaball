@@ -48,14 +48,14 @@ export default async function Home({
     const leaderboardEntry = await getEntry()
 
     return(
-        <div className="min-h-svh bg-gray-900">
+        <div className="min-h-svh bg-slate-50 dark:bg-gray-900">
             <div className="w-full max-w-4xl mx-auto relative">
                 <div className="flex justify-between p-4">
                     <div>
                         <BackButton/>
                     </div>
                 </div>
-                <div className="p-2 w-full bg-gray-900 flex flex-col items-center">
+                <div className="p-2 w-full bg-slate-50 dark:bg-gray-900 flex flex-col items-center">
                     {leaderboardEntry !== undefined && <LeaderboardEntry disablePulse entry={leaderboardEntry} isUser={true}/>}
                     {(await getGames()).map((match, index) => {
                     return (

@@ -22,7 +22,7 @@ export default function Crest(props: CrestProps): React.JSX.Element {
                     objectFit: "contain",
             }}
             />
-            <span className="text-center text-xs font-bold text-white">
+            <span className="text-center text-xs font-bold text-slate-900 dark:text-white">
                 {props.country.charAt(0).toUpperCase() + props.country.slice(1)}
             </span>
         </div>

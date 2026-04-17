@@ -4,7 +4,7 @@ import {BUTTON_CLASS} from "@/app/util/css-classes";
 
 export default function ButtonLinks(): React.JSX.Element {
     return (
-        <div className="w-full flex-col justify-around text-white">
+        <div className="w-full flex-col justify-around text-slate-900 dark:text-white">
             <div className="flex justify-around w-full">
                 <div className="flex">
                     <Button className={BUTTON_CLASS}>
