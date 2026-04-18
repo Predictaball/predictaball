@@ -57,12 +57,20 @@ const Home = async () => {
 
                 <section className="space-y-4">
                     <h2 className={SECTION_EYEBROW + " px-1"}>Your Leagues</h2>
-                    <Dashboard />
+                    <div className="relative rounded-3xl bg-gradient-to-br from-slate-900/10 to-slate-900/5 dark:from-white/10 dark:to-white/5 p-[1px]">
+                        <div className="rounded-3xl bg-white/40 dark:bg-white/[0.02] backdrop-blur-sm p-5 sm:p-6">
+                            <Dashboard />
+                        </div>
+                    </div>
                 </section>
 
                 <section className="space-y-4 pb-10">
                     <h2 className={SECTION_EYEBROW + " px-1"}>Global Leaderboard</h2>
-                    <Leaderboard shouldPaginate={false} leagueId={"global"} limit={true} />
+                    <div className="relative rounded-3xl bg-gradient-to-br from-slate-900/10 to-slate-900/5 dark:from-white/10 dark:to-white/5 p-[1px]">
+                        <div className="rounded-3xl bg-white/40 dark:bg-white/[0.02] backdrop-blur-sm p-5 sm:p-6">
+                            <Leaderboard shouldPaginate={false} leagueId={"global"} limit={true} />
+                        </div>
+                    </div>
                 </section>
             </div>
         </main>
