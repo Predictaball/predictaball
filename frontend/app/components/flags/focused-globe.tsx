@@ -19,12 +19,19 @@ const CAMERA_MIN_DISTANCE = 2.8
 const FLAG_OUTER_RADIUS = GLOBE_RADIUS + FLAG_LIFT + FLAG_DISC_RADIUS + FLAG_BORDER_WIDTH
 const TRAVEL_SECONDS = 0.7
 const ARC_DRAW_SECONDS = 0.9
+const TOUR_TRAVERSE_SECONDS = 3.0
+const TOUR_DWELL_SECONDS = 0.7
+const TOUR_LEG_SECONDS = TOUR_TRAVERSE_SECONDS + TOUR_DWELL_SECONDS
+const TOUR_INTRO_SECONDS = 1.1
+const POST_DRAW_HOLD_SECONDS = 0.9
 
-type Phase = "travel" | "draw" | "done"
+type Phase = "travel" | "draw" | "hold" | "tourIntro" | "tour" | "done"
 
 interface AnimState {
     phase: Phase
     progress: number
+    tourLeg: number
+    tourFrom: THREE.Vector3
 }
 
 function visibleArc(aDir: THREE.Vector3, bDir: THREE.Vector3, steps = 64): THREE.Vector3[] {
@@ -105,13 +112,15 @@ function AnimatedArc({points, anim}: {points: THREE.Vector3[]; anim: React.RefOb
     const [, setTick] = useState(0)
 
     useFrame(() => {
-        if (anim.current.phase !== "done") setTick(t => t + 1)
+        const phase = anim.current.phase
+        if (phase === "travel" || phase === "draw") setTick(t => t + 1)
     })
 
     const visiblePoints = useMemo(() => {
         const {phase, progress} = anim.current
         if (phase === "travel") return [points[0], points[0]]
-        const p = phase === "done" ? 1 : progress
+        if (phase !== "draw") return points
+        const p = progress
         if (p >= 1) return points
         const segments = points.length - 1
         const t = p * segments
@@ -129,13 +138,15 @@ function AnimatedArc({points, anim}: {points: THREE.Vector3[]; anim: React.RefOb
     return <Line points={visiblePoints} color="#fbbf24" lineWidth={2.2} transparent opacity={0.95}/>
 }
 
-function CameraRig({homeCode, awayCode, stadium, anim, onComplete}: {homeCode: string; awayCode: string; stadium?: Stadium; anim: React.RefObject<AnimState>; onComplete: () => void}) {
+function CameraRig({homeCode, awayCode, stadium, anim, tourLegs, controlsRef, userStopped, onIntroComplete}: {homeCode: string; awayCode: string; stadium?: Stadium; anim: React.RefObject<AnimState>; tourLegs: THREE.Vector3[][]; controlsRef: React.RefObject<{setAzimuthalAngle: (v: number) => void; setPolarAngle: (v: number) => void; update: () => void} | null>; userStopped: boolean; onIntroComplete: () => void}) {
     const {camera} = useThree()
     const {startPos, endPos} = useMemo(() => cameraPath(homeCode, awayCode, stadium), [homeCode, awayCode, stadium])
     const travelOrigin = useRef(new THREE.Vector3(0, 0, 5))
+    const tourDistance = useRef(endPos.length())
     const initialized = useRef(false)
 
     useEffect(() => {
+        tourDistance.current = endPos.length()
         if (!initialized.current) {
             camera.position.copy(startPos)
             camera.lookAt(0, 0, 0)
@@ -153,27 +164,95 @@ function CameraRig({homeCode, awayCode, stadium, anim, onComplete}: {homeCode: s
     useFrame((_, delta) => {
         const a = anim.current
         if (a.phase === "done") return
-
-        const duration = a.phase === "travel" ? TRAVEL_SECONDS : ARC_DRAW_SECONDS
-        a.progress = Math.min(1, a.progress + delta / duration)
-        const eased = easeInOut(a.progress)
-
-        if (a.phase === "travel") {
-            const mag = travelOrigin.current.length() + (startPos.length() - travelOrigin.current.length()) * eased
-            camera.position.copy(slerpVec(travelOrigin.current, startPos, mag, eased))
-        } else {
-            const mag = startPos.length() + (endPos.length() - startPos.length()) * eased
-            camera.position.copy(slerpVec(startPos, endPos, mag, eased))
+        if (userStopped) {
+            a.phase = "done"
+            return
         }
-        camera.lookAt(0, 0, 0)
 
-        if (a.progress >= 1) {
+        if (a.phase === "travel" || a.phase === "draw") {
+            const duration = a.phase === "travel" ? TRAVEL_SECONDS : ARC_DRAW_SECONDS
+            a.progress = Math.min(1, a.progress + delta / duration)
+            const eased = easeInOut(a.progress)
+
             if (a.phase === "travel") {
-                a.phase = "draw"
-                a.progress = 0
+                const mag = travelOrigin.current.length() + (startPos.length() - travelOrigin.current.length()) * eased
+                camera.position.copy(slerpVec(travelOrigin.current, startPos, mag, eased))
             } else {
-                a.phase = "done"
-                onComplete()
+                const mag = startPos.length() + (endPos.length() - startPos.length()) * eased
+                camera.position.copy(slerpVec(startPos, endPos, mag, eased))
+            }
+            camera.lookAt(0, 0, 0)
+
+            if (a.progress >= 1) {
+                if (a.phase === "travel") {
+                    a.phase = "draw"
+                    a.progress = 0
+                } else {
+                    a.phase = "hold"
+                    a.progress = 0
+                }
+            }
+            return
+        }
+
+        if (a.phase === "hold") {
+            a.progress = Math.min(1, a.progress + delta / POST_DRAW_HOLD_SECONDS)
+            if (a.progress >= 1) {
+                if (tourLegs.length >= 1 && tourLegs[0].length >= 2) {
+                    a.phase = "tourIntro"
+                    a.progress = 0
+                    a.tourLeg = 0
+                    a.tourFrom = camera.position.clone().normalize()
+                    onIntroComplete()
+                } else {
+                    a.phase = "done"
+                    onIntroComplete()
+                }
+            }
+            return
+        }
+
+        if (a.phase === "tourIntro") {
+            a.progress = Math.min(1, a.progress + delta / TOUR_INTRO_SECONDS)
+            const eased = easeInOut(a.progress)
+            const toDir = tourLegs[0][0].clone().normalize()
+            const dir = slerpVec(a.tourFrom, toDir, 1, eased).normalize()
+            const targetPos = dir.multiplyScalar(tourDistance.current)
+            camera.position.copy(targetPos)
+            camera.lookAt(0, 0, 0)
+            if (a.progress >= 1) {
+                a.phase = "tour"
+                a.progress = 0
+                a.tourLeg = 0
+            }
+            return
+        }
+
+        if (a.phase === "tour") {
+            a.progress += delta / TOUR_LEG_SECONDS
+            while (a.progress >= 1) {
+                a.progress -= 1
+                a.tourLeg = (a.tourLeg + 1) % tourLegs.length
+            }
+            const traverseFrac = Math.min(1, a.progress / (TOUR_TRAVERSE_SECONDS / TOUR_LEG_SECONDS))
+            const eased = easeInOut(traverseFrac)
+            const leg = tourLegs[a.tourLeg]
+            const segs = leg.length - 1
+            const u = eased * segs
+            const idx = Math.min(Math.floor(u), segs - 1)
+            const frac = u - idx
+            const p = leg[idx].clone().lerp(leg[idx + 1], frac)
+            const dir = p.clone().normalize()
+            const targetPos = dir.multiplyScalar(tourDistance.current)
+
+            if (controlsRef.current) {
+                const sph = new THREE.Spherical().setFromVector3(targetPos)
+                controlsRef.current.setAzimuthalAngle(sph.theta)
+                controlsRef.current.setPolarAngle(sph.phi)
+                controlsRef.current.update()
+            } else {
+                camera.position.copy(targetPos)
+                camera.lookAt(0, 0, 0)
             }
         }
     })
@@ -257,34 +336,40 @@ function StadiumMarker({position}: {position: THREE.Vector3}) {
     )
 }
 
-function Scene({homeCode, awayCode, venue, enableControls}: {homeCode: string; awayCode: string; venue?: string; enableControls: boolean}) {
-    const anim = useRef<AnimState>({phase: "draw", progress: 0})
+function Scene({homeCode, awayCode, venue, enableControls, userStopped, onUserStop}: {homeCode: string; awayCode: string; venue?: string; enableControls: boolean; userStopped: boolean; onUserStop: () => void}) {
+    const anim = useRef<AnimState>({phase: "draw", progress: 0, tourLeg: 0, tourFrom: new THREE.Vector3(0, 0, 1)})
     const stadium = useMemo(() => resolveStadium(venue), [venue])
-    const [animating, setAnimating] = useState(true)
+    const [introDone, setIntroDone] = useState(false)
+    const controlsRef = useRef<{setAzimuthalAngle: (v: number) => void; setPolarAngle: (v: number) => void; update: () => void} | null>(null)
 
     useEffect(() => {
-        setAnimating(true)
+        setIntroDone(false)
     }, [homeCode, awayCode, stadium])
 
-    const {arcs, aPos, bPos, stadiumPos} = useMemo(() => {
+    const {arcs, aPos, bPos, stadiumPos, tourLegs} = useMemo(() => {
         const hc = COUNTRY_COORDS[homeCode]
         const ac = COUNTRY_COORDS[awayCode]
         const aDir = hc ? latLngToVec3(hc[0], hc[1], 1) : new THREE.Vector3(1, 0, 0)
         const bDir = ac ? latLngToVec3(ac[0], ac[1], 1) : new THREE.Vector3(-1, 0, 0)
         if (stadium) {
             const sDir = latLngToVec3(stadium.lat, stadium.lng, 1)
+            const arcHome = visibleArc(aDir, sDir)
+            const arcAway = visibleArc(bDir, sDir)
             return {
-                arcs: [visibleArc(aDir, sDir), visibleArc(bDir, sDir)],
+                arcs: [arcHome, arcAway],
                 aPos: aDir.clone().multiplyScalar(GLOBE_RADIUS),
                 bPos: bDir.clone().multiplyScalar(GLOBE_RADIUS),
                 stadiumPos: sDir.clone().multiplyScalar(GLOBE_RADIUS + 0.01),
+                tourLegs: [arcHome, [...arcAway].reverse(), arcAway, [...arcHome].reverse()],
             }
         }
+        const arcHA = visibleArc(aDir, bDir)
         return {
-            arcs: [visibleArc(aDir, bDir)],
+            arcs: [arcHA],
             aPos: aDir.clone().multiplyScalar(GLOBE_RADIUS),
             bPos: bDir.clone().multiplyScalar(GLOBE_RADIUS),
             stadiumPos: undefined,
+            tourLegs: [arcHA, [...arcHA].reverse()],
         }
     }, [homeCode, awayCode, stadium])
 
@@ -293,7 +378,16 @@ function Scene({homeCode, awayCode, venue, enableControls}: {homeCode: string; a
 
     return (
         <>
-            <CameraRig homeCode={homeCode} awayCode={awayCode} stadium={stadium} anim={anim} onComplete={() => setAnimating(false)}/>
+            <CameraRig
+                homeCode={homeCode}
+                awayCode={awayCode}
+                stadium={stadium}
+                anim={anim}
+                tourLegs={tourLegs}
+                controlsRef={controlsRef}
+                userStopped={userStopped}
+                onIntroComplete={() => setIntroDone(true)}
+            />
             <mesh>
                 <sphereGeometry args={[GLOBE_RADIUS, 64, 64]}/>
                 <meshStandardMaterial color="#1e3a5f" roughness={0.75} metalness={0.15}/>
@@ -311,8 +405,16 @@ function Scene({homeCode, awayCode, venue, enableControls}: {homeCode: string; a
                 {hasHome && <FocusFlag code={homeCode} position={aPos}/>}
                 {hasAway && <FocusFlag code={awayCode} position={bPos}/>}
             </React.Suspense>
-            {enableControls && !animating && (
-                <OrbitControls enableZoom={false} enablePan={false} rotateSpeed={0.5} enableDamping dampingFactor={0.08}/>
+            {enableControls && introDone && (
+                <OrbitControls
+                    ref={controlsRef as never}
+                    enableZoom={false}
+                    enablePan={false}
+                    rotateSpeed={0.5}
+                    enableDamping
+                    dampingFactor={0.08}
+                    onStart={onUserStop}
+                />
             )}
         </>
     )
@@ -333,13 +435,26 @@ function useCoarsePointer(): boolean {
 export default function FocusedGlobe({homeCode, awayCode, venue}: {homeCode: string; awayCode: string; venue?: string}): React.JSX.Element {
     const coarsePointer = useCoarsePointer()
     const interactive = !coarsePointer
+    const [userStopped, setUserStopped] = useState(false)
+
+    useEffect(() => {
+        setUserStopped(false)
+    }, [homeCode, awayCode, venue])
+
     return (
         <div className={`relative h-full w-full ${interactive ? "cursor-grab active:cursor-grabbing" : "pointer-events-none"}`}>
             <Canvas camera={{position: [0, 0, 5], fov: 42}} gl={{antialias: true, alpha: true}} dpr={[1, 1.5]}>
                 <ambientLight intensity={0.75}/>
                 <directionalLight position={[5, 3, 5]} intensity={1.1}/>
                 <pointLight position={[-5, -3, -5]} intensity={0.4} color="#22d3ee"/>
-                <Scene homeCode={homeCode} awayCode={awayCode} venue={venue} enableControls={interactive}/>
+                <Scene
+                    homeCode={homeCode}
+                    awayCode={awayCode}
+                    venue={venue}
+                    enableControls={interactive}
+                    userStopped={userStopped}
+                    onUserStop={() => setUserStopped(true)}
+                />
             </Canvas>
         </div>
     )
