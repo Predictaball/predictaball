@@ -1,6 +1,6 @@
 'use client'
 
-import React, {useState} from "react"
+import React, {useRef, useState} from "react"
 import {Button} from "@nextui-org/react"
 import toast from "react-hot-toast"
 import {Match, MatchStateEnum} from "@/client"
@@ -10,6 +10,13 @@ import {LocalTime} from "@/app/components/ticket/local-time"
 import {FlagImage} from "@/app/components/predictions/flag-image"
 
 const ADVANCE_DELAY_MS = 800
+const SWIPE_STEP_PX = 34
+
+function vibrate(pattern: number | number[]) {
+    if (typeof navigator !== "undefined" && typeof navigator.vibrate === "function") {
+        navigator.vibrate(pattern)
+    }
+}
 
 interface PredictionFormProps {
     match: Match
@@ -35,6 +42,7 @@ export default function PredictionForm({match, onPredictionSaved}: PredictionFor
         try {
             await handlePrediction(h, a, match.matchId)
             setSavedPrediction({home: h, away: a})
+            vibrate([20, 40, 20])
             toast.success("Prediction saved")
             setTimeout(onPredictionSaved, ADVANCE_DELAY_MS)
         } catch {
@@ -106,13 +114,55 @@ function ScoreInput({value, onChange, disabled}: {
     disabled: boolean
 }) {
     const btnClass = "w-full h-8 rounded-lg bg-slate-900/5 border border-slate-900/10 text-cyan-600 hover:bg-slate-900/10 hover:border-cyan-500/40 dark:bg-white/5 dark:border-white/10 dark:text-cyan-300 dark:hover:bg-white/10 dark:hover:border-cyan-400/40 font-bold text-base flex items-center justify-center active:scale-95 transition-all disabled:opacity-20 disabled:pointer-events-none select-none"
+    const dragRef = useRef<{startY: number; startValue: number; lastValue: number} | null>(null)
+    const [isDragging, setIsDragging] = useState(false)
+
+    function clamp(n: number): number {
+        return Math.max(0, Math.min(9, n))
+    }
+
+    function onPointerDown(e: React.PointerEvent<HTMLDivElement>) {
+        if (disabled) return
+        dragRef.current = {startY: e.clientY, startValue: value, lastValue: value}
+        e.currentTarget.setPointerCapture(e.pointerId)
+        setIsDragging(true)
+    }
+
+    function onPointerMove(e: React.PointerEvent<HTMLDivElement>) {
+        const drag = dragRef.current
+        if (!drag) return
+        const delta = Math.round((drag.startY - e.clientY) / SWIPE_STEP_PX)
+        const next = clamp(drag.startValue + delta)
+        if (next !== drag.lastValue) {
+            drag.lastValue = next
+            vibrate(6)
+            onChange(next)
+        }
+    }
+
+    function endDrag(e: React.PointerEvent<HTMLDivElement>) {
+        if (!dragRef.current) return
+        dragRef.current = null
+        setIsDragging(false)
+        if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+            e.currentTarget.releasePointerCapture(e.pointerId)
+        }
+    }
+
     return (
         <div className="flex flex-col items-center gap-1.5 w-14 sm:w-16">
             <button type="button" disabled={disabled || value >= 9} onClick={() => onChange(value + 1)} className={btnClass}>
                 +
             </button>
-            <div className="w-full rounded-2xl bg-gradient-to-tr from-blue-500 via-cyan-400 to-green-300 p-[2px]">
-                <div className="w-full aspect-square rounded-2xl bg-white dark:bg-gray-900 flex items-center justify-center text-3xl font-black text-slate-900 dark:text-white">
+            <div
+                onPointerDown={onPointerDown}
+                onPointerMove={onPointerMove}
+                onPointerUp={endDrag}
+                onPointerCancel={endDrag}
+                style={{touchAction: "none"}}
+                className={`w-full rounded-2xl bg-gradient-to-tr from-blue-500 via-cyan-400 to-green-300 p-[2px] transition-transform ${isDragging ? "scale-105" : ""} ${disabled ? "" : "cursor-ns-resize"}`}
+            >
+                <div className="w-full aspect-square rounded-2xl bg-white dark:bg-gray-900 flex items-center justify-center text-3xl font-black text-slate-900 dark:text-white select-none">
                     {value}
                 </div>
             </div>
