@@ -4,6 +4,7 @@ import React, {useEffect, useMemo, useRef, useState} from "react"
 import {Canvas, useFrame} from "@react-three/fiber"
 import {Line, OrbitControls, useTexture} from "@react-three/drei"
 import * as THREE from "three"
+import {useTheme} from "next-themes"
 import {COUNTRY_COORDS} from "./country-coords"
 import {WORLD_CUP_2026_STADIUMS} from "./stadium-coords"
 import {GLOBE_RADIUS, latLngToVec3, buildContinentGeometry, orientationForPosition, cropSquare} from "./globe-utils"
@@ -122,6 +123,110 @@ function Continents() {
     )
 }
 
+function StarField() {
+    const fieldRef = useRef<THREE.Group>(null)
+    const twinkleRef = useRef<THREE.Points>(null)
+
+    const pinpricks = useMemo(() => {
+        const count = 1800
+        const positions = new Float32Array(count * 3)
+        const sizes = new Float32Array(count)
+        for (let i = 0; i < count; i++) {
+            const u = Math.random()
+            const v = Math.random()
+            const theta = 2 * Math.PI * u
+            const phi = Math.acos(2 * v - 1)
+            const r = 28 + Math.random() * 14
+            positions[i * 3] = r * Math.sin(phi) * Math.cos(theta)
+            positions[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta)
+            positions[i * 3 + 2] = r * Math.cos(phi)
+            sizes[i] = 0.02 + Math.random() * 0.06
+        }
+        return {positions, sizes, count}
+    }, [])
+
+    const twinkle = useMemo(() => {
+        const count = 70
+        const positions = new Float32Array(count * 3)
+        const colors = new Float32Array(count * 3)
+        const phases = new Float32Array(count)
+        const warm = new THREE.Color("#fde68a")
+        const cool = new THREE.Color("#a5f3fc")
+        const white = new THREE.Color("#ffffff")
+        for (let i = 0; i < count; i++) {
+            const u = Math.random()
+            const v = Math.random()
+            const theta = 2 * Math.PI * u
+            const phi = Math.acos(2 * v - 1)
+            const r = 24 + Math.random() * 8
+            positions[i * 3] = r * Math.sin(phi) * Math.cos(theta)
+            positions[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta)
+            positions[i * 3 + 2] = r * Math.cos(phi)
+            const pick = Math.random()
+            const c = pick < 0.33 ? warm : pick < 0.66 ? cool : white
+            colors[i * 3] = c.r
+            colors[i * 3 + 1] = c.g
+            colors[i * 3 + 2] = c.b
+            phases[i] = Math.random() * Math.PI * 2
+        }
+        return {positions, colors, phases, count}
+    }, [])
+
+    useFrame((state, delta) => {
+        if (fieldRef.current) fieldRef.current.rotation.y += delta * 0.01
+        if (twinkleRef.current) {
+            const mat = twinkleRef.current.material as THREE.PointsMaterial
+            const t = state.clock.elapsedTime
+            mat.opacity = 0.75 + Math.sin(t * 0.9) * 0.15
+        }
+    })
+
+    return (
+        <group ref={fieldRef}>
+            <points>
+                <bufferGeometry>
+                    <bufferAttribute
+                        attach="attributes-position"
+                        args={[pinpricks.positions, 3]}
+                        count={pinpricks.count}
+                    />
+                </bufferGeometry>
+                <pointsMaterial
+                    color="#ffffff"
+                    size={0.05}
+                    sizeAttenuation
+                    transparent
+                    opacity={0.7}
+                    depthWrite={false}
+                />
+            </points>
+            <points ref={twinkleRef}>
+                <bufferGeometry>
+                    <bufferAttribute
+                        attach="attributes-position"
+                        args={[twinkle.positions, 3]}
+                        count={twinkle.count}
+                    />
+                    <bufferAttribute
+                        attach="attributes-color"
+                        args={[twinkle.colors, 3]}
+                        count={twinkle.count}
+                    />
+                </bufferGeometry>
+                <pointsMaterial
+                    size={0.18}
+                    sizeAttenuation
+                    transparent
+                    opacity={0.85}
+                    vertexColors
+                    depthWrite={false}
+                    blending={THREE.AdditiveBlending}
+                />
+            </points>
+        </group>
+    )
+}
+
 function Flags() {
     const textures = useTexture(FLAG_URLS) as THREE.Texture[]
 
@@ -224,12 +329,17 @@ function useCoarsePointer(): boolean {
 export default function FlagGlobe({matches = DEFAULT_MATCHES, interactive = true}: FlagGlobeProps = {}): React.JSX.Element {
     const coarsePointer = useCoarsePointer()
     const effectiveInteractive = interactive && !coarsePointer
+    const {resolvedTheme} = useTheme()
+    const [mounted, setMounted] = useState(false)
+    useEffect(() => setMounted(true), [])
+    const showStars = mounted && resolvedTheme === "dark"
     return (
         <div className={`relative h-full w-full ${effectiveInteractive ? "" : "pointer-events-none"}`}>
             <Canvas camera={{position: [0, 0, 5.2], fov: 45}} gl={{antialias: true, alpha: true}} dpr={[1, 1.5]}>
                 <ambientLight intensity={0.7}/>
                 <directionalLight position={[5, 3, 5]} intensity={1.1}/>
                 <pointLight position={[-5, -3, -5]} intensity={0.4} color="#22d3ee"/>
+                {showStars && <StarField/>}
                 <Globe matches={matches}/>
                 {effectiveInteractive && (
                     <OrbitControls enableZoom={false} enablePan={false} rotateSpeed={0.5} enableDamping dampingFactor={0.08}/>
