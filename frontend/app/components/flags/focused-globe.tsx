@@ -2,7 +2,7 @@
 
 import React, {useEffect, useMemo, useRef, useState} from "react"
 import {Canvas, useFrame, useThree} from "@react-three/fiber"
-import {Line, useTexture} from "@react-three/drei"
+import {Line, OrbitControls, useTexture} from "@react-three/drei"
 import * as THREE from "three"
 import {COUNTRY_COORDS} from "./country-coords"
 import {resolveStadium, Stadium} from "./stadium-coords"
@@ -129,7 +129,7 @@ function AnimatedArc({points, anim}: {points: THREE.Vector3[]; anim: React.RefOb
     return <Line points={visiblePoints} color="#fbbf24" lineWidth={2.2} transparent opacity={0.95}/>
 }
 
-function CameraRig({homeCode, awayCode, stadium, anim}: {homeCode: string; awayCode: string; stadium?: Stadium; anim: React.RefObject<AnimState>}) {
+function CameraRig({homeCode, awayCode, stadium, anim, onComplete}: {homeCode: string; awayCode: string; stadium?: Stadium; anim: React.RefObject<AnimState>; onComplete: () => void}) {
     const {camera} = useThree()
     const {startPos, endPos} = useMemo(() => cameraPath(homeCode, awayCode, stadium), [homeCode, awayCode, stadium])
     const travelOrigin = useRef(new THREE.Vector3(0, 0, 5))
@@ -173,6 +173,7 @@ function CameraRig({homeCode, awayCode, stadium, anim}: {homeCode: string; awayC
                 a.progress = 0
             } else {
                 a.phase = "done"
+                onComplete()
             }
         }
     })
@@ -256,9 +257,14 @@ function StadiumMarker({position}: {position: THREE.Vector3}) {
     )
 }
 
-function Scene({homeCode, awayCode, venue}: {homeCode: string; awayCode: string; venue?: string}) {
+function Scene({homeCode, awayCode, venue, enableControls}: {homeCode: string; awayCode: string; venue?: string; enableControls: boolean}) {
     const anim = useRef<AnimState>({phase: "draw", progress: 0})
     const stadium = useMemo(() => resolveStadium(venue), [venue])
+    const [animating, setAnimating] = useState(true)
+
+    useEffect(() => {
+        setAnimating(true)
+    }, [homeCode, awayCode, stadium])
 
     const {arcs, aPos, bPos, stadiumPos} = useMemo(() => {
         const hc = COUNTRY_COORDS[homeCode]
@@ -287,7 +293,7 @@ function Scene({homeCode, awayCode, venue}: {homeCode: string; awayCode: string;
 
     return (
         <>
-            <CameraRig homeCode={homeCode} awayCode={awayCode} stadium={stadium} anim={anim}/>
+            <CameraRig homeCode={homeCode} awayCode={awayCode} stadium={stadium} anim={anim} onComplete={() => setAnimating(false)}/>
             <mesh>
                 <sphereGeometry args={[GLOBE_RADIUS, 64, 64]}/>
                 <meshStandardMaterial color="#1e3a5f" roughness={0.75} metalness={0.15}/>
@@ -305,18 +311,35 @@ function Scene({homeCode, awayCode, venue}: {homeCode: string; awayCode: string;
                 {hasHome && <FocusFlag code={homeCode} position={aPos}/>}
                 {hasAway && <FocusFlag code={awayCode} position={bPos}/>}
             </React.Suspense>
+            {enableControls && !animating && (
+                <OrbitControls enableZoom={false} enablePan={false} rotateSpeed={0.5} enableDamping dampingFactor={0.08}/>
+            )}
         </>
     )
 }
 
+function useCoarsePointer(): boolean {
+    const [coarse, setCoarse] = useState(true)
+    useEffect(() => {
+        const mq = window.matchMedia("(pointer: coarse)")
+        const update = () => setCoarse(mq.matches)
+        update()
+        mq.addEventListener("change", update)
+        return () => mq.removeEventListener("change", update)
+    }, [])
+    return coarse
+}
+
 export default function FocusedGlobe({homeCode, awayCode, venue}: {homeCode: string; awayCode: string; venue?: string}): React.JSX.Element {
+    const coarsePointer = useCoarsePointer()
+    const interactive = !coarsePointer
     return (
-        <div className="relative h-full w-full pointer-events-none">
+        <div className={`relative h-full w-full ${interactive ? "cursor-grab active:cursor-grabbing" : "pointer-events-none"}`}>
             <Canvas camera={{position: [0, 0, 5], fov: 42}} gl={{antialias: true, alpha: true}} dpr={[1, 1.5]}>
                 <ambientLight intensity={0.75}/>
                 <directionalLight position={[5, 3, 5]} intensity={1.1}/>
                 <pointLight position={[-5, -3, -5]} intensity={0.4} color="#22d3ee"/>
-                <Scene homeCode={homeCode} awayCode={awayCode} venue={venue}/>
+                <Scene homeCode={homeCode} awayCode={awayCode} venue={venue} enableControls={interactive}/>
             </Canvas>
         </div>
     )
