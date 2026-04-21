@@ -8,6 +8,7 @@ import {BUTTON_CLASS} from "@/app/util/css-classes"
 import {handlePrediction} from "@/app/components/ticket/submit-prediction"
 import {LocalTime} from "@/app/components/ticket/local-time"
 import {FlagImage} from "@/app/components/predictions/flag-image"
+import {SHORT_COUNTRY_NAMES} from "@/app/util/teams"
 
 const ADVANCE_DELAY_MS = 800
 const SWIPE_STEP_PX = 34
@@ -98,11 +99,12 @@ export default function PredictionForm({match, onPredictionSaved}: PredictionFor
 }
 
 function TeamSide({code, name, reverse}: {code: string; name: string; reverse?: boolean}) {
+    const displayName = SHORT_COUNTRY_NAMES[name.toLowerCase()] ?? name
     return (
         <div className={`flex flex-col items-center gap-2 w-20 ${reverse ? "order-last" : ""}`}>
             <FlagImage code={code} name={name} size={48}/>
-            <span className="text-xs font-semibold tracking-wide text-slate-700 dark:text-gray-200 text-center truncate w-full">
-                {name}
+            <span className="text-xs font-semibold tracking-wide text-slate-700 dark:text-gray-200 text-center leading-tight break-words w-full">
+                {displayName}
             </span>
         </div>
     )

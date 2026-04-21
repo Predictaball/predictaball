@@ -57,3 +57,11 @@ export const COUNTRY_CODES: Record<string, string> = {
     "panama": "PAN",
 }
 
+export const SHORT_COUNTRY_NAMES: Record<string, string> = {
+    "bosnia and herzegovina": "Bosnia",
+    "czech republic": "Czechia",
+    "united states": "USA",
+    "south korea": "S. Korea",
+    "south africa": "S. Africa",
+}
+

@@ -36,7 +36,7 @@ const Home = async () => {
                         <span className="ml-0.5 text-[10px] font-medium tracking-[0.2em] text-slate-500 dark:text-gray-400">.LIVE</span>
                     </Link>
                     <div className="flex items-center gap-2">
-                        <ThemeToggle />
+                        <ThemeToggle sizeClassName="h-8 w-8" />
                         <AdminButton />
                         <SignOutButton />
                     </div>

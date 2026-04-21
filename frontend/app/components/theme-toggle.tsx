@@ -3,7 +3,11 @@
 import React, {useEffect, useState} from "react"
 import {useTheme} from "next-themes"
 
-export default function ThemeToggle(): React.JSX.Element {
+interface ThemeToggleProps {
+    sizeClassName?: string
+}
+
+export default function ThemeToggle({sizeClassName = "h-[39px] w-[39px]"}: ThemeToggleProps = {}): React.JSX.Element {
     const {resolvedTheme, setTheme} = useTheme()
     const [mounted, setMounted] = useState(false)
 
@@ -18,7 +22,7 @@ export default function ThemeToggle(): React.JSX.Element {
             aria-label={label}
             title={label}
             onClick={() => setTheme(isDark ? "light" : "dark")}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 transition hover:bg-slate-100 dark:border-white/10 dark:bg-white/5 dark:text-gray-200 dark:hover:bg-white/10"
+            className={`inline-flex ${sizeClassName} items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 transition hover:bg-slate-100 dark:border-white/10 dark:bg-white/5 dark:text-gray-200 dark:hover:bg-white/10`}
         >
             {mounted && (isDark ? (
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4">
