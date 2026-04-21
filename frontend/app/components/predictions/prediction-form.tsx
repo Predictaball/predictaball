@@ -63,13 +63,13 @@ export default function PredictionForm({match, onPredictionSaved}: PredictionFor
             </div>
 
             <div className="flex items-center justify-between gap-2">
-                <TeamSide code={homeCode} name={match.homeTeam}/>
+                <TeamSide code={homeCode} name={match.homeTeam} ranking={match.homeTeamRanking}/>
                 <div className="flex items-center gap-2">
                     <ScoreInput value={homeScore} onChange={setHomeScore} disabled={!isUpcoming}/>
                     <span className="text-3xl font-black text-slate-400 dark:text-gray-500">:</span>
                     <ScoreInput value={awayScore} onChange={setAwayScore} disabled={!isUpcoming}/>
                 </div>
-                <TeamSide code={awayCode} name={match.awayTeam} reverse/>
+                <TeamSide code={awayCode} name={match.awayTeam} ranking={match.awayTeamRanking} reverse/>
             </div>
 
             {isUpcoming && (
@@ -94,14 +94,21 @@ export default function PredictionForm({match, onPredictionSaved}: PredictionFor
     )
 }
 
-function TeamSide({code, name, reverse}: {code: string; name: string; reverse?: boolean}) {
+function TeamSide({code, name, reverse, ranking}: {code: string; name: string; reverse?: boolean; ranking?: number}) {
     const displayName = SHORT_COUNTRY_NAMES[name.toLowerCase()] ?? name
     return (
         <div className={`flex flex-col items-center gap-2 w-20 ${reverse ? "order-last" : ""}`}>
             <FlagImage code={code} name={name} size={48}/>
-            <span className="text-xs font-semibold tracking-wide text-slate-700 dark:text-gray-200 text-center leading-tight break-words w-full">
-                {displayName}
-            </span>
+            <div className="w-full text-center leading-tight">
+                <span className="block text-xs font-semibold tracking-wide text-slate-700 dark:text-gray-200 break-words">
+                    {displayName}
+                </span>
+                {ranking !== undefined && (
+                    <span className="block text-[10px] font-medium tabular-nums text-slate-400 dark:text-gray-500 mt-0.5">
+                        #{ranking}
+                    </span>
+                )}
+            </div>
         </div>
     )
 }

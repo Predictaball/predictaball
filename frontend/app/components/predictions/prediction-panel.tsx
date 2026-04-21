@@ -2,10 +2,10 @@
 
 import React, {useMemo, useState} from "react"
 import {Match, MatchRoundEnum, MatchStateEnum} from "@/client"
-import {LocalTime} from "@/app/components/ticket/local-time"
 import FocusedGlobeClient from "@/app/components/flags/focused-globe-client"
 import PredictionForm from "@/app/components/predictions/prediction-form"
 import MatchStrip from "@/app/components/predictions/match-strip"
+import {MatchCountdown} from "@/app/components/predictions/match-countdown"
 
 const ROUND_LABEL: Record<MatchRoundEnum, string> = {
     GROUP_STAGE: "Group Stage",
@@ -62,7 +62,7 @@ export default function PredictionPanel({liveMatches, upcomingMatches}: Predicti
                                 </div>
                                 <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between pointer-events-none">
                                     <span className="rounded-full bg-white/80 border border-slate-200 text-slate-600 dark:bg-black/50 dark:border-white/10 dark:text-gray-300 px-3 py-1 text-xs backdrop-blur">
-                                        <LocalTime date={selected.datetime}/>
+                                        <MatchCountdown match={selected}/>
                                     </span>
                                     <span className="rounded-full bg-white/80 border border-slate-200 text-slate-600 dark:bg-black/50 dark:border-white/10 dark:text-gray-300 px-3 py-1 text-xs backdrop-blur">
                                         {selected.venue}
