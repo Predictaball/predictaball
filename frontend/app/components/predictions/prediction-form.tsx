@@ -6,7 +6,6 @@ import toast from "react-hot-toast"
 import {Match, MatchStateEnum} from "@/client"
 import {BUTTON_CLASS} from "@/app/util/css-classes"
 import {handlePrediction} from "@/app/components/ticket/submit-prediction"
-import {LocalTime} from "@/app/components/ticket/local-time"
 import {FlagImage} from "@/app/components/predictions/flag-image"
 import {SHORT_COUNTRY_NAMES} from "@/app/util/teams"
 
@@ -59,11 +58,8 @@ export default function PredictionForm({match, onPredictionSaved}: PredictionFor
 
     return (
         <div className="flex-1 p-4 sm:p-6 flex flex-col justify-center">
-            <div className="text-center md:text-left text-xs uppercase tracking-[0.2em] text-slate-500 dark:text-gray-400 mb-1">
+            <div className="lg:pb-4 sm:pb-2 lg:font-bold text-center md:text-left text-xs uppercase tracking-[0.2em] text-slate-500 dark:text-gray-400 mb-1">
                 {isUpcoming ? "Predict the score" : "Your prediction"}
-            </div>
-            <div className="text-xs text-slate-500 dark:text-gray-400 mb-4 text-center md:text-left">
-                <LocalTime date={match.datetime}/>
             </div>
 
             <div className="flex items-center justify-between gap-2">
@@ -83,7 +79,7 @@ export default function PredictionForm({match, onPredictionSaved}: PredictionFor
                     isDisabled={!hasChanges}
                     className={"mt-4 w-full " + BUTTON_CLASS}
                 >
-                    {savedPrediction ? "Update prediction" : "Submit prediction"}
+                    {savedPrediction ? "Update prediction" : "Submit Prediction"}
                 </Button>
             )}
 
