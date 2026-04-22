@@ -64,9 +64,6 @@ export default function PredictionPanel({liveMatches, upcomingMatches}: Predicti
                                     <span className="rounded-full bg-white/80 border border-slate-200 text-slate-600 dark:bg-black/50 dark:border-white/10 dark:text-gray-300 px-3 py-1 text-xs backdrop-blur">
                                         <MatchCountdown match={selected}/>
                                     </span>
-                                    <span className="rounded-full bg-white/80 border border-slate-200 text-slate-600 dark:bg-black/50 dark:border-white/10 dark:text-gray-300 px-3 py-1 text-xs backdrop-blur">
-                                        {selected.venue}
-                                    </span>
                                 </div>
                             </div>
                             <PredictionForm match={selected} key={selected.matchId} onPredictionSaved={advanceToNext}/>

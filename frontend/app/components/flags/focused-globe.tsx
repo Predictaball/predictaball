@@ -2,7 +2,7 @@
 
 import React, {useEffect, useMemo, useRef, useState} from "react"
 import {Canvas, useFrame, useThree} from "@react-three/fiber"
-import {Line, OrbitControls, useTexture} from "@react-three/drei"
+import {Html, Line, OrbitControls, useTexture} from "@react-three/drei"
 import * as THREE from "three"
 import {COUNTRY_COORDS} from "./country-coords"
 import {resolveStadium, Stadium} from "./stadium-coords"
@@ -327,11 +327,16 @@ function FocusFlag({code, position}: {code: string; position: THREE.Vector3}) {
     )
 }
 
-function StadiumMarker({position}: {position: THREE.Vector3}) {
+function StadiumMarker({position, name}: {position: THREE.Vector3; name: string}) {
     return (
         <mesh position={position}>
             <sphereGeometry args={[0.024, 14, 14]}/>
             <meshBasicMaterial color="#fbbf24"/>
+            <Html center distanceFactor={4} style={{pointerEvents: "none", whiteSpace: "nowrap", transform: "translateY(-22px)"}}>
+                <span className="rounded-full bg-white/80 border border-slate-200 text-slate-600 dark:bg-black/50 dark:border-white/10 dark:text-gray-300 px-3 py-1 text-xs backdrop-blur">
+                    {name}
+                </span>
+            </Html>
         </mesh>
     )
 }
@@ -400,7 +405,7 @@ function Scene({homeCode, awayCode, venue, enableControls, userStopped, onUserSt
             {arcs.map((points, i) => (
                 <AnimatedArc key={i} points={points} anim={anim}/>
             ))}
-            {stadiumPos && <StadiumMarker position={stadiumPos}/>}
+            {stadiumPos && <StadiumMarker position={stadiumPos} name={stadium!.name}/>}
             <React.Suspense fallback={null}>
                 {hasHome && <FocusFlag code={homeCode} position={aPos}/>}
                 {hasAway && <FocusFlag code={awayCode} position={bPos}/>}
