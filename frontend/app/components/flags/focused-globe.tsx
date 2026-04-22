@@ -327,13 +327,17 @@ function FocusFlag({code, position}: {code: string; position: THREE.Vector3}) {
     )
 }
 
-function StadiumMarker({position, name}: {position: THREE.Vector3; name: string}) {
+// Flag discs sit ~FLAG_LIFT above the surface; treat stadium label as conflicting
+// if the stadium is within ~25° of either flag's country centroid.
+const FLAG_CONFLICT_ANGLE = 25 * (Math.PI / 180)
+
+function StadiumMarker({position, name, labelLeft}: {position: THREE.Vector3; name: string; labelLeft: boolean}) {
     return (
         <mesh position={position}>
             <sphereGeometry args={[0.024, 14, 14]}/>
             <meshBasicMaterial color="#fbbf24"/>
-            <Html center distanceFactor={4} style={{pointerEvents: "none", whiteSpace: "nowrap", transform: "translateY(-22px)"}}>
-                <span className="rounded-full bg-white/80 border border-slate-200 text-slate-600 dark:bg-black/50 dark:border-white/10 dark:text-gray-300 px-3 py-1 text-xs backdrop-blur">
+            <Html distanceFactor={4} style={{pointerEvents: "none", whiteSpace: "nowrap", transform: labelLeft ? "translate(-100%, -50%)" : "translateY(-50%)"}}>
+                <span className={`inline-block rounded-full bg-white/80 border border-slate-200 text-white dark:bg-black/50 dark:border-white/10 px-3 py-1 text-xs font-semibold backdrop-blur${labelLeft ? " mr-2" : " ml-2"}`}>
                     {name}
                 </span>
             </Html>
@@ -381,6 +385,12 @@ function Scene({homeCode, awayCode, venue, enableControls, userStopped, onUserSt
     const hasHome = Boolean(COUNTRY_COORDS[homeCode])
     const hasAway = Boolean(COUNTRY_COORDS[awayCode])
 
+    const stadiumLabelLeft = useMemo(() => {
+        if (!stadiumPos) return false
+        const sDir = stadiumPos.clone().normalize()
+        return [aPos, bPos].some(p => sDir.angleTo(p.clone().normalize()) < FLAG_CONFLICT_ANGLE)
+    }, [stadiumPos, aPos, bPos])
+
     return (
         <>
             <CameraRig
@@ -405,7 +415,7 @@ function Scene({homeCode, awayCode, venue, enableControls, userStopped, onUserSt
             {arcs.map((points, i) => (
                 <AnimatedArc key={i} points={points} anim={anim}/>
             ))}
-            {stadiumPos && <StadiumMarker position={stadiumPos} name={stadium!.name}/>}
+            {stadiumPos && <StadiumMarker position={stadiumPos} name={stadium!.name} labelLeft={stadiumLabelLeft}/>}
             <React.Suspense fallback={null}>
                 {hasHome && <FocusFlag code={homeCode} position={aPos}/>}
                 {hasAway && <FocusFlag code={awayCode} position={bPos}/>}
