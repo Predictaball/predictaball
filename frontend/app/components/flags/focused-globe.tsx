@@ -337,7 +337,7 @@ function StadiumMarker({position, name, labelLeft}: {position: THREE.Vector3; na
             <sphereGeometry args={[0.024, 14, 14]}/>
             <meshBasicMaterial color="#fbbf24"/>
             <Html distanceFactor={4} style={{pointerEvents: "none", whiteSpace: "nowrap", transform: labelLeft ? "translate(-100%, -50%)" : "translateY(-50%)"}}>
-                <span className={`inline-block rounded-full bg-white/80 border border-slate-200 text-white dark:bg-black/50 dark:border-white/10 px-3 py-1 text-xs font-semibold backdrop-blur${labelLeft ? " mr-2" : " ml-2"}`}>
+                <span className={`inline-block rounded-full bg-white/80 border border-slate-200 text-amber-500 dark:bg-black/50 dark:border-white/10 dark:text-amber-400 px-3 py-1 text-xs font-semibold backdrop-blur${labelLeft ? " mr-2" : " ml-2"}`}>
                     {name}
                 </span>
             </Html>
