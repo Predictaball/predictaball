@@ -108,6 +108,7 @@ private fun getPredictions(matchId: String): List<Prediction> =
     PredictionTable.selectAll().where { PredictionTable.matchId eq matchId.toInt() }.map { row ->
         Prediction(
             row[PredictionTable.homeScore],
+            row[PredictionTable.chip],
             row[PredictionTable.awayScore],
             row[PredictionTable.matchId].toString(),
             row[PredictionTable.id].toString(),

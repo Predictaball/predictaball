@@ -97,7 +97,7 @@ fun userRoutes(contexts: RequestContexts, leaderboardService: LeaderboardService
         val userId = req.path("userId")!!
         val predictions = transaction {
             PredictionTable.selectAll().where { PredictionTable.memberId eq userId }.map { row ->
-                Prediction(row[PredictionTable.homeScore], row[PredictionTable.awayScore], row[PredictionTable.matchId].toString(), row[PredictionTable.id].toString(), row[PredictionTable.memberId], row[PredictionTable.points])
+                Prediction(row[PredictionTable.homeScore], row[PredictionTable.chip], row[PredictionTable.awayScore], row[PredictionTable.matchId].toString(), row[PredictionTable.id].toString(), row[PredictionTable.memberId], row[PredictionTable.points])
             }
         }
         Response(Status.OK).body(predictions.toJson())

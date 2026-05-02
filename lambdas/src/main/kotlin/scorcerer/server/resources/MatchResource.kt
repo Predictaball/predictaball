@@ -49,7 +49,7 @@ fun matchRoutes(contexts: RequestContexts, leaderboardService: LeaderboardServic
                 (predictions innerJoin LeagueMembershipTable).selectAll().where { (PredictionTable.matchId eq matchId.toInt()).and(LeagueMembershipTable.leagueId eq leagueId) }
             }.map { row ->
                 PredictionWithUser(
-                    Prediction(row[PredictionTable.homeScore], row[PredictionTable.awayScore], row[PredictionTable.matchId].toString(), row[PredictionTable.id].toString(), row[PredictionTable.memberId], row[PredictionTable.points]),
+                    Prediction(row[PredictionTable.homeScore], row[PredictionTable.chip], row[PredictionTable.awayScore], row[PredictionTable.matchId].toString(), row[PredictionTable.id].toString(), row[PredictionTable.memberId], row[PredictionTable.points]),
                     User(row[MemberTable.firstName], row[MemberTable.familyName], row[MemberTable.id], row[MemberTable.fixedPoints], 0),
                 )
             }
@@ -136,7 +136,7 @@ private fun listMatches(requesterUserId: String, filterType: String?, userId: St
                 row[homeTeamTable[TeamTable.ranking]], row[awayTeamTable[TeamTable.ranking]],
                 row[MatchTable.homeScore], row[MatchTable.awayScore],
                 row.getOrNull(predictions[PredictionTable.id])?.let {
-                    Prediction(row[predictions[PredictionTable.homeScore]], row[predictions[PredictionTable.awayScore]], row[MatchTable.id].toString(), row[predictions[PredictionTable.id]].toString(), row[predictions[PredictionTable.memberId]], row[predictions[PredictionTable.points]])
+                    Prediction(row[predictions[PredictionTable.homeScore]], row[predictions[PredictionTable.chip]], row[predictions[PredictionTable.awayScore]], row[MatchTable.id].toString(), row[predictions[PredictionTable.id]].toString(), row[predictions[PredictionTable.memberId]], row[predictions[PredictionTable.points]])
                 },
             )
         }
