@@ -4,6 +4,7 @@ import {getConfigWithAuthHeader} from "@/app/api/client-config";
 import {filterWithContext} from "@/app/util/array";
 import {getUserId} from "@/app/auth/jwt-handler";
 import LeaderboardPagination from "./leaderboard-pagination";
+import {getUserForm} from "@/app/components/leaderboard/get-user-form";
 
 export interface EntriesProps {
     leagueId: string,
@@ -45,6 +46,12 @@ export default async function Entries(props: EntriesProps): Promise<React.JSX.El
             : [leader].concat(elementsForLeaderboard)
     }
 
+    const entries = await leaderboard()
+    const formResults = await Promise.all(entries.map(e => getUserForm(e.user.userId)))
+    const formByUserId: Record<string, (number | null)[]> = Object.fromEntries(
+        entries.map((e, i) => [e.user.userId, formResults[i]])
+    )
+
     return (
         <div className="w-full max-w-2xl mx-auto">
             {leaderboardData?.leagueName && (
@@ -54,8 +61,9 @@ export default async function Entries(props: EntriesProps): Promise<React.JSX.El
             )}
             <LeaderboardPagination
                 shouldPaginate={props.shouldPaginate}
-                leaderboardInners={await leaderboard()}
+                leaderboardInners={entries}
                 userId={userId}
+                formByUserId={formByUserId}
             />
         </div>
     )

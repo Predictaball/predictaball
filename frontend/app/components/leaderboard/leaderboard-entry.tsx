@@ -8,7 +8,8 @@ import Entry from "@/app/components/leaderboard/entry";
 interface LeaderboardEntryProps {
     entry: LeaderboardInner,
     isUser: boolean,
-    disablePulse: boolean
+    disablePulse: boolean,
+    form: (number | null)[]
 }
 
 const MOVEMENT_TO_ICON: Record<LeaderboardInnerMovementEnum, React.JSX.Element> = {
@@ -26,6 +27,7 @@ export default function LeaderboardEntry(props: LeaderboardEntryProps): React.JS
                 movement={props.entry.movement}
                 disablePulse={props.disablePulse}
                 isUser={props.isUser}
+                form={props.form}
             />
         </Link>
     )

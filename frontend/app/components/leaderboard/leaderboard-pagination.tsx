@@ -11,6 +11,7 @@ interface LeaderboardPaginationProps {
     leaderboardInners: LeaderboardInner[]
     userId: string | undefined
     shouldPaginate: boolean
+    formByUserId: Record<string, (number | null)[]>
 }
 
 export default function LeaderboardPagination(props: LeaderboardPaginationProps): React.JSX.Element {
@@ -40,6 +41,7 @@ export default function LeaderboardPagination(props: LeaderboardPaginationProps)
                 entry={entry}
                 isUser={entry.user.userId === props.userId}
                 disablePulse={false}
+                form={props.formByUserId[entry.user.userId] ?? []}
             />
         ))}
         {props.shouldPaginate && totalPages > 1 &&

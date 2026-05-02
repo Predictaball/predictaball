@@ -2,6 +2,7 @@
 
 import React, {useState} from "react"
 import {LeaderboardInner, LeaderboardInnerMovementEnum} from "@/client"
+import FormBadge from "@/app/components/leaderboard/form-badge"
 
 interface EntryProps {
     entry: LeaderboardInner
@@ -9,6 +10,7 @@ interface EntryProps {
     disablePulse: boolean
     isUser?: boolean
     movement: LeaderboardInnerMovementEnum
+    form: (number | null)[]
 }
 
 const MOVEMENT_CHIP: Record<LeaderboardInnerMovementEnum, string> = {
@@ -44,6 +46,7 @@ export default function Entry(props: EntryProps): React.JSX.Element {
                 <div className="flex-1 min-w-0 text-left font-semibold text-slate-900 dark:text-white truncate">
                     {props.entry.user.firstName} {props.entry.user.familyName}
                 </div>
+                {props.form.length > 0 && <FormBadge form={props.form}/>}
                 <div className="font-black tabular-nums bg-gradient-to-r from-blue-500 via-cyan-500 to-green-500 dark:from-blue-400 dark:via-cyan-300 dark:to-green-300 bg-clip-text text-transparent">
                     {props.entry.user.fixedPoints + props.entry.user.livePoints}
                 </div>

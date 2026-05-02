@@ -5,6 +5,7 @@ import {LeaderboardInner, LeagueApi, ListMatchesFilterTypeEnum, Match, MatchApi}
 import BackButton from "@/app/components/back-button";
 import React from "react";
 import LeaderboardEntry from "@/app/components/leaderboard/leaderboard-entry";
+import {getUserForm} from "@/app/components/leaderboard/get-user-form";
 
 export default async function Home({
     params
@@ -45,7 +46,7 @@ export default async function Home({
         }
     }
 
-    const leaderboardEntry = await getEntry()
+    const [leaderboardEntry, form] = await Promise.all([getEntry(), getUserForm(userId)])
 
     return(
         <div className="min-h-svh bg-slate-50 dark:bg-gray-900">
@@ -56,7 +57,7 @@ export default async function Home({
                     </div>
                 </div>
                 <div className="p-2 w-full bg-slate-50 dark:bg-gray-900 flex flex-col items-center">
-                    {leaderboardEntry !== undefined && <LeaderboardEntry disablePulse entry={leaderboardEntry} isUser={true}/>}
+                    {leaderboardEntry !== undefined && <LeaderboardEntry disablePulse entry={leaderboardEntry} isUser={true} form={form}/>}
                     {(await getGames()).map((match, index) => {
                     return (
                         <Ticket 
