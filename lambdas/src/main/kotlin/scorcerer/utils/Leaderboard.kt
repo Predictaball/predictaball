@@ -78,6 +78,8 @@ fun calculateGlobalLeaderboard(previousGlobalLeaderboard: List<LeaderboardInner>
                     it[MemberTable.firstName],
                     it[MemberTable.familyName],
                     userId,
+                    it[MemberTable.doublePointsChips],
+                    it[MemberTable.doublePointsChips],
                     it[MemberTable.fixedPoints],
                     livePoints[userId] ?: 0,
                 )

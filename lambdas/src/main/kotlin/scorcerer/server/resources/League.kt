@@ -67,7 +67,7 @@ fun leagueRoutes(contexts: RequestContexts, leaderboardService: LeaderboardServi
             (LeagueTable innerJoin LeagueMembershipTable innerJoin MemberTable)
                 .select(MemberTable.firstName, MemberTable.familyName, MemberTable.id, MemberTable.fixedPoints)
                 .where { LeagueTable.id eq leagueId }
-                .map { User(it[MemberTable.firstName], it[MemberTable.familyName], it[MemberTable.id], it[MemberTable.fixedPoints], 0) }
+                .map { User(it[MemberTable.firstName], it[MemberTable.familyName], it[MemberTable.id], it[MemberTable.doublePointsChips], it[MemberTable.oneOutChips], it[MemberTable.fixedPoints], 0) }
         }
         Response(Status.OK).body(League(leagueId, leagueName, users).toJson())
     },
