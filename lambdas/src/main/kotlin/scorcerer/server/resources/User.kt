@@ -77,7 +77,7 @@ fun userRoutes(contexts: RequestContexts, leaderboardService: LeaderboardService
                 .groupBy { it[LeagueTable.id] }
                 .mapValues { entry ->
                     val leagueName = entry.value.first()[LeagueTable.name]
-                    val users = entry.value.map { User(it[MemberTable.firstName], it[MemberTable.familyName], it[MemberTable.id], it[MemberTable.fixedPoints], 0) }
+                    val users = entry.value.map { User(it[MemberTable.firstName], it[MemberTable.familyName], it[MemberTable.id], it[MemberTable.doublePointsChips], it[MemberTable.oneOutChips], it[MemberTable.fixedPoints], 0) }
                     League(entry.key, leagueName, users)
                 }.values.toList()
         }

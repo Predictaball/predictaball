@@ -1,7 +1,7 @@
-import React from "react";
-import Predictions from "@/app/app/match/[matchId]/predictions/predictions";
-import { League, Match, MatchApi, UserApi } from "@/client"
 import { getConfigWithAuthHeader } from "@/app/api/client-config"
+import Predictions from "@/app/app/match/[matchId]/predictions/predictions"
+import { League, Match, MatchApi, UserApi } from "@/client"
+import React from "react"
 
 export default async function Home(
     {

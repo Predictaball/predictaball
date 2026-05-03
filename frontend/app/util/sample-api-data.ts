@@ -1,11 +1,13 @@
-import {User} from "../../client/models/User"
-import {LeaderboardInner} from "../../client/models/LeaderboardInner"
-import {Match, MatchRoundEnum, MatchStateEnum} from "@/client";
+import { Match, MatchRoundEnum, MatchStateEnum } from "@/client"
+import { LeaderboardInner } from "../../client/models/LeaderboardInner"
+import { User } from "../../client/models/User"
 
 export const USER_1: User = {
     firstName: "Tom",
     familyName: "McTomminay",
     userId: "1",
+    oneOutChipsRemaining: 2,
+    doublePointsChipsRemaining: 1,
     livePoints: 4,
     fixedPoints: 16
 }
@@ -20,6 +22,8 @@ export const USER_2: User = {
     firstName: "John",
     familyName: "Smith",
     userId: "2",
+    doublePointsChipsRemaining: 3,
+    oneOutChipsRemaining: 3,
     livePoints: 1,
     fixedPoints: 24
 }
@@ -34,6 +38,8 @@ export const USER_3: User = {
     firstName: "Bobby",
     familyName: "Pitch",
     userId: "3",
+    oneOutChipsRemaining: 2,
+    doublePointsChipsRemaining: 3,
     livePoints: 0,
     fixedPoints: 26
 }
