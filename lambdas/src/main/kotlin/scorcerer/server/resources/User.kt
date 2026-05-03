@@ -14,6 +14,7 @@ import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
+import org.openapitools.server.models.GetUserChips200Response
 import org.openapitools.server.models.GetUserPoints200Response
 import org.openapitools.server.models.League
 import org.openapitools.server.models.Prediction
@@ -92,6 +93,15 @@ fun userRoutes(contexts: RequestContexts, leaderboardService: LeaderboardService
             GetUserPoints200Response(member[MemberTable.fixedPoints], livePoints)
         }
         Response(Status.OK).body(points.toJson())
+    },
+    "/user/{userId}/chips" bind Method.GET to { req ->
+        val userId = req.path("userId")!!
+        val chips = transaction {
+            val member = MemberTable.selectAll().where { MemberTable.id eq userId }.firstOrNull()
+                ?: throw ApiResponseError(Response(Status.BAD_REQUEST).body("User does not exist"))
+            GetUserChips200Response(member[MemberTable.doublePointsChips], member[MemberTable.oneOutChips])
+        }
+        Response(Status.OK).body(chips.toJson())
     },
     "/user/{userId}/predictions" bind Method.GET to { req ->
         val userId = req.path("userId")!!

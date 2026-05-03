@@ -403,9 +403,19 @@ paths:
             application/json:
               schema:
                 type: object
+                required:
+                  - predictionId
+                  - doublePointsChipsRemaining
+                  - oneOutChipsRemaining
                 properties:
                   predictionId:
                     type: string
+                  doublePointsChipsRemaining:
+                    type: integer
+                    format: int32
+                  oneOutChipsRemaining:
+                    type: integer
+                    format: int32
   /match/data/{matchId}:
     get:
       tags:
@@ -926,6 +936,41 @@ paths:
                     type: integer
                     format: int32
                   livePoints:
+                    type: integer
+                    format: int32
+  /user/{userId}/chips:
+    get:
+      tags:
+        - user
+      operationId: getUserChips
+      description: Get user's remaining chip counts
+      x-amazon-apigateway-integration:
+        type: "aws_proxy"
+        httpMethod: "POST"
+        uri: "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${apiHandlerArn}/invocations"
+        credentials: "${apiGatewayRoleArn}"
+        payloadFormatVersion: "1.0"
+      parameters:
+        - in: path
+          required: true
+          name: userId
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - doublePointsChipsRemaining
+                  - oneOutChipsRemaining
+                properties:
+                  doublePointsChipsRemaining:
+                    type: integer
+                    format: int32
+                  oneOutChipsRemaining:
                     type: integer
                     format: int32
   /user/leagues:

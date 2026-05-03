@@ -11,15 +11,17 @@ import ThemeToggle from "@/app/components/theme-toggle";
 import {getConfigWithAuthHeader} from "@/app/api/client-config";
 import {ListMatchesFilterTypeEnum, MatchApi} from "@/client";
 import PredictionPanel from "@/app/components/predictions/prediction-panel";
+import {getUserChips} from "@/app/components/predictions/get-user-chips";
 import {SECTION_EYEBROW} from "@/app/util/css-classes";
 
 const Home = async () => {
     const config = await getConfigWithAuthHeader()
     const matchApi = new MatchApi(config)
 
-    const [liveMatches, upcomingMatches] = await Promise.all([
+    const [liveMatches, upcomingMatches, userChips] = await Promise.all([
         matchApi.listMatches({filterType: ListMatchesFilterTypeEnum.Live}).catch(() => []),
         matchApi.listMatches({filterType: ListMatchesFilterTypeEnum.Upcoming}).catch(() => []),
+        getUserChips(),
     ])
 
     return (
@@ -48,7 +50,7 @@ const Home = async () => {
                     <div className="flex items-center justify-between px-1">
                         <h2 className={SECTION_EYEBROW}>Matches</h2>
                     </div>
-                    <PredictionPanel liveMatches={liveMatches} upcomingMatches={upcomingMatches} />
+                    <PredictionPanel liveMatches={liveMatches} upcomingMatches={upcomingMatches} userChips={userChips} />
                 </section>
 
                 <section className="flex justify-center">

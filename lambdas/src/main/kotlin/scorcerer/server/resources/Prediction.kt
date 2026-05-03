@@ -105,7 +105,17 @@ fun predictionRoutes(contexts: RequestContexts) = routes(
                 } get PredictionTable.id
             }
         }
-        Response(Status.OK).body(CreatePrediction200Response(predictionId.toString()).toJson())
+        val (doublePointsRemaining, oneOutRemaining) = transaction {
+            val member = MemberTable.selectAll().where { MemberTable.id eq requesterUserId }.first()
+            member[MemberTable.doublePointsChips] to member[MemberTable.oneOutChips]
+        }
+        Response(Status.OK).body(
+            CreatePrediction200Response(
+                predictionId.toString(),
+                doublePointsRemaining,
+                oneOutRemaining,
+            ).toJson(),
+        )
     },
     "/prediction/{matchId}" bind Method.GET to { req ->
         val requesterUserId = contexts.extractUserId(req)

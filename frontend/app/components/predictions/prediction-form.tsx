@@ -3,11 +3,12 @@
 import React, {useRef, useState} from "react"
 import {Button} from "@nextui-org/react"
 import toast from "react-hot-toast"
-import {Match, MatchStateEnum} from "@/client"
+import {Chip, Match, MatchStateEnum} from "@/client"
 import {BUTTON_CLASS} from "@/app/util/css-classes"
 import {handlePrediction} from "@/app/components/ticket/submit-prediction"
 import {FlagImage} from "@/app/components/predictions/flag-image"
 import {SHORT_COUNTRY_NAMES} from "@/app/util/teams"
+import type {UserChips} from "@/app/components/predictions/get-user-chips"
 
 const ADVANCE_DELAY_MS = 800
 const SWIPE_STEP_PX = 34
@@ -21,15 +22,20 @@ function vibrate(pattern: number | number[]) {
 interface PredictionFormProps {
     match: Match
     onPredictionSaved: () => void
+    userChips: UserChips
+    onChipsChanged: (chips: UserChips) => void
 }
 
-export default function PredictionForm({match, onPredictionSaved}: PredictionFormProps): React.JSX.Element {
+export default function PredictionForm({match, onPredictionSaved, userChips, onChipsChanged}: PredictionFormProps): React.JSX.Element {
     const isUpcoming = match.state === MatchStateEnum.Upcoming
     const [homeScore, setHomeScore] = useState<number>(match.prediction?.homeScore ?? 0)
     const [awayScore, setAwayScore] = useState<number>(match.prediction?.awayScore ?? 0)
+    const [chip, setChip] = useState<Chip>(match.prediction?.chip ?? Chip.None)
     const [isSending, setIsSending] = useState(false)
     const [savedPrediction, setSavedPrediction] = useState(
-        match.prediction ? {home: match.prediction.homeScore, away: match.prediction.awayScore} : undefined,
+        match.prediction
+            ? {home: match.prediction.homeScore, away: match.prediction.awayScore, chip: match.prediction.chip}
+            : undefined,
     )
 
     const homeCode = match.homeTeamFlagCode.toLowerCase()
@@ -38,10 +44,17 @@ export default function PredictionForm({match, onPredictionSaved}: PredictionFor
     async function submit() {
         const h = homeScore
         const a = awayScore
+        const c = chip
         setIsSending(true)
         try {
-            await handlePrediction(h, a, match.matchId)
-            setSavedPrediction({home: h, away: a})
+            const response = await handlePrediction(h, a, match.matchId, c)
+            setSavedPrediction({home: h, away: a, chip: c})
+            if (response) {
+                onChipsChanged({
+                    doublePointsRemaining: response.doublePointsChipsRemaining,
+                    oneOutRemaining: response.oneOutChipsRemaining,
+                })
+            }
             vibrate([20, 40, 20])
             toast.success("Prediction saved")
             setTimeout(onPredictionSaved, ADVANCE_DELAY_MS)
@@ -55,6 +68,7 @@ export default function PredictionForm({match, onPredictionSaved}: PredictionFor
     const hasChanges = savedPrediction === undefined
         || savedPrediction.home !== homeScore
         || savedPrediction.away !== awayScore
+        || savedPrediction.chip !== chip
 
     return (
         <div className="flex-1 p-4 sm:p-6 flex flex-col justify-center">
@@ -71,6 +85,15 @@ export default function PredictionForm({match, onPredictionSaved}: PredictionFor
                 </div>
                 <TeamSide code={awayCode} name={match.awayTeam} ranking={match.awayTeamRanking} reverse/>
             </div>
+
+            {isUpcoming && (
+                <ChipSelector
+                    selected={chip}
+                    onSelect={setChip}
+                    chips={userChips}
+                    savedChip={savedPrediction?.chip ?? Chip.None}
+                />
+            )}
 
             {isUpcoming && (
                 <Button
@@ -174,6 +197,63 @@ function ScoreInput({value, onChange, disabled}: {
             <button type="button" disabled={disabled || value <= 0} onClick={() => onChange(value - 1)} className={btnClass}>
                 −
             </button>
+        </div>
+    )
+}
+
+function ChipSelector({selected, onSelect, chips, savedChip}: {
+    selected: Chip
+    onSelect: (chip: Chip) => void
+    chips: UserChips
+    savedChip: Chip
+}) {
+    const options: Array<{
+        value: Chip
+        label: string
+        sub: string
+        remaining: number | "∞"
+    }> = [
+        {value: Chip.None, label: "No chip", sub: "Standard scoring", remaining: "∞"},
+        {value: Chip.DoublePoints, label: "2× Points", sub: "Double your earned points", remaining: chips.doublePointsRemaining},
+        {value: Chip.OneGoalOut, label: "Off by One", sub: "Score as if one goal closer", remaining: chips.oneOutRemaining},
+    ]
+
+    return (
+        <div className="mt-4">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-gray-400 mb-2">
+                Power-up
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+                {options.map(option => {
+                    const isSelected = selected === option.value
+                    const isSavedChip = savedChip === option.value && option.value !== Chip.None
+                    const outOfStock = typeof option.remaining === "number" && option.remaining <= 0 && !isSavedChip
+                    const disabled = outOfStock
+                    return (
+                        <button
+                            key={option.value}
+                            type="button"
+                            disabled={disabled}
+                            onClick={() => onSelect(option.value)}
+                            className={`relative rounded-xl p-2 text-left transition-all border ${
+                                isSelected
+                                    ? "border-cyan-500 bg-cyan-500/10 dark:border-cyan-400 dark:bg-cyan-400/10 shadow-sm shadow-cyan-500/20"
+                                    : "border-slate-200 bg-slate-900/[0.02] hover:bg-slate-900/[0.05] hover:border-cyan-500/40 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10 dark:hover:border-cyan-400/40"
+                            } ${disabled ? "opacity-40 pointer-events-none" : ""}`}
+                        >
+                            <span className="absolute top-1 right-1.5 text-[10px] font-mono font-bold tabular-nums text-slate-500 dark:text-gray-400">
+                                {option.remaining}
+                            </span>
+                            <div className="text-xs font-bold text-slate-900 dark:text-white">
+                                {option.label}
+                            </div>
+                            <div className="text-[10px] leading-tight text-slate-500 dark:text-gray-400 mt-0.5">
+                                {option.sub}
+                            </div>
+                        </button>
+                    )
+                })}
+            </div>
         </div>
     )
 }

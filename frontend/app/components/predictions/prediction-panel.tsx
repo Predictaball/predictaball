@@ -6,6 +6,7 @@ import FocusedGlobeClient from "@/app/components/flags/focused-globe-client"
 import PredictionForm from "@/app/components/predictions/prediction-form"
 import MatchStrip from "@/app/components/predictions/match-strip"
 import {MatchCountdown} from "@/app/components/predictions/match-countdown"
+import type {UserChips} from "@/app/components/predictions/get-user-chips"
 
 const ROUND_LABEL: Record<MatchRoundEnum, string> = {
     GROUP_STAGE: "Group Stage",
@@ -18,11 +19,13 @@ const ROUND_LABEL: Record<MatchRoundEnum, string> = {
 interface PredictionPanelProps {
     liveMatches: Match[]
     upcomingMatches: Match[]
+    userChips: UserChips
 }
 
-export default function PredictionPanel({liveMatches, upcomingMatches}: PredictionPanelProps): React.JSX.Element {
+export default function PredictionPanel({liveMatches, upcomingMatches, userChips}: PredictionPanelProps): React.JSX.Element {
     const allMatches = useMemo(() => [...liveMatches, ...upcomingMatches], [liveMatches, upcomingMatches])
     const [selectedId, setSelectedId] = useState<string | undefined>(allMatches[0]?.matchId)
+    const [chips, setChips] = useState<UserChips>(userChips)
     const selected = allMatches.find(m => m.matchId === selectedId) ?? allMatches[0]
 
     if (!selected) {
@@ -66,7 +69,13 @@ export default function PredictionPanel({liveMatches, upcomingMatches}: Predicti
                                     </span>
                                 </div>
                             </div>
-                            <PredictionForm match={selected} key={selected.matchId} onPredictionSaved={advanceToNext}/>
+                            <PredictionForm
+                                match={selected}
+                                key={selected.matchId}
+                                onPredictionSaved={advanceToNext}
+                                userChips={chips}
+                                onChipsChanged={setChips}
+                            />
                         </div>
                     </div>
                 </div>
