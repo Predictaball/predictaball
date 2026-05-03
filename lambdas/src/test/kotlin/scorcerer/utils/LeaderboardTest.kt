@@ -96,7 +96,7 @@ class TestLeaderboardS3Service {
         coEvery {
             s3Client.getObject(
                 any<GetObjectRequest>(),
-                any<suspend (GetObjectResponse) -> List<LeaderboardInner>?>()
+                any<suspend (GetObjectResponse) -> List<LeaderboardInner>?>(),
             )
         } throws exception
 

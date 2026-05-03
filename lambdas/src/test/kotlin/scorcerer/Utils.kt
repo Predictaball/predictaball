@@ -14,6 +14,8 @@ fun givenUserExists(id: String, firstName: String, familyName: String = "Name", 
             it[this.firstName] = firstName
             it[this.familyName] = familyName
             it[this.fixedPoints] = fixedPoints
+            it[this.doublePointsChips] = 3
+            it[this.oneOutChips] = 3
         }
     }
 }
