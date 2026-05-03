@@ -9,6 +9,7 @@ import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.junit.jupiter.api.Test
+import org.openapitools.server.models.Chip
 import scorcerer.DatabaseTest
 import scorcerer.givenMatchExists
 import scorcerer.givenPredictionExists
@@ -72,7 +73,7 @@ class PredictionTest : DatabaseTest() {
         val response = handler(Request(Method.GET, "/prediction/$matchId"))
         response.status shouldBe Status.OK
         val prediction: PredictionModel = response.bodyString().fromJson()
-        prediction shouldBe PredictionModel(1, 1, matchId, predictionId, "test-user")
+        prediction shouldBe PredictionModel(1, Chip.NONE, 1, matchId, predictionId, "test-user")
     }
 
     @Test

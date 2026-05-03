@@ -14,6 +14,7 @@ import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.openapitools.server.models.Chip
 import org.openapitools.server.models.Match
 import org.openapitools.server.models.Prediction
 import scorcerer.DatabaseTest
@@ -65,7 +66,7 @@ class MatchTest : DatabaseTest() {
         response.status shouldBe Status.OK
         val matches: List<Match> = response.bodyString().fromJson()
         matches.size shouldBe 2
-        matches.first().prediction shouldBe Prediction(3, 4, "1", "1", "test-user", null)
+        matches.first().prediction shouldBe Prediction(3, Chip.NONE, 4, "1", "1", "test-user", null)
     }
 
     @Test

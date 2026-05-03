@@ -2,6 +2,7 @@ package scorcerer
 
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
+import org.openapitools.server.models.Chip
 import org.openapitools.server.models.Match
 import scorcerer.server.db.tables.*
 import java.time.OffsetDateTime
@@ -59,7 +60,14 @@ fun givenLeagueExists(leagueId: String, leagueName: String) {
     }
 }
 
-fun givenPredictionExists(matchId: String, userId: String, homeScore: Int, awayScore: Int, points: Int? = null): String {
+fun givenPredictionExists(
+    matchId: String,
+    userId: String,
+    homeScore: Int,
+    awayScore: Int,
+    points: Int? = null,
+    chip: Chip = Chip.NONE,
+): String {
     return (
         transaction {
             PredictionTable.insert {
@@ -68,6 +76,7 @@ fun givenPredictionExists(matchId: String, userId: String, homeScore: Int, awayS
                 it[this.homeScore] = homeScore
                 it[this.awayScore] = awayScore
                 it[this.points] = points
+                it[this.chip] = chip
             }
         } get PredictionTable.id
         ).toString()

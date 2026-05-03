@@ -3,6 +3,7 @@ package scorcerer.server.db.tables
 import org.jetbrains.exposed.v1.core.Table
 import org.jetbrains.exposed.v1.core.greaterEq
 import org.jetbrains.exposed.v1.core.lessEq
+import org.openapitools.server.models.Chip
 
 object PredictionTable : Table("prediction") {
     val id = integer("id").uniqueIndex().autoIncrement()
@@ -10,6 +11,7 @@ object PredictionTable : Table("prediction") {
     val matchId = integer("match_id").references(MatchTable.id)
     val homeScore = integer("home_score").check { it.greaterEq(0) }
     val awayScore = integer("away_score").check { it.greaterEq(0) }
+    val chip = enumeration<Chip>("chip").default(Chip.NONE)
     val result = enumeration<MatchResult>("result").nullable()
     val points = integer("points").check { it.greaterEq(0) }.check { it.lessEq(10) }.nullable()
     init {
