@@ -1,5 +1,5 @@
-import {AuthApi, Configuration, UserApi} from "@/client";
-import {API_GATEWAY} from "./constants";
+import { AuthApi, Configuration, UserApi } from "@/client"
+import { API_GATEWAY } from "./constants"
 
 export class AuthClient {
     readonly authApi: AuthApi
@@ -25,6 +25,3 @@ const authClientConfig = new Configuration({
     basePath: API_GATEWAY,
 })
 export const AUTH_CLIENT = AuthClient.create(authClientConfig)
-
-export const TOKEN_COOKIE_KEY = "authToken"
-export const REFRESH_TOKEN_COOKIE_KEY = "refreshToken"

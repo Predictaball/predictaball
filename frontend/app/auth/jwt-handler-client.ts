@@ -1,18 +1,8 @@
 'use client'
 
-import {getCookie} from "cookies-next";
-import {TOKEN_COOKIE_KEY} from "@/app/api/api";
-import {jwtDecode} from "jwt-decode";
+import { getSession } from "next-auth/react"
 
-export function getUserIdClient(): string | undefined {
-    'use client'
-    try {
-        const token: string | undefined = getCookie(TOKEN_COOKIE_KEY)
-        if (token === undefined) {
-            return undefined
-        }
-        return jwtDecode(token)?.sub
-    } catch (error) {
-        return undefined
-    }
+export async function getUserIdClient(): Promise<string | undefined> {
+    const session = await getSession()
+    return session?.user?.id
 }

@@ -12,6 +12,7 @@ import scorcerer.server.db.tables.LeagueMembershipTable
 import scorcerer.server.db.tables.LeagueTable
 import scorcerer.server.db.tables.MatchTable
 import scorcerer.server.db.tables.MemberTable
+import scorcerer.server.db.tables.PasswordResetTokenTable
 import scorcerer.server.db.tables.PredictionTable
 import scorcerer.server.db.tables.TeamTable
 import scorcerer.server.log
@@ -43,13 +44,13 @@ object DatabaseFactory {
     fun generateTables() {
         transaction {
             addLogger(StdOutSqlLogger)
-            SchemaUtils.create(MatchTable, LeagueMembershipTable, LeagueTable, MemberTable, PredictionTable, TeamTable)
+            SchemaUtils.create(MatchTable, LeagueMembershipTable, LeagueTable, MemberTable, PasswordResetTokenTable, PredictionTable, TeamTable)
         }
     }
 
     fun dropTables() {
         transaction {
-            SchemaUtils.drop(MatchTable, LeagueMembershipTable, LeagueTable, MemberTable, PredictionTable, TeamTable)
+            SchemaUtils.drop(MatchTable, LeagueMembershipTable, LeagueTable, MemberTable, PasswordResetTokenTable, PredictionTable, TeamTable)
         }
     }
 }

@@ -9,5 +9,8 @@ object MemberTable : Table("member") {
     val fixedPoints = integer("fixed_points")
     val doublePointsChips = integer("double_points_chips").default(3)
     val oneOutChips = integer("one_out_chips").default(3)
+    val email = varchar("email", 255).uniqueIndex()
+    val passwordHash = varchar("password_hash", 255).nullable()
+    val authProvider = varchar("auth_provider", 20).default("email")
     override val primaryKey = PrimaryKey(id)
 }

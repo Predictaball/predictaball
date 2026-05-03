@@ -1,14 +1,14 @@
 'use client'
 
-import React, {useState} from "react"
-import {Button, Input} from "@nextui-org/react"
-import {EyeFilledIcon, EyeSlashFilledIcon} from "@nextui-org/shared-icons"
-import {setCookie} from "cookies-next"
-import {LoginRequest, SignupRequest} from "@/client"
-import {AUTH_CLIENT, REFRESH_TOKEN_COOKIE_KEY, TOKEN_COOKIE_KEY} from "@/app/api/api"
-import {navigateTo} from "@/app/actions"
-import {AUTH_INPUT_CLASS_NAMES, BUTTON_CLASS} from "@/app/util/css-classes"
-import {doesContainDigit, doesContainLowerCase} from "@/app/util/regex"
+import React, { useState } from "react"
+import { Button, Input } from "@nextui-org/react"
+import { EyeFilledIcon, EyeSlashFilledIcon } from "@nextui-org/shared-icons"
+import { signIn } from "next-auth/react"
+import { AUTH_CLIENT } from "@/app/api/api"
+import { API_GATEWAY } from "@/app/api/constants"
+import { AUTH_INPUT_CLASS_NAMES, BUTTON_CLASS } from "@/app/util/css-classes"
+import GoogleIcon from "@/app/components/icons/google-icon"
+import { doesContainDigit, doesContainLowerCase } from "@/app/util/regex"
 
 const EMAIL_REGEX = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|.(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
 
@@ -19,7 +19,7 @@ interface AuthFormProps {
     leagueId?: string
 }
 
-function PasswordRule({ok, label}: {ok: boolean; label: string}) {
+function PasswordRule({ ok, label }: { ok: boolean; label: string }) {
     return (
         <p className="flex items-center gap-2">
             <span className={`inline-flex h-4 w-4 items-center justify-center rounded-full text-[10px] font-bold ${ok ? "bg-green-500/20 text-green-700 dark:bg-green-400/20 dark:text-green-300" : "bg-red-500/20 text-red-700 dark:bg-red-400/20 dark:text-red-300"}`}>
@@ -30,7 +30,7 @@ function PasswordRule({ok, label}: {ok: boolean; label: string}) {
     )
 }
 
-export default function AuthForm({callbackUrl, leagueId}: AuthFormProps): React.JSX.Element {
+export default function AuthForm({ callbackUrl, leagueId }: AuthFormProps): React.JSX.Element {
     const [mode, setMode] = useState<Mode>("email")
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
@@ -41,12 +41,16 @@ export default function AuthForm({callbackUrl, leagueId}: AuthFormProps): React.
     const [didFail, setDidFail] = useState(false)
     const [checkError, setCheckError] = useState(false)
 
+    const [googleEmail, setGoogleEmail] = useState(false)
+
     const validEmail = EMAIL_REGEX.test(email)
     const validLength = password.length >= 6
     const containsDigit = doesContainDigit(password)
     const containsLowerCase = doesContainLowerCase(password)
 
     const toggleVisibility = () => setIsVisible(v => !v)
+
+    const redirectTo = callbackUrl ?? (leagueId ? `/app/league/${leagueId}/join` : "/app")
 
     const subtitle = mode === "email"
         ? "Enter your email to get started"
@@ -56,9 +60,15 @@ export default function AuthForm({callbackUrl, leagueId}: AuthFormProps): React.
         if (!validEmail) return
         setIsLoading(true)
         setCheckError(false)
+        setGoogleEmail(false)
         try {
-            const response = await AUTH_CLIENT.authApi.checkEmail({email})
-            setMode(response._exists ? "login" : "signup")
+            const res = await fetch(`${API_GATEWAY}/auth/check-email?email=${encodeURIComponent(email)}`)
+            const data = await res.json() as { exists: boolean; provider?: string }
+            if (data.exists && data.provider === "google") {
+                setGoogleEmail(true)
+            } else {
+                setMode(data.exists ? "login" : "signup")
+            }
         } catch {
             setCheckError(true)
         } finally {
@@ -67,36 +77,33 @@ export default function AuthForm({callbackUrl, leagueId}: AuthFormProps): React.
     }
 
     const handleLogin = async () => {
-        const requestBody: LoginRequest = {email, password}
         setIsLoading(true)
         setDidFail(false)
-        try {
-            const response = await AUTH_CLIENT.authApi.login({loginRequest: requestBody})
-            if (!response.idToken) {
-                setDidFail(true)
-                setIsLoading(false)
-                return
-            }
-            setCookie(TOKEN_COOKIE_KEY, response.idToken, {maxAge: 60 * 60 * 24})
-            if (response.refreshToken) {
-                setCookie(REFRESH_TOKEN_COOKIE_KEY, response.refreshToken, {maxAge: 60 * 60 * 24 * 30})
-            }
-            await navigateTo(callbackUrl ?? (leagueId ? `app/league/${leagueId}/join` : "app"))
-        } catch {
+        const result = await signIn("credentials", {
+            email,
+            password,
+            redirect: false,
+        })
+        if (result?.error) {
             setDidFail(true)
             setIsLoading(false)
+        } else {
+            window.location.href = redirectTo
         }
     }
 
     const handleSignup = async () => {
-        const signupRequest: SignupRequest = {email, password, firstName, familyName: lastName}
         setIsLoading(true)
         try {
-            await AUTH_CLIENT.userApi.signup({signupRequest})
+            await AUTH_CLIENT.userApi.signup({ signupRequest: { email, password, firstName, familyName: lastName } })
             await handleLogin()
         } catch {
             setIsLoading(false)
         }
+    }
+
+    const handleGoogleSignIn = () => {
+        signIn("google", { callbackUrl: redirectTo })
     }
 
     const signupInvalid = !validEmail
@@ -126,6 +133,18 @@ export default function AuthForm({callbackUrl, leagueId}: AuthFormProps): React.
             {mode === "email" && (
                 <>
                     <p className="text-center text-sm text-slate-500 dark:text-gray-400 -mt-2 mb-2">{subtitle}</p>
+                    <Button
+                        onPress={handleGoogleSignIn}
+                        className="w-full bg-white text-gray-700 font-medium border border-gray-300"
+                        startContent={<GoogleIcon />}
+                    >
+                        Continue with Google
+                    </Button>
+                    <div className="flex items-center gap-3 my-1">
+                        <div className="flex-1 h-px bg-gray-700" />
+                        <span className="text-xs text-gray-500 uppercase">or</span>
+                        <div className="flex-1 h-px bg-gray-700" />
+                    </div>
                     <Input
                         value={email}
                         onChange={(e) => {
@@ -145,12 +164,17 @@ export default function AuthForm({callbackUrl, leagueId}: AuthFormProps): React.
                         variant="bordered"
                         isInvalid={email.length > 0 && !validEmail}
                         classNames={AUTH_INPUT_CLASS_NAMES}
-                        style={{fontSize: "18px"}}
+                        style={{ fontSize: "18px" }}
                         autoFocus
                     />
                     {checkError && (
                         <p className="text-sm text-red-600 dark:text-red-400 text-center">
                             Something went wrong. Please try again.
+                        </p>
+                    )}
+                    {googleEmail && (
+                        <p className="text-sm text-amber-600 dark:text-amber-400 text-center">
+                            This email is registered with Google. Use the button above to sign in.
                         </p>
                     )}
                     <Button
@@ -183,7 +207,7 @@ export default function AuthForm({callbackUrl, leagueId}: AuthFormProps): React.
                         variant="bordered"
                         isInvalid={didFail}
                         classNames={AUTH_INPUT_CLASS_NAMES}
-                        style={{fontSize: "18px"}}
+                        style={{ fontSize: "18px" }}
                         autoFocus
                         endContent={
                             <button className="focus:outline-none" type="button" onClick={toggleVisibility}>
@@ -218,7 +242,7 @@ export default function AuthForm({callbackUrl, leagueId}: AuthFormProps): React.
                             label="First name"
                             variant="bordered"
                             classNames={AUTH_INPUT_CLASS_NAMES}
-                            style={{fontSize: "18px"}}
+                            style={{ fontSize: "18px" }}
                             autoFocus
                         />
                         <Input
@@ -227,7 +251,7 @@ export default function AuthForm({callbackUrl, leagueId}: AuthFormProps): React.
                             label="Last name"
                             variant="bordered"
                             classNames={AUTH_INPUT_CLASS_NAMES}
-                            style={{fontSize: "18px"}}
+                            style={{ fontSize: "18px" }}
                         />
                     </div>
                     <div>
@@ -237,7 +261,7 @@ export default function AuthForm({callbackUrl, leagueId}: AuthFormProps): React.
                             label="Password"
                             variant="bordered"
                             classNames={AUTH_INPUT_CLASS_NAMES}
-                            style={{fontSize: "18px"}}
+                            style={{ fontSize: "18px" }}
                             endContent={
                                 <button className="focus:outline-none" type="button" onClick={toggleVisibility}>
                                     {isVisible

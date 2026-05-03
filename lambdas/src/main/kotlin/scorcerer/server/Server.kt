@@ -13,9 +13,7 @@ import org.http4k.filter.ServerFilters.InitialiseRequestContext
 import org.http4k.routing.routes
 import org.http4k.server.Netty
 import org.http4k.server.asServer
-import scorcerer.server.auth.AuthProvider
-import scorcerer.server.auth.CognitoAuthProvider
-import scorcerer.server.auth.LocalAuthProvider
+import scorcerer.server.auth.DatabaseAuthProvider
 import scorcerer.server.db.DatabaseFactory
 import scorcerer.server.resources.adminRoutes
 import scorcerer.server.resources.authRoutes
@@ -33,25 +31,16 @@ import scorcerer.utils.LocalLeaderboardService
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
-private enum class AuthMode { LOCAL, COGNITO }
+private val requestContext = RequestContexts()
+private val s3Client by lazy { S3Client { region = "eu-west-2" } }
+private val authProvider = DatabaseAuthProvider()
 private enum class LeaderboardMode { LOCAL, S3 }
-private val authMode = try {
-    AuthMode.valueOf(System.getenv("AUTH_MODE")?.uppercase() ?: "COGNITO")
-} catch (_: Exception) {
-    AuthMode.COGNITO
-}
 private val leaderboardMode = try {
     LeaderboardMode.valueOf(System.getenv("LEADERBOARD_MODE")?.uppercase() ?: "S3")
 } catch (_: Exception) {
     LeaderboardMode.S3
 }
 
-private val requestContext = RequestContexts()
-private val s3Client by lazy { S3Client { region = "eu-west-2" } }
-private val authProvider: AuthProvider = when (authMode) {
-    AuthMode.LOCAL -> LocalAuthProvider()
-    AuthMode.COGNITO -> CognitoAuthProvider()
-}
 private val leaderboardService: LeaderboardService = when (leaderboardMode) {
     LeaderboardMode.LOCAL -> LocalLeaderboardService()
     LeaderboardMode.S3 -> LeaderboardS3Service(s3Client, Environment.LeaderboardBucketName)
@@ -95,12 +84,7 @@ private val httpServer = cors
     .then(InitialiseRequestContext(requestContext))
     .then(loggingFilter)
     .then(CatchAll(::handleError))
-    .let {
-        when (authMode) {
-            AuthMode.LOCAL -> it.then(localAuthFilter(requestContext))
-            AuthMode.COGNITO -> it.then(cognitoAuthFilter(requestContext))
-        }
-    }
+    .then(authFilter(requestContext))
     .then(allRoutes)
 
 fun main() {
@@ -113,6 +97,6 @@ fun main() {
         scheduler.scheduleAtFixedRate({ runCatching { ScoreUpdater(leaderboardService).run() }.onFailure { log.error(it.stackTraceToString()) } }, 0, 2, TimeUnit.MINUTES)
     }
 
-    log.info("Starting server on port 8080 (auth: $authMode, leaderboard: $leaderboardMode, scheduler: $schedulerMode)")
+    log.info("Starting server on port 8080 (leaderboard: $leaderboardMode, scheduler: $schedulerMode)")
     httpServer.asServer(Netty(8080)).start().block()
 }
