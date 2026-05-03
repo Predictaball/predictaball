@@ -72,7 +72,7 @@ export default function PredictionForm({match, onPredictionSaved, userChips, onC
 
     return (
         <div className="flex-1 p-4 sm:p-6 flex flex-col justify-center">
-            <div className="lg:pb-4 sm:pb-2 lg:font-bold text-center md:text-left text-xs uppercase tracking-[0.2em] text-slate-500 dark:text-gray-400 mb-1">
+            <div className="hidden md:block lg:pb-4 sm:pb-2 lg:font-bold text-center md:text-left text-xs uppercase tracking-[0.2em] text-slate-500 dark:text-gray-400 mb-1">
                 {isUpcoming ? "Predict the score" : "Your prediction"}
             </div>
 
@@ -210,20 +210,20 @@ function ChipSelector({selected, onSelect, chips, savedChip}: {
     const options: Array<{
         value: Chip
         label: string
-        sub: string
+        glyph: string
+        description: string
         remaining: number | "∞"
     }> = [
-        {value: Chip.None, label: "No chip", sub: "Standard scoring", remaining: "∞"},
-        {value: Chip.DoublePoints, label: "2× Points", sub: "Double your earned points", remaining: chips.doublePointsRemaining},
-        {value: Chip.OneGoalOut, label: "Off by One", sub: "Score as if one goal closer", remaining: chips.oneOutRemaining},
+        {value: Chip.None, label: "No power-up", glyph: "—", description: "Standard scoring", remaining: "∞"},
+        {value: Chip.DoublePoints, label: "Double Points", glyph: "2×", description: "Double your earned points", remaining: chips.doublePointsRemaining},
+        {value: Chip.OneGoalOut, label: "Off by One", glyph: "±1", description: "Score as if one goal closer", remaining: chips.oneOutRemaining},
     ]
 
+    const selectedOption = options.find(o => o.value === selected) ?? options[0]
+
     return (
-        <div className="mt-4">
-            <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-gray-400 mb-2">
-                Power-up
-            </div>
-            <div className="grid grid-cols-3 gap-2">
+        <div className="mt-3 flex items-center gap-3">
+            <div className="flex gap-1.5 shrink-0">
                 {options.map(option => {
                     const isSelected = selected === option.value
                     const isSavedChip = savedChip === option.value && option.value !== Chip.None
@@ -234,25 +234,29 @@ function ChipSelector({selected, onSelect, chips, savedChip}: {
                             key={option.value}
                             type="button"
                             disabled={disabled}
+                            aria-label={option.label}
                             onClick={() => onSelect(option.value)}
-                            className={`relative rounded-xl p-2 text-left transition-all border ${
+                            className={`relative h-10 w-10 rounded-lg flex items-center justify-center font-black text-sm transition-all border ${
                                 isSelected
-                                    ? "border-cyan-500 bg-cyan-500/10 dark:border-cyan-400 dark:bg-cyan-400/10 shadow-sm shadow-cyan-500/20"
-                                    : "border-slate-200 bg-slate-900/[0.02] hover:bg-slate-900/[0.05] hover:border-cyan-500/40 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10 dark:hover:border-cyan-400/40"
+                                    ? "border-cyan-500 bg-cyan-500/10 text-cyan-600 dark:border-cyan-400 dark:bg-cyan-400/10 dark:text-cyan-300 shadow-sm shadow-cyan-500/20"
+                                    : "border-slate-200 bg-slate-900/[0.02] text-slate-700 hover:bg-slate-900/[0.05] hover:border-cyan-500/40 dark:border-white/10 dark:bg-white/5 dark:text-gray-200 dark:hover:bg-white/10 dark:hover:border-cyan-400/40"
                             } ${disabled ? "opacity-40 pointer-events-none" : ""}`}
                         >
-                            <span className="absolute top-1 right-1.5 text-[10px] font-mono font-bold tabular-nums text-slate-500 dark:text-gray-400">
+                            <span className="tabular-nums">{option.glyph}</span>
+                            <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full bg-slate-100 dark:bg-gray-800 border border-slate-200 dark:border-white/10 text-[9px] font-mono font-bold tabular-nums text-slate-600 dark:text-gray-300 flex items-center justify-center leading-none">
                                 {option.remaining}
                             </span>
-                            <div className="text-xs font-bold text-slate-900 dark:text-white">
-                                {option.label}
-                            </div>
-                            <div className="text-[10px] leading-tight text-slate-500 dark:text-gray-400 mt-0.5">
-                                {option.sub}
-                            </div>
                         </button>
                     )
                 })}
+            </div>
+            <div className="flex-1 min-w-0 leading-tight">
+                <div className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                    {selectedOption.label}
+                </div>
+                <div className="text-[10px] text-slate-500 dark:text-gray-400 truncate">
+                    {selectedOption.description}
+                </div>
             </div>
         </div>
     )
