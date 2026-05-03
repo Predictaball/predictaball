@@ -32,7 +32,7 @@ docker compose up -d
 cd lambdas
 ./gradlew runLocal
 ```
-The server starts on `http://localhost:8080` with local auth (no Cognito needed).
+The server starts on `http://localhost:8080`.
 
 3. Start the frontend:
 ```bash
@@ -44,11 +44,13 @@ The frontend starts on `http://localhost:3000`, pointing at the local backend.
 
 4. Open `http://localhost:3000`, sign up with any email/password, and start using the app.
 
-### Local Auth
+### Auth
 
-The backend uses `AUTH_MODE=local` when running locally. This provides a full auth flow (signup, login, JWT tokens) without Cognito. Users are stored in memory and reset when the server restarts.
+Authentication uses [NextAuth.js v5](https://authjs.dev/) on the frontend with Google OAuth and email/password credentials. The backend issues HMAC JWTs for API authentication, verified using a shared `NEXTAUTH_SECRET`.
 
-To test as an admin, sign up with `admin@test.com` (configurable via `LOCAL_ADMIN_EMAILS` env var in `build.gradle.kts`).
+To test as an admin locally, sign up with `admin@test.com` (configurable via `LOCAL_ADMIN_EMAILS` env var in `build.gradle.kts`).
+
+To test Google OAuth locally, add `AUTH_GOOGLE_ID` and `AUTH_GOOGLE_SECRET` to `frontend/.env.local`.
 
 ### Run Tests
 
@@ -72,13 +74,13 @@ To deploy manually:
 
 ```bash
 cd lambdas && ./gradlew shadowJar
-cd ../cdk && npm install && CDK_ACCOUNT_ID=<account-id> CDK_DB_PASSWORD=<password> CDK_API_DOMAIN=<domain> npx cdk deploy --profile <profile>
+cd ../cdk && npm install && CDK_ACCOUNT_ID=<account-id> CDK_DB_PASSWORD=<password> CDK_NEXTAUTH_SECRET=<secret> CDK_RESEND_API_KEY=<key> CDK_API_DOMAIN=<domain> npx cdk deploy --profile <profile>
 ```
 
 <details>
 <summary>Using Finch instead of Docker?</summary>
 
 ```bash
-CDK_DOCKER=finch CDK_ACCOUNT_ID=<account-id> CDK_DB_PASSWORD=<password> npx cdk deploy --profile <profile>
+CDK_DOCKER=finch CDK_ACCOUNT_ID=<account-id> CDK_DB_PASSWORD=<password> CDK_NEXTAUTH_SECRET=<secret> CDK_RESEND_API_KEY=<key> npx cdk deploy --profile <profile>
 ```
 </details>

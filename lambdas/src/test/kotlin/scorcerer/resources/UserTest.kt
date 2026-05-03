@@ -16,7 +16,7 @@ import scorcerer.givenPredictionExists
 import scorcerer.givenTeamExists
 import scorcerer.givenUserExists
 import scorcerer.givenUserInLeague
-import scorcerer.server.auth.LocalAuthProvider
+import scorcerer.server.auth.DatabaseAuthProvider
 import scorcerer.server.fromJson
 import scorcerer.server.resources.userRoutes
 import scorcerer.utils.LeaderboardS3Service
@@ -24,7 +24,7 @@ import scorcerer.utils.LeaderboardS3Service
 class UserTest : DatabaseTest() {
     private val contexts = RequestContexts()
     private val mockLeaderboardService = mockk<LeaderboardS3Service>(relaxed = true)
-    private val handler = testHandler(contexts, userRoutes(contexts, mockLeaderboardService, LocalAuthProvider()))
+    private val handler = testHandler(contexts, userRoutes(contexts, mockLeaderboardService, DatabaseAuthProvider()))
 
     @Test
     fun getUserPoints() {

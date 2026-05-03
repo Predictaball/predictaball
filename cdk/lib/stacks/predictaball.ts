@@ -11,8 +11,7 @@ import {
 } from "aws-cdk-lib/aws-ec2"
 import { Credentials, DatabaseInstance, DatabaseInstanceEngine, StorageType } from "aws-cdk-lib/aws-rds"
 import { adminApiKey, apiDomain, dbPassword, frontendDomain, rootDomain, vercelCname } from "../environment"
-import { Cognito } from "./cognito"
-import { AnyPrincipal, Effect, PolicyStatement } from "aws-cdk-lib/aws-iam"
+import { AnyPrincipal, PolicyStatement } from "aws-cdk-lib/aws-iam"
 import { BlockPublicAccess, Bucket, BucketEncryption } from "aws-cdk-lib/aws-s3"
 import { Cluster, ContainerImage, LogDrivers } from "aws-cdk-lib/aws-ecs"
 import { ApplicationLoadBalancedFargateService } from "aws-cdk-lib/aws-ecs-patterns"
@@ -58,8 +57,6 @@ export class Predictaball extends Stack {
       }),
     )
 
-    const cognito = new Cognito(this)
-
     const db = new DatabaseInstance(this, "predictaballDatabase", {
       engine: DatabaseInstanceEngine.POSTGRES,
       vpc: vpc,
@@ -100,8 +97,8 @@ export class Predictaball extends Stack {
           DB_URL: db.dbInstanceEndpointAddress,
           DB_NAME: "postgres",
           DB_PORT: db.dbInstanceEndpointPort,
-          USER_POOL_CLIENT_ID: cognito.poolClient.userPoolClientId,
-          USER_POOL_ID: cognito.userPool.userPoolId,
+          NEXTAUTH_SECRET: process.env["CDK_NEXTAUTH_SECRET"] || "",
+          RESEND_API_KEY: process.env["CDK_RESEND_API_KEY"] || "",
           LEADERBOARD_BUCKET_NAME: leaderboardBucket.bucketName,
           SCHEDULER_MODE: adminApiKey ? "off" : "in_process",
           ADMIN_API_KEY: adminApiKey || "",
@@ -130,20 +127,6 @@ export class Predictaball extends Stack {
     const taskRole = ecsService.taskDefinition.taskRole
 
     leaderboardBucket.grantReadWrite(taskRole)
-
-    taskRole.addToPrincipalPolicy(
-      new PolicyStatement({
-        effect: Effect.ALLOW,
-        actions: [
-          "cognito-idp:AdminInitiateAuth",
-          "cognito-idp:AdminCreateUser",
-          "cognito-idp:AdminSetUserPassword",
-          "cognito-idp:AdminDeleteUser",
-          "cognito-idp:AdminGetUser",
-        ],
-        resources: [cognito.userPool.userPoolArn],
-      }),
-    )
 
     // Allow ECS tasks to connect to RDS
     db.connections.allowFrom(ecsService.service, Port.tcp(dbPort))

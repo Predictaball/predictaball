@@ -18,8 +18,10 @@ export default function LeagueComponent(props: LeagueProps): React.JSX.Element {
 
     useEffect(() => {
         if (props.config === undefined) return
-        getPositionForLeague(props.leagueId, props.config, getUserIdClient()).then(
-            res => setPosition(res.toString())
+        getUserIdClient().then(userId =>
+            getPositionForLeague(props.leagueId, props.config!, userId).then(
+                res => setPosition(res.toString())
+            )
         )
     }, [props.leagueId, props.config])
 

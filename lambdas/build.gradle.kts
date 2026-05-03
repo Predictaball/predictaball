@@ -56,8 +56,7 @@ dependencies {
 
     implementation("aws.sdk.kotlin:s3:1.2.15")
     implementation("com.auth0:java-jwt:4.4.0")
-    implementation("com.auth0:jwks-rsa:0.22.1")
-    implementation("aws.sdk.kotlin:cognitoidentityprovider:1.2.5")
+    implementation("at.favre.lib:bcrypt:0.10.2")
 
     implementation("org.jetbrains.exposed:exposed-core:1.1.1")
     implementation("org.jetbrains.exposed:exposed-kotlin-datetime:1.1.1")
@@ -178,7 +177,6 @@ tasks {
         environment("DB_URL", "localhost")
         environment("DB_NAME", "postgres")
         environment("DB_PORT", "5432")
-        environment("AUTH_MODE", "local")
         environment("LEADERBOARD_MODE", "local")
         environment("LOCAL_ADMIN_EMAILS", "admin@test.com")
     }
