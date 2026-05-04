@@ -17,7 +17,12 @@ export async function handlePrediction(
         chip: chip
     }
 
-    return predictionApi.createPrediction({
+    const result = await predictionApi.createPrediction({
         createPredictionRequest: createPredictionRequest
     })
+
+    const { revalidatePath } = await import("next/cache")
+    revalidatePath("/app")
+
+    return result
 }

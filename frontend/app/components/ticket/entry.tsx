@@ -9,7 +9,6 @@ import {handlePrediction} from "./submit-prediction"
 import toast from "react-hot-toast";
 import {endMatch, submitScore} from "./submit-score";
 import {navigateTo} from "@/app/actions";
-import {useRouter} from "next/navigation";
 
 interface EntryProps {
     match: Match,
@@ -64,7 +63,6 @@ export default function Entry(props: EntryProps): React.JSX.Element {
     const [isEnding, setIsEnding] = useState(false)
     const [ended, setEnded] = useState(false)
     const [isNavigatingToMatchPage, setIsNavigatingToMatchPage] = useState(false)
-    const router = useRouter()
 
     function handleHomeScore(event: React.ChangeEvent<HTMLInputElement>) {
         if (/^\d*$/.test(event.target.value)) { // Only allow digits
@@ -137,7 +135,6 @@ export default function Entry(props: EntryProps): React.JSX.Element {
                     throw new Error("Should not be able to submit in current state")
             }
             setPredictionSetSuccess(true)
-            router.refresh()
         } catch (error) {
             toast.error("Error Sending Prediction, try again")
             setPredictionSetSuccess(false)
