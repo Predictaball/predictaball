@@ -28,6 +28,9 @@ object DatabaseFactory {
             },
         )
 
+        Database.connect(dataSource)
+        generateTables()
+
         Flyway.configure()
             .dataSource(dataSource)
             .baselineOnMigrate(true)
@@ -36,9 +39,6 @@ object DatabaseFactory {
             .load()
             .migrate()
             .also { log.info("Flyway migrations applied: ${it.migrationsExecuted}") }
-
-        Database.connect(dataSource)
-        generateTables()
     }
 
     fun generateTables() {
