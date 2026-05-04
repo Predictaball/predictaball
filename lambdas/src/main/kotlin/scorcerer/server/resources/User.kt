@@ -38,18 +38,22 @@ data class OAuthSignupRequest(val userId: String, val email: String, val firstNa
 data class OAuthSignupResponse(val idToken: String, val refreshToken: String, val userId: String, val isAdmin: Boolean)
 
 private fun addToGlobalLeague(userId: String) {
-    transaction {
-        val globalLeagueExists = LeagueTable.selectAll().where { LeagueTable.id eq "global" }.count() > 0
-        if (!globalLeagueExists) {
-            LeagueTable.insert {
-                it[name] = "Global"
-                it[id] = "global"
+    try {
+        transaction {
+            val globalLeagueExists = LeagueTable.selectAll().where { LeagueTable.id eq "global" }.count() > 0
+            if (!globalLeagueExists) {
+                LeagueTable.insert {
+                    it[name] = "Global"
+                    it[id] = "global"
+                }
+            }
+            LeagueMembershipTable.insert {
+                it[memberId] = userId
+                it[leagueId] = "global"
             }
         }
-        LeagueMembershipTable.insert {
-            it[memberId] = userId
-            it[leagueId] = "global"
-        }
+    } catch (_: Exception) {
+        // Already in global league
     }
 }
 
@@ -77,12 +81,12 @@ fun userRoutes(contexts: RequestContexts, leaderboardService: LeaderboardService
                         it[MemberTable.authProvider] = "google"
                     }
                 }
-                addToGlobalLeague(userId)
-                log.info("Created OAuth member ($userId)")
-                runBlocking { leaderboardService.updateGlobalLeaderboard(leaderboardService.getLatestLeaderboardMatchDay()) }
             } catch (_: Exception) {
                 log.info("OAuth member ($userId) already exists (concurrent insert)")
             }
+            addToGlobalLeague(userId)
+            log.info("Created OAuth member ($userId)")
+            runBlocking { leaderboardService.updateGlobalLeaderboard(leaderboardService.getLatestLeaderboardMatchDay()) }
         }
         val tokens = runBlocking { authProvider.generateTokensForOAuth(userId, body.email, body.firstName, body.familyName) }
         val isAdmin = authProvider.isAdmin(body.email)
