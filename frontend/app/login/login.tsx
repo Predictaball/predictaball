@@ -4,7 +4,7 @@ import React from "react"
 import AuthShell from "@/app/components/auth-shell"
 import AuthForm from "@/app/components/auth-form"
 
-export default function Login({callbackUrl, leagueId, error}: {callbackUrl: string | undefined, leagueId: string | undefined, error: string | undefined}) {
+export default function Login({callbackUrl, leagueId, error, email, initialMode}: {callbackUrl: string | undefined, leagueId: string | undefined, error: string | undefined, email: string | undefined, initialMode: string | undefined}) {
     return (
         <AuthShell title="Welcome to predictaball">
             {error && (
@@ -12,7 +12,7 @@ export default function Login({callbackUrl, leagueId, error}: {callbackUrl: stri
                     Something went wrong. Please try again.
                 </p>
             )}
-            <AuthForm callbackUrl={callbackUrl} leagueId={leagueId}/>
+            <AuthForm callbackUrl={callbackUrl} leagueId={leagueId} initialEmail={email} initialMode={initialMode as "email" | "login" | undefined}/>
         </AuthShell>
     )
 }

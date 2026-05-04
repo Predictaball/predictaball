@@ -12,13 +12,15 @@ const ServerLogin = async ({
     const leagueId = resolvedSearchParams["leagueId"]
     const callbackUrl = resolvedSearchParams["callbackUrl"]
     const error = resolvedSearchParams["error"]
+    const email = resolvedSearchParams["email"]
+    const initialMode = resolvedSearchParams["mode"]
 
     const loggedIn = await isLoggedIn()
     if (loggedIn) {
         redirect(callbackUrl ?? "/app")
     }
 
-    return <Login callbackUrl={callbackUrl} leagueId={leagueId} error={error}/>
+    return <Login callbackUrl={callbackUrl} leagueId={leagueId} error={error} email={email} initialMode={initialMode}/>
 }
 
 export default ServerLogin

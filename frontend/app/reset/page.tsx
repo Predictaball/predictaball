@@ -1,19 +1,39 @@
 'use client'
 
-import React, {useState} from "react";
-import {ResetPasswordConfirmRequest, ResetPasswordRequest} from "@/client";
-import {AUTH_CLIENT} from "@/app/api/api";
-import {navigateTo} from "@/app/actions";
-import {Button, Input} from "@nextui-org/react";
-import {EyeFilledIcon, EyeSlashFilledIcon} from "@nextui-org/shared-icons";
-import {BUTTON_CLASS} from "@/app/util/css-classes";
-import Link from "next/link";
-import { doesContainDigit, doesContainLowerCase } from "../util/regex";
-import toast, { Toaster } from "react-hot-toast";
+import React, { Suspense, useState } from "react"
+import { useSearchParams } from "next/navigation"
+import { ResetPasswordConfirmRequest, ResetPasswordRequest } from "@/client"
+import { AUTH_CLIENT } from "@/app/api/api"
+import { navigateTo } from "@/app/actions"
+import { Button, Input } from "@nextui-org/react"
+import { EyeFilledIcon, EyeSlashFilledIcon } from "@nextui-org/shared-icons"
+import { AUTH_INPUT_CLASS_NAMES, BUTTON_CLASS } from "@/app/util/css-classes"
+import { doesContainDigit, doesContainLowerCase } from "../util/regex"
+import toast, { Toaster } from "react-hot-toast"
+import AuthShell from "@/app/components/auth-shell"
 
-export default function Reset() {
+function PasswordRule({ ok, label }: { ok: boolean; label: string }) {
+    return (
+        <p className="flex items-center gap-2">
+            <span className={`inline-flex h-4 w-4 items-center justify-center rounded-full text-[10px] font-bold ${ok ? "bg-green-500/20 text-green-700 dark:bg-green-400/20 dark:text-green-300" : "bg-red-500/20 text-red-700 dark:bg-red-400/20 dark:text-red-300"}`}>
+                {ok ? "✓" : "×"}
+            </span>
+            <span className={ok ? "text-slate-700 dark:text-gray-300" : "text-slate-500 dark:text-gray-400"}>{label}</span>
+        </p>
+    )
+}
 
-    const [email, setEmail] = useState("")
+export default function ResetPage() {
+    return (
+        <Suspense>
+            <Reset />
+        </Suspense>
+    )
+}
+
+function Reset() {
+    const searchParams = useSearchParams()
+    const [email, setEmail] = useState(searchParams.get("email") ?? "")
     const [password, setPassword] = useState("")
     const [otp, setOtp] = useState("")
     const [isVisible, setIsVisible] = useState(false)
@@ -22,160 +42,126 @@ export default function Reset() {
     const [isRequested, setIsRequested] = useState(false)
     const [didFail, setDidFail] = useState(false)
 
-    const [validLength, setIsValidLength] = useState(false)
-    const [containsDigit, setContainsDigit] = useState(false)
-    const [containsLowerCase, setContainsLowerCase] = useState(false)
-
-    const toggleVisibility = () => setIsVisible(!isVisible);
-
-    function handlePasswordChange(val: string): void {
-        setIsValidLength(val.length >= 6)
-        setContainsDigit(doesContainDigit(val))
-        setContainsLowerCase(doesContainLowerCase(val))
-        setPassword(val)
-    }
-
-    function isPasswordValid(): boolean {
-        return containsDigit && validLength && containsLowerCase
-    }
+    const validLength = password.length >= 6
+    const containsDigit = doesContainDigit(password)
+    const containsLowerCase = doesContainLowerCase(password)
 
     const handleVerificationCodeRequest = async () => {
-
-        const requestBody: ResetPasswordRequest = {
-            email: email
-        }
-
         setIsLoadingCode(true)
-
         try {
-            await AUTH_CLIENT.authApi.resetPassword({resetPasswordRequest: requestBody})
-            toast.success("Check your email for your reset verification code", {duration: 4000})
+            const requestBody: ResetPasswordRequest = { email }
+            await AUTH_CLIENT.authApi.resetPassword({ resetPasswordRequest: requestBody })
+            toast.success("Check your email for your reset code", { duration: 4000 })
             setIsRequested(true)
-        } catch (error) {
-            toast.error("Failed to request reset. There is no user for this email address")
+        } catch {
+            toast.error("Failed to request reset. Check the email address is correct.")
             setDidFail(true)
         }
-
         setIsLoadingCode(false)
     }
 
     const handlePasswordResetRequest = async () => {
-
-        if (!isPasswordValid()) return
-
-        const requestBody: ResetPasswordConfirmRequest = {
-            email: email,
-            otp: otp,
-            password: password
-        }
-
+        if (!containsDigit || !validLength || !containsLowerCase) return
         setIsLoadingConfirmation(true)
-
         try {
-            await AUTH_CLIENT.authApi.resetPasswordConfirm({resetPasswordConfirmRequest: requestBody})
+            const requestBody: ResetPasswordConfirmRequest = { email, otp, password }
+            await AUTH_CLIENT.authApi.resetPasswordConfirm({ resetPasswordConfirmRequest: requestBody })
+            toast.success("Password reset successfully")
             await navigateTo("login")
-        } catch (error) {
-            toast.error("Failed to reset password. Double check your verification code")
+        } catch {
+            toast.error("Failed to reset password. Double check your verification code.")
             setDidFail(true)
         }
-
         setIsLoadingConfirmation(false)
     }
 
     return (
-        <section>
-            <Toaster/>
-            <div className="bg-slate-50 dark:bg-gray-900 flex flex-col items-center justify-center px-6 py-8 mx-auto h-screen lg:py-0">
-                <h1 className="text-slate-900 dark:text-white pb-20">
-                    <Link href="/">PREDICTABALL.LIVE</Link>
-                </h1>
-                <div
-                    className="w-full bg-white rounded-lg shadow dark:border md:mt-0 sm:max-w-md xl:p-0 dark:bg-gray-800 dark:border-gray-700">
-                    <div className="p-6 space-y-4 items-center justify-between md:space-y-6 sm:p-8">
-                        <h1 className="text-xl text-center font-bold leading-tight tracking-tight text-gray-900 md:text-2xl">
-                            Reset your password
-                        </h1>
-                        <div>
-                            <Input
-                                onChange={(event) => {
-                                    setDidFail(false)
-                                    setEmail(event.target.value)
-                                }}
-                                type="email"
-                                name="email"
-                                id="email"
-                                label="Email"
-                                isInvalid={didFail}
-                                style={{fontSize: "18px"}}
-                                disabled={isRequested}
-                                value={email}
-                            />
-                        </div>
+        <>
+            <Toaster />
+            <AuthShell title="Reset your password">
+                <div className="space-y-5">
+                    <Input
+                        onChange={(e) => {
+                            setDidFail(false)
+                            setEmail(e.target.value.toLowerCase())
+                        }}
+                        type="email"
+                        label="Email"
+                        variant="bordered"
+                        isInvalid={didFail}
+                        classNames={AUTH_INPUT_CLASS_NAMES}
+                        style={{ fontSize: "18px" }}
+                        isDisabled={isRequested}
+                        value={email}
+                        autoFocus={!email}
+                    />
+                    {!isRequested && (
                         <Button
                             onPress={handleVerificationCodeRequest}
-                            disabled={isRequested}
                             isLoading={isLoadingCode}
-                            type="submit"
-                            className={"w-full " + BUTTON_CLASS + " disabled:bg-gray-300"}>
-                            Request Verification Code
+                            isDisabled={!email}
+                            className={"w-full " + BUTTON_CLASS}
+                        >
+                            Send Reset Code
                         </Button>
-                        <div>
-                                <Input
-                                    onChange={(event) => {
-                                        setDidFail(false)
-                                        setOtp(event.target.value)
-                                    }}
-                                    type="text"
-                                    name="verification code"
-                                    id="otp"
-                                    label="Verification Code"
-                                    style={{fontSize: "18px"}}
-                                    isDisabled={!isRequested}
-                                />
-                        </div>
-                        <div>
+                    )}
+                    {isRequested && (
+                        <>
                             <Input
-                                label="New Password"
-                                onChange={(event) => {
-                                    handlePasswordChange(event.target.value)
+                                onChange={(e) => {
                                     setDidFail(false)
+                                    setOtp(e.target.value)
                                 }}
-                                value={password}
-                                style={{fontSize: "18px"}}
-                                endContent={
-                                    <button className="focus:outline-none" type="button" onClick={toggleVisibility}>
-                                        {isVisible ? (
-                                            <EyeSlashFilledIcon
-                                                className="text-2xl text-default-400 pointer-events-none"/>
-                                        ) : (
-                                            <EyeFilledIcon
-                                                className="text-2xl text-default-400 pointer-events-none"/>
-                                        )}
-                                    </button>
-                                }
-                                type={isVisible ? "text" : "password"}
-                                isInvalid={didFail}
-                                isDisabled={!isRequested}
+                                type="text"
+                                label="Verification Code"
+                                variant="bordered"
+                                classNames={AUTH_INPUT_CLASS_NAMES}
+                                style={{ fontSize: "18px" }}
+                                autoFocus
                             />
-                            {password.length !== 0 &&
-                                    <div className="p-2 text-xs">
-                                        <p><span className="font-bold" style={containsLowerCase ? {"color": "green"} : {"color": "red"}}>{containsLowerCase ? "✓" : "x"}</span> At least one lowercase letter</p>
-                                        <p><span className="font-bold" style={containsDigit ? {"color": "green"} : {"color": "red"}}>{containsDigit ? "✓" : "x"}</span> At least one digit</p>
-                                        <p><span className="font-bold" style={validLength ? {"color": "green"} : {"color": "red"}}>{validLength ? "✓" : "x"}</span> At least 6 characters in length</p>
+                            <div>
+                                <Input
+                                    label="New Password"
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    value={password}
+                                    variant="bordered"
+                                    classNames={AUTH_INPUT_CLASS_NAMES}
+                                    style={{ fontSize: "18px" }}
+                                    isInvalid={didFail}
+                                    endContent={
+                                        <button className="focus:outline-none" type="button" onClick={() => setIsVisible(v => !v)}>
+                                            {isVisible
+                                                ? <EyeSlashFilledIcon className="text-2xl text-slate-500 dark:text-gray-400 pointer-events-none" />
+                                                : <EyeFilledIcon className="text-2xl text-slate-500 dark:text-gray-400 pointer-events-none" />}
+                                        </button>
+                                    }
+                                    type={isVisible ? "text" : "password"}
+                                />
+                                {password.length > 0 && (
+                                    <div className="mt-3 space-y-1 text-xs">
+                                        <PasswordRule ok={containsLowerCase} label="At least one lowercase letter" />
+                                        <PasswordRule ok={containsDigit} label="At least one digit" />
+                                        <PasswordRule ok={validLength} label="At least 6 characters" />
                                     </div>
-                                }
-                        </div>
-                        <Button
-                            disabled={!isRequested || !isPasswordValid()}
-                            onPress={handlePasswordResetRequest}
-                            isLoading={isLoadingConfirmation}
-                            type="submit"
-                            className={"w-full " + ((!isRequested || !isPasswordValid()) ? "bg-gray-300" : BUTTON_CLASS)}>
-                            Reset Password
-                        </Button>
+                                )}
+                            </div>
+                            <Button
+                                onPress={handlePasswordResetRequest}
+                                isLoading={isLoadingConfirmation}
+                                isDisabled={!containsDigit || !validLength || !containsLowerCase || !otp}
+                                className={"w-full " + BUTTON_CLASS}
+                            >
+                                Reset Password
+                            </Button>
+                        </>
+                    )}
+                    <div className="text-center">
+                        <a href={`/login?email=${encodeURIComponent(email)}&mode=login`} className="text-sm font-medium text-cyan-600 dark:text-cyan-300 hover:text-cyan-700 dark:hover:text-cyan-200 hover:underline">
+                            Back to sign in
+                        </a>
                     </div>
                 </div>
-            </div>
-        </section>
-    );
+            </AuthShell>
+        </>
+    )
 }

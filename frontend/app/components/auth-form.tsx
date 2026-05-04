@@ -17,6 +17,8 @@ type Mode = "email" | "login" | "signup"
 interface AuthFormProps {
     callbackUrl?: string
     leagueId?: string
+    initialEmail?: string
+    initialMode?: "email" | "login"
 }
 
 function PasswordRule({ ok, label }: { ok: boolean; label: string }) {
@@ -30,9 +32,9 @@ function PasswordRule({ ok, label }: { ok: boolean; label: string }) {
     )
 }
 
-export default function AuthForm({ callbackUrl, leagueId }: AuthFormProps): React.JSX.Element {
-    const [mode, setMode] = useState<Mode>("email")
-    const [email, setEmail] = useState("")
+export default function AuthForm({ callbackUrl, leagueId, initialEmail, initialMode }: AuthFormProps): React.JSX.Element {
+    const [mode, setMode] = useState<Mode>(initialMode ?? "email")
+    const [email, setEmail] = useState(initialEmail ?? "")
     const [password, setPassword] = useState("")
     const [firstName, setFirstName] = useState("")
     const [lastName, setLastName] = useState("")
@@ -218,7 +220,7 @@ export default function AuthForm({ callbackUrl, leagueId }: AuthFormProps): Reac
                         }
                     />
                     <div className="flex items-center justify-end">
-                        <a href="/reset" className="text-sm font-medium text-cyan-600 dark:text-cyan-300 hover:text-cyan-700 dark:hover:text-cyan-200 hover:underline">
+                        <a href={`/reset?email=${encodeURIComponent(email)}`} className="text-sm font-medium text-cyan-600 dark:text-cyan-300 hover:text-cyan-700 dark:hover:text-cyan-200 hover:underline">
                             Forgot password?
                         </a>
                     </div>
