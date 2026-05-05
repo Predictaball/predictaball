@@ -50,7 +50,7 @@ fun matchRoutes(contexts: RequestContexts, leaderboardService: LeaderboardServic
             }.map { row ->
                 PredictionWithUser(
                     Prediction(row[PredictionTable.homeScore], row[PredictionTable.chip], row[PredictionTable.awayScore], row[PredictionTable.matchId].toString(), row[PredictionTable.id].toString(), row[PredictionTable.memberId], row[PredictionTable.points]),
-                    User(row[MemberTable.firstName], row[MemberTable.familyName], row[MemberTable.id], row[MemberTable.doublePointsChips], row[MemberTable.oneOutChips], row[MemberTable.fixedPoints], 0),
+                    User(row[MemberTable.firstName], row[MemberTable.familyName], row[MemberTable.id], row[MemberTable.doublePointsChips], row[MemberTable.oneOutChips], row[MemberTable.crowdChips], row[MemberTable.fixedPoints], 0),
                 )
             }
         }

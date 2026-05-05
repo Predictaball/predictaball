@@ -187,6 +187,7 @@ components:
         - userId
         - doublePointsChipsRemaining
         - oneOutChipsRemaining
+        - crowdChipsRemaining
         - fixedPoints
         - livePoints
       properties:
@@ -199,6 +200,8 @@ components:
         doublePointsChipsRemaining:
           type: integer
         oneOutChipsRemaining:
+          type: integer
+        crowdChipsRemaining:
           type: integer
         fixedPoints:
           type: integer
@@ -217,6 +220,7 @@ components:
         - NONE
         - DOUBLE_POINTS
         - ONE_GOAL_OUT
+        - CROWD
     predictionWithUser:
       type: object
       required:
@@ -407,6 +411,7 @@ paths:
                   - predictionId
                   - doublePointsChipsRemaining
                   - oneOutChipsRemaining
+                  - crowdChipsRemaining
                 properties:
                   predictionId:
                     type: string
@@ -414,6 +419,9 @@ paths:
                     type: integer
                     format: int32
                   oneOutChipsRemaining:
+                    type: integer
+                    format: int32
+                  crowdChipsRemaining:
                     type: integer
                     format: int32
   /match/data/{matchId}:
@@ -966,11 +974,15 @@ paths:
                 required:
                   - doublePointsChipsRemaining
                   - oneOutChipsRemaining
+                  - crowdChipsRemaining
                 properties:
                   doublePointsChipsRemaining:
                     type: integer
                     format: int32
                   oneOutChipsRemaining:
+                    type: integer
+                    format: int32
+                  crowdChipsRemaining:
                     type: integer
                     format: int32
   /user/leagues:

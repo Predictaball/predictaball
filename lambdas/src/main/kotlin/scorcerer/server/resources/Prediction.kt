@@ -30,6 +30,7 @@ import java.time.OffsetDateTime
 private fun chipColumn(chip: Chip) = when (chip) {
     Chip.DOUBLE_POINTS -> MemberTable.doublePointsChips
     Chip.ONE_GOAL_OUT -> MemberTable.oneOutChips
+    Chip.CROWD -> MemberTable.crowdChips
     Chip.NONE -> throw IllegalArgumentException("NONE has no column")
 }
 
@@ -105,15 +106,20 @@ fun predictionRoutes(contexts: RequestContexts) = routes(
                 } get PredictionTable.id
             }
         }
-        val (doublePointsRemaining, oneOutRemaining) = transaction {
+        val (doublePointsRemaining, oneOutRemaining, crowdRemaining) = transaction {
             val member = MemberTable.selectAll().where { MemberTable.id eq requesterUserId }.first()
-            member[MemberTable.doublePointsChips] to member[MemberTable.oneOutChips]
+            Triple(
+                member[MemberTable.doublePointsChips],
+                member[MemberTable.oneOutChips],
+                member[MemberTable.crowdChips],
+            )
         }
         Response(Status.OK).body(
             CreatePrediction200Response(
                 predictionId.toString(),
                 doublePointsRemaining,
                 oneOutRemaining,
+                crowdRemaining,
             ).toJson(),
         )
     },

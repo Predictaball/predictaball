@@ -23,7 +23,7 @@ object PointsCalculator {
         return when (prediction.chip) {
             Chip.ONE_GOAL_OUT -> calculatePointsOneGoalOut(defaultPoints, prediction, result)
             Chip.DOUBLE_POINTS -> 2 * defaultPoints
-            Chip.NONE -> defaultPoints
+            Chip.NONE, Chip.CROWD -> defaultPoints
         }
     }
 

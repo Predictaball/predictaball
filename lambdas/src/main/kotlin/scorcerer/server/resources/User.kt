@@ -126,7 +126,7 @@ fun userRoutes(contexts: RequestContexts, leaderboardService: LeaderboardService
                 .groupBy { it[LeagueTable.id] }
                 .mapValues { entry ->
                     val leagueName = entry.value.first()[LeagueTable.name]
-                    val users = entry.value.map { User(it[MemberTable.firstName], it[MemberTable.familyName], it[MemberTable.id], it[MemberTable.doublePointsChips], it[MemberTable.oneOutChips], it[MemberTable.fixedPoints], 0) }
+                    val users = entry.value.map { User(it[MemberTable.firstName], it[MemberTable.familyName], it[MemberTable.id], it[MemberTable.doublePointsChips], it[MemberTable.oneOutChips], it[MemberTable.crowdChips], it[MemberTable.fixedPoints], 0) }
                     League(entry.key, leagueName, users)
                 }.values.toList()
         }
@@ -147,7 +147,7 @@ fun userRoutes(contexts: RequestContexts, leaderboardService: LeaderboardService
         val chips = transaction {
             val member = MemberTable.selectAll().where { MemberTable.id eq userId }.firstOrNull()
                 ?: throw ApiResponseError(Response(Status.BAD_REQUEST).body("User does not exist"))
-            GetUserChips200Response(member[MemberTable.doublePointsChips], member[MemberTable.oneOutChips])
+            GetUserChips200Response(member[MemberTable.doublePointsChips], member[MemberTable.oneOutChips], member[MemberTable.crowdChips])
         }
         Response(Status.OK).body(chips.toJson())
     },

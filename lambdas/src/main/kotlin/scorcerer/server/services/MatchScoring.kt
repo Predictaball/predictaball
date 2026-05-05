@@ -11,6 +11,7 @@ import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.jetbrains.exposed.v1.jdbc.update
+import org.openapitools.server.models.Chip
 import org.openapitools.server.models.Match
 import org.openapitools.server.models.Prediction
 import scorcerer.server.ApiResponseError
@@ -54,6 +55,10 @@ fun setScore(matchId: String, matchDay: Int, homeScore: Int, awayScore: Int, lea
             return@transaction
         }
 
+        if (matchState == Match.State.UPCOMING) {
+            substituteCrowdPredictions(matchId)
+        }
+
         MatchTable.update({ MatchTable.id eq matchId.toInt() }) {
             it[MatchTable.homeScore] = homeScore
             it[MatchTable.awayScore] = awayScore
@@ -66,6 +71,36 @@ fun setScore(matchId: String, matchDay: Int, homeScore: Int, awayScore: Int, lea
             leaderboardService.updateGlobalLeaderboard(matchDay)
         }
     }
+
+private fun substituteCrowdPredictions(matchId: String) {
+    val matchIdInt = matchId.toInt()
+    val all = PredictionTable.selectAll().where { PredictionTable.matchId eq matchIdInt }.toList()
+    val crowdIds = all.filter { it[PredictionTable.chip] == Chip.CROWD }.map { it[PredictionTable.id] }
+    if (crowdIds.isEmpty()) return
+
+    val nonCrowdScores = all
+        .filter { it[PredictionTable.chip] != Chip.CROWD }
+        .map { it[PredictionTable.homeScore] to it[PredictionTable.awayScore] }
+
+    val (chosenHome, chosenAway) = if (nonCrowdScores.isEmpty()) {
+        0 to 0
+    } else {
+        nonCrowdScores.groupingBy { it }.eachCount()
+            .entries
+            .sortedWith(
+                compareByDescending<Map.Entry<Pair<Int, Int>, Int>> { it.value }
+                    .thenBy { it.key.first + it.key.second }
+                    .thenBy { it.key.first },
+            )
+            .first().key
+    }
+
+    PredictionTable.update({ PredictionTable.id inList crowdIds }) {
+        it[homeScore] = chosenHome
+        it[awayScore] = chosenAway
+    }
+    log.info("CROWD substitution for match $matchId: ${crowdIds.size} predictions set to $chosenHome-$chosenAway")
+}
 
 fun getMatchDay(matchId: String): Int? = transaction {
     MatchTable.select(MatchTable.matchDay).where { MatchTable.id eq matchId.toInt() }.firstOrNull()

@@ -53,6 +53,7 @@ export default function PredictionForm({match, onPredictionSaved, userChips, onC
                 onChipsChanged({
                     doublePointsRemaining: response.doublePointsChipsRemaining,
                     oneOutRemaining: response.oneOutChipsRemaining,
+                    crowdRemaining: response.crowdChipsRemaining,
                 })
             }
             vibrate([20, 40, 20])
@@ -217,6 +218,7 @@ function ChipSelector({selected, onSelect, chips, savedChip}: {
         {value: Chip.None, label: "No power-up", glyph: "—", description: "Standard scoring", remaining: "∞"},
         {value: Chip.DoublePoints, label: "Double Points", glyph: "2×", description: "Double your earned points", remaining: chips.doublePointsRemaining},
         {value: Chip.OneGoalOut, label: "Off by One", glyph: "±1", description: "Score as if one goal closer", remaining: chips.oneOutRemaining},
+        {value: Chip.Crowd, label: "Follow the Crowd", glyph: "%", description: "Lock in the most popular prediction at kickoff", remaining: chips.crowdRemaining},
     ]
 
     const selectedOption = options.find(o => o.value === selected) ?? options[0]
