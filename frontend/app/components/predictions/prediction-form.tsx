@@ -80,9 +80,9 @@ export default function PredictionForm({match, onPredictionSaved, userChips, onC
             <div className="flex items-center justify-between gap-2">
                 <TeamSide code={homeCode} name={match.homeTeam} ranking={match.homeTeamRanking}/>
                 <div className="flex items-center gap-2">
-                    <ScoreInput value={homeScore} onChange={setHomeScore} disabled={!isUpcoming}/>
+                    <ScoreInput value={homeScore} onChange={setHomeScore} disabled={!isUpcoming || chip === Chip.Crowd} displayOverride={chip === Chip.Crowd ? "?" : undefined}/>
                     <span className="text-3xl font-black text-slate-400 dark:text-gray-500">:</span>
-                    <ScoreInput value={awayScore} onChange={setAwayScore} disabled={!isUpcoming}/>
+                    <ScoreInput value={awayScore} onChange={setAwayScore} disabled={!isUpcoming || chip === Chip.Crowd} displayOverride={chip === Chip.Crowd ? "?" : undefined}/>
                 </div>
                 <TeamSide code={awayCode} name={match.awayTeam} ranking={match.awayTeamRanking} reverse/>
             </div>
@@ -137,10 +137,11 @@ function TeamSide({code, name, reverse, ranking}: {code: string; name: string; r
     )
 }
 
-function ScoreInput({value, onChange, disabled}: {
+function ScoreInput({value, onChange, disabled, displayOverride}: {
     value: number
     onChange: (v: number) => void
     disabled: boolean
+    displayOverride?: string
 }) {
     const btnClass = "w-full h-8 rounded-lg bg-slate-900/5 border border-slate-900/10 text-cyan-600 hover:bg-slate-900/10 hover:border-cyan-500/40 dark:bg-white/5 dark:border-white/10 dark:text-cyan-300 dark:hover:bg-white/10 dark:hover:border-cyan-400/40 font-bold text-base flex items-center justify-center active:scale-95 transition-all disabled:opacity-20 disabled:pointer-events-none select-none"
     const dragRef = useRef<{startY: number; startValue: number; lastValue: number} | null>(null)
@@ -192,7 +193,7 @@ function ScoreInput({value, onChange, disabled}: {
                 className={`w-full rounded-2xl bg-gradient-to-tr from-blue-500 via-cyan-400 to-green-300 p-[2px] transition-transform ${isDragging ? "scale-105" : ""} ${disabled ? "" : "cursor-ns-resize"}`}
             >
                 <div className="w-full aspect-square rounded-2xl bg-white dark:bg-gray-900 flex items-center justify-center text-3xl font-black text-slate-900 dark:text-white select-none">
-                    {value}
+                    {displayOverride ?? value}
                 </div>
             </div>
             <button type="button" disabled={disabled || value <= 0} onClick={() => onChange(value - 1)} className={btnClass}>
