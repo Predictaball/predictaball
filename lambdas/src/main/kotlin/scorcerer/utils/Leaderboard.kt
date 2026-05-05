@@ -72,6 +72,7 @@ fun calculateGlobalLeaderboard(previousGlobalLeaderboard: List<LeaderboardInner>
                 MemberTable.fixedPoints,
                 MemberTable.doublePointsChips,
                 MemberTable.oneOutChips,
+                MemberTable.crowdChips,
             )
             .where { LeagueMembershipTable.leagueId eq "global" }
             .map {
@@ -82,6 +83,7 @@ fun calculateGlobalLeaderboard(previousGlobalLeaderboard: List<LeaderboardInner>
                     userId,
                     it[MemberTable.doublePointsChips],
                     it[MemberTable.oneOutChips],
+                    it[MemberTable.crowdChips],
                     it[MemberTable.fixedPoints],
                     livePoints[userId] ?: 0,
                 )

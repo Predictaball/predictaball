@@ -8,6 +8,7 @@ export const USER_1: User = {
     userId: "1",
     oneOutChipsRemaining: 2,
     doublePointsChipsRemaining: 1,
+    crowdChipsRemaining: 3,
     livePoints: 4,
     fixedPoints: 16
 }
@@ -24,6 +25,7 @@ export const USER_2: User = {
     userId: "2",
     doublePointsChipsRemaining: 3,
     oneOutChipsRemaining: 3,
+    crowdChipsRemaining: 2,
     livePoints: 1,
     fixedPoints: 24
 }
@@ -40,6 +42,7 @@ export const USER_3: User = {
     userId: "3",
     oneOutChipsRemaining: 2,
     doublePointsChipsRemaining: 3,
+    crowdChipsRemaining: 1,
     livePoints: 0,
     fixedPoints: 26
 }

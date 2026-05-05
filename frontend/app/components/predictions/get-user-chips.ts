@@ -7,10 +7,11 @@ import {getUserId} from "@/app/auth/jwt-handler"
 export interface UserChips {
     doublePointsRemaining: number
     oneOutRemaining: number
+    crowdRemaining: number
 }
 
 export async function getUserChips(): Promise<UserChips> {
-    const fallback: UserChips = {doublePointsRemaining: 0, oneOutRemaining: 0}
+    const fallback: UserChips = {doublePointsRemaining: 0, oneOutRemaining: 0, crowdRemaining: 0}
     try {
         const userId = await getUserId()
         if (!userId) return fallback
@@ -19,6 +20,7 @@ export async function getUserChips(): Promise<UserChips> {
         return {
             doublePointsRemaining: result.doublePointsChipsRemaining,
             oneOutRemaining: result.oneOutChipsRemaining,
+            crowdRemaining: result.crowdChipsRemaining,
         }
     } catch {
         return fallback
