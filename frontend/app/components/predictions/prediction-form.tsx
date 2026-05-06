@@ -9,6 +9,7 @@ import {handlePrediction} from "@/app/components/ticket/submit-prediction"
 import {FlagImage} from "@/app/components/predictions/flag-image"
 import {SHORT_COUNTRY_NAMES} from "@/app/util/teams"
 import type {UserChips} from "@/app/components/predictions/get-user-chips"
+import DistributionBar from "@/app/components/predictions/distribution-bar"
 
 const ADVANCE_DELAY_MS = 800
 const SWIPE_STEP_PX = 34
@@ -40,6 +41,7 @@ export default function PredictionForm({match, onPredictionSaved, userChips, onC
 
     const homeCode = match.homeTeamFlagCode.toLowerCase()
     const awayCode = match.awayTeamFlagCode.toLowerCase()
+    const distribution = match.predictionDistribution
 
     async function submit() {
         const h = homeScore
@@ -113,6 +115,10 @@ export default function PredictionForm({match, onPredictionSaved, userChips, onC
                         ? `Live score: ${match.homeScore ?? 0} - ${match.awayScore ?? 0}`
                         : `Final: ${match.homeScore ?? 0} - ${match.awayScore ?? 0}`}
                 </div>
+            )}
+
+            {!isUpcoming && distribution && (
+                <DistributionBar distribution={distribution} homeName={match.homeTeam} awayName={match.awayTeam}/>
             )}
         </div>
     )
@@ -264,3 +270,4 @@ function ChipSelector({selected, onSelect, chips, savedChip}: {
         </div>
     )
 }
+
