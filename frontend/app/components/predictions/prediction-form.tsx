@@ -72,7 +72,7 @@ export default function PredictionForm({match, onPredictionSaved, userChips, onC
         || savedPrediction.chip !== chip
 
     return (
-        <div className="flex-1 p-4 sm:p-6 flex flex-col justify-center">
+        <div className="flex-1 min-w-0 p-4 sm:p-6 flex flex-col justify-center">
             <div className="hidden md:block lg:pb-4 sm:pb-2 lg:font-bold text-center md:text-left text-xs uppercase tracking-[0.2em] text-slate-500 dark:text-gray-400 mb-1">
                 {isUpcoming ? "Predict the score" : "Your prediction"}
             </div>
