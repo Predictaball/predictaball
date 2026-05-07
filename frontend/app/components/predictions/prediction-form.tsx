@@ -1,15 +1,15 @@
 'use client'
 
-import React, {useRef, useState} from "react"
-import {Button} from "@nextui-org/react"
-import toast from "react-hot-toast"
-import {Chip, Match, MatchStateEnum} from "@/client"
-import {BUTTON_CLASS} from "@/app/util/css-classes"
-import {handlePrediction} from "@/app/components/ticket/submit-prediction"
-import {FlagImage} from "@/app/components/predictions/flag-image"
-import {SHORT_COUNTRY_NAMES} from "@/app/util/teams"
-import type {UserChips} from "@/app/components/predictions/get-user-chips"
 import DistributionBar from "@/app/components/predictions/distribution-bar"
+import { FlagImage } from "@/app/components/predictions/flag-image"
+import type { UserChips } from "@/app/components/predictions/get-user-chips"
+import { handlePrediction } from "@/app/components/ticket/submit-prediction"
+import { BUTTON_CLASS } from "@/app/util/css-classes"
+import { SHORT_COUNTRY_NAMES } from "@/app/util/teams"
+import { Chip, Match, MatchStateEnum } from "@/client"
+import { Button } from "@nextui-org/react"
+import React, { useRef, useState } from "react"
+import toast from "react-hot-toast"
 
 const ADVANCE_DELAY_MS = 800
 const SWIPE_STEP_PX = 34
@@ -112,8 +112,8 @@ export default function PredictionForm({match, onPredictionSaved, userChips, onC
             {!isUpcoming && (
                 <div className="mt-4 text-center text-sm text-slate-500 dark:text-gray-400">
                     {match.state === MatchStateEnum.Live
-                        ? `Live score: ${match.homeScore ?? 0} - ${match.awayScore ?? 0}`
-                        : `Final: ${match.homeScore ?? 0} - ${match.awayScore ?? 0}`}
+                        ? `Live Score: ${match.homeScore ?? 0} - ${match.awayScore ?? 0}`
+                        : `Result: ${match.homeScore ?? 0} - ${match.awayScore ?? 0}`}
                 </div>
             )}
 
