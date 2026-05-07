@@ -98,7 +98,7 @@ fun matchRoutes(contexts: RequestContexts, leaderboardService: LeaderboardServic
                 .join(homeTeamTable, JoinType.INNER, MatchTable.homeTeamId, homeTeamTable[TeamTable.id]).selectAll()
                 .orderBy(MatchTable.datetime)
                 .where { MatchTable.id eq matchId.toInt() }.singleOrNull()?.let { row ->
-                    Match(row[homeTeamTable[TeamTable.name]].toTitleCase(), row[homeTeamTable[TeamTable.flagCode]], row[awayTeamTable[TeamTable.name]].toTitleCase(), row[awayTeamTable[TeamTable.flagCode]], row[MatchTable.id].toString(), row[MatchTable.venue], row[MatchTable.datetime], row[MatchTable.matchDay], Match.Round.valueOf(row[MatchTable.round].value), row[MatchTable.state], row[homeTeamTable[TeamTable.ranking]], row[awayTeamTable[TeamTable.ranking]], row[MatchTable.homeScore], row[MatchTable.awayScore])
+                    Match(row[homeTeamTable[TeamTable.name]].toTitleCase(), row[homeTeamTable[TeamTable.flagCode]], row[awayTeamTable[TeamTable.name]].toTitleCase(), row[awayTeamTable[TeamTable.flagCode]], row[MatchTable.id].toString(), row[MatchTable.venue], row[MatchTable.datetime], row[MatchTable.matchDay], Match.Round.valueOf(row[MatchTable.round].value), row[MatchTable.state], row[homeTeamTable[TeamTable.ranking]], row[awayTeamTable[TeamTable.ranking]], row[MatchTable.homeScore], row[MatchTable.awayScore], null, predictionDistributionFromRow(row))
                 } ?: throw ApiResponseError(Response(Status.BAD_REQUEST).body("Match does not exist"))
         }
         Response(Status.OK).body(match.toJson())
@@ -138,6 +138,7 @@ private fun listMatches(requesterUserId: String, filterType: String?, userId: St
                 row.getOrNull(predictions[PredictionTable.id])?.let {
                     Prediction(row[predictions[PredictionTable.homeScore]], row[predictions[PredictionTable.chip]], row[predictions[PredictionTable.awayScore]], row[MatchTable.id].toString(), row[predictions[PredictionTable.id]].toString(), row[predictions[PredictionTable.memberId]], row[predictions[PredictionTable.points]])
                 },
+                predictionDistributionFromRow(row),
             )
         }
     }
@@ -146,6 +147,13 @@ private fun listMatches(requesterUserId: String, filterType: String?, userId: St
         return getMatchesOnNextThreeDays(matches)
     }
     return matches
+}
+
+private fun predictionDistributionFromRow(row: org.jetbrains.exposed.v1.core.ResultRow): PredictionDistribution? {
+    val home = row[MatchTable.homePredictions] ?: return null
+    val draw = row[MatchTable.drawPredictions] ?: return null
+    val away = row[MatchTable.awayPredictions] ?: return null
+    return PredictionDistribution(home, draw, away)
 }
 
 internal fun getMatchesOnNextThreeDays(matches: List<Match>): List<Match> {

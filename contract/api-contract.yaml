@@ -123,6 +123,26 @@ components:
             - COMPLETED
         prediction:
           $ref: '#/components/schemas/prediction'
+        predictionDistribution:
+          $ref: '#/components/schemas/predictionDistribution'
+
+    predictionDistribution:
+      description: Counts of predictions by outcome (home/draw/away). Populated once a match is no longer UPCOMING.
+      type: object
+      required:
+        - home
+        - draw
+        - away
+      properties:
+        home:
+          type: integer
+          format: int32
+        draw:
+          type: integer
+          format: int32
+        away:
+          type: integer
+          format: int32
 
     league:
       type: object

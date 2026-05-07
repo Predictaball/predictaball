@@ -57,6 +57,7 @@ fun setScore(matchId: String, matchDay: Int, homeScore: Int, awayScore: Int, lea
 
         if (matchState == Match.State.UPCOMING) {
             substituteCrowdPredictions(matchId)
+            persistPredictionDistribution(matchId)
         }
 
         MatchTable.update({ MatchTable.id eq matchId.toInt() }) {
@@ -100,6 +101,30 @@ private fun substituteCrowdPredictions(matchId: String) {
         it[awayScore] = chosenAway
     }
     log.info("CROWD substitution for match $matchId: ${crowdIds.size} predictions set to $chosenHome-$chosenAway")
+}
+
+private fun persistPredictionDistribution(matchId: String) {
+    val matchIdInt = matchId.toInt()
+    var home = 0
+    var draw = 0
+    var away = 0
+    PredictionTable.select(PredictionTable.homeScore, PredictionTable.awayScore, PredictionTable.chip)
+        .where { PredictionTable.matchId eq matchIdInt }
+        .forEach { row ->
+            if (row[PredictionTable.chip] == Chip.CROWD) return@forEach
+            val h = row[PredictionTable.homeScore]
+            val a = row[PredictionTable.awayScore]
+            when {
+                h > a -> home++
+                h < a -> away++
+                else -> draw++
+            }
+        }
+    MatchTable.update({ MatchTable.id eq matchIdInt }) {
+        it[homePredictions] = home
+        it[drawPredictions] = draw
+        it[awayPredictions] = away
+    }
 }
 
 fun getMatchDay(matchId: String): Int? = transaction {
