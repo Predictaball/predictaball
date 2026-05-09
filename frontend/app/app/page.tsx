@@ -12,7 +12,8 @@ import {getConfigWithAuthHeader} from "@/app/api/client-config";
 import {ListMatchesFilterTypeEnum, MatchApi} from "@/client";
 import PredictionPanel from "@/app/components/predictions/prediction-panel";
 import {getUserChips} from "@/app/components/predictions/get-user-chips";
-import {SECTION_EYEBROW} from "@/app/util/css-classes";
+import {SECTION_EYEBROW, GHOST_BUTTON_CLASS} from "@/app/util/css-classes";
+import {Button} from "@nextui-org/react";
 
 const Home = async () => {
     const config = await getConfigWithAuthHeader()
@@ -40,6 +41,9 @@ const Home = async () => {
                     <div className="flex items-center gap-2">
                         <ThemeToggle sizeClassName="h-8 w-8" />
                         <AdminButton />
+                        <Link href="/app/profile">
+                            <Button size="sm" radius="full" className={GHOST_BUTTON_CLASS}>Profile</Button>
+                        </Link>
                         <SignOutButton />
                     </div>
                 </header>

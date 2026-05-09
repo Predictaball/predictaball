@@ -14,6 +14,7 @@ import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
+import org.jetbrains.exposed.v1.jdbc.update
 import org.openapitools.server.models.GetUserChips200Response
 import org.openapitools.server.models.GetUserPoints200Response
 import org.openapitools.server.models.League
@@ -36,6 +37,10 @@ import scorcerer.utils.livePointsForUser
 data class OAuthSignupRequest(val userId: String, val email: String, val firstName: String, val familyName: String)
 
 data class OAuthSignupResponse(val idToken: String, val refreshToken: String, val userId: String, val isAdmin: Boolean)
+
+data class ProfileResponse(val firstName: String, val familyName: String, val email: String, val authProvider: String, val emailReminders: Boolean)
+
+data class UpdateProfileRequest(val emailReminders: Boolean? = null)
 
 private fun addToGlobalLeague(userId: String) {
     try {
@@ -159,5 +164,31 @@ fun userRoutes(contexts: RequestContexts, leaderboardService: LeaderboardService
             }
         }
         Response(Status.OK).body(predictions.toJson())
+    },
+    "/user/profile" bind Method.GET to { req ->
+        val userId = contexts.extractUserId(req)
+        val member = transaction {
+            MemberTable.selectAll().where { MemberTable.id eq userId }.firstOrNull()
+                ?: throw ApiResponseError(Response(Status.BAD_REQUEST).body("User does not exist"))
+        }
+        Response(Status.OK).body(
+            ProfileResponse(
+                firstName = member[MemberTable.firstName],
+                familyName = member[MemberTable.familyName],
+                email = member[MemberTable.email],
+                authProvider = member[MemberTable.authProvider],
+                emailReminders = member[MemberTable.emailReminders],
+            ).toJson(),
+        )
+    },
+    "/user/profile" bind Method.PATCH to { req ->
+        val userId = contexts.extractUserId(req)
+        val body: UpdateProfileRequest = req.bodyString().fromJson()
+        transaction {
+            MemberTable.update({ MemberTable.id eq userId }) {
+                if (body.emailReminders != null) it[emailReminders] = body.emailReminders
+            }
+        }
+        Response(Status.OK)
     },
 )

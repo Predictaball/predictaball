@@ -191,6 +191,17 @@ export class Predictaball extends Stack {
           schedule: Schedule.rate(Duration.minutes(2)),
           targets: [new ApiDestinationTarget(updateScoresDest)],
         })
+
+        const sendRemindersDest = new ApiDestination(this, "sendRemindersDest", {
+          connection,
+          endpoint: `https://${apiDomain}/admin/send-reminders`,
+          httpMethod: HttpMethod.POST,
+        })
+
+        new Rule(this, "sendRemindersRule", {
+          schedule: Schedule.cron({ hour: "8", minute: "0" }),
+          targets: [new ApiDestinationTarget(sendRemindersDest)],
+        })
       }
     }
   }

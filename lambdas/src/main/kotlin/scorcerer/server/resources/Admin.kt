@@ -10,6 +10,7 @@ import org.http4k.routing.routes
 import scorcerer.server.log
 import scorcerer.server.schedule.MatchStarter
 import scorcerer.server.schedule.ScoreUpdater
+import scorcerer.server.services.ReminderService
 import scorcerer.server.services.recalculateAllFixedPoints
 import scorcerer.utils.LeaderboardService
 
@@ -42,6 +43,12 @@ fun adminRoutes(leaderboardService: LeaderboardService) = requireApiKey.then(
         "/admin/recalculate-points" bind Method.POST to {
             log.info("Admin: recalculate-points triggered")
             runCatching { recalculateAllFixedPoints() }
+                .onFailure { log.error(it.stackTraceToString()) }
+            Response(Status.OK)
+        },
+        "/admin/send-reminders" bind Method.POST to {
+            log.info("Admin: send-reminders triggered")
+            runCatching { ReminderService.sendReminders() }
                 .onFailure { log.error(it.stackTraceToString()) }
             Response(Status.OK)
         },

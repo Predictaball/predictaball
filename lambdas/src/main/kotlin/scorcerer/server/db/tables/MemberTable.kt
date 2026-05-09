@@ -13,5 +13,6 @@ object MemberTable : Table("member") {
     val email = varchar("email", 255).uniqueIndex()
     val passwordHash = varchar("password_hash", 255).nullable()
     val authProvider = varchar("auth_provider", 20).default("email")
+    val emailReminders = bool("email_reminders").default(false)
     override val primaryKey = PrimaryKey(id)
 }
