@@ -2,6 +2,7 @@ import React from "react";
 import {Header} from "@/app/components/landing-header";
 import CustomCursor from "@/app/components/custom-cursor";
 import FlagGlobe from "@/app/components/flags/flag-globe-client";
+import LegalFooter from "@/app/components/legal-footer";
 
 export default async function Home(): Promise<React.JSX.Element> {
 
@@ -109,6 +110,8 @@ export default async function Home(): Promise<React.JSX.Element> {
                     </div>
                 </div>
             </section>
+
+            <LegalFooter/>
         </main>
     );
 }

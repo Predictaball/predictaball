@@ -1,6 +1,7 @@
 import React from "react"
 import Link from "next/link"
 import FlagGlobeClient from "@/app/components/flags/flag-globe-client"
+import LegalFooter from "@/app/components/legal-footer"
 
 interface AuthShellProps {
     title: string
@@ -42,6 +43,21 @@ export default function AuthShell({title, children}: AuthShellProps): React.JSX.
                         {children}
                     </div>
                 </div>
+
+                <p className="relative mt-8 text-xs text-slate-500 dark:text-gray-400 text-center">
+                    By continuing you agree to our{" "}
+                    <Link href="/privacy-policy" className="underline hover:text-slate-900 dark:hover:text-white">
+                        Privacy Policy
+                    </Link>
+                    {" "}and{" "}
+                    <Link href="/cookie-policy" className="underline hover:text-slate-900 dark:hover:text-white">
+                        Cookie Policy
+                    </Link>.
+                </p>
+            </div>
+
+            <div className="relative">
+                <LegalFooter/>
             </div>
         </section>
     )
