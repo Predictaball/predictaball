@@ -82,6 +82,9 @@ All endpoints except auth require a valid Cognito JWT. Locally, auth is disabled
 - `GET /user/leagues` - Get your leagues
 - `GET /user/{userId}/points` - Get user points
 - `GET /user/{userId}/predictions` - Get user predictions
+- `GET /user/{userId}/chips` - Get user chips remaining
+- `GET /user/profile` - Get the signed-in user's profile
+- `PATCH /user/profile` - Update profile preferences (e.g. email reminders)
 
 ### Health
 - `GET /ping` - Health check
@@ -90,3 +93,4 @@ All endpoints except auth require a valid Cognito JWT. Locally, auth is disabled
 - `POST /admin/start-matches` - Trigger match starter
 - `POST /admin/update-scores` - Trigger score updater
 - `POST /admin/recalculate-points` - Recalculate all member fixed points
+- `POST /admin/send-reminders` - Send reminder emails for unpredicted upcoming matches
