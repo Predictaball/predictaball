@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from "react"
-import { Button, Input } from "@nextui-org/react"
+import { Button, Checkbox, Input } from "@nextui-org/react"
 import { EyeFilledIcon, EyeSlashFilledIcon } from "@nextui-org/shared-icons"
 import { signIn } from "next-auth/react"
 import { AUTH_CLIENT } from "@/app/api/api"
@@ -38,6 +38,7 @@ export default function AuthForm({ callbackUrl, leagueId, initialEmail, initialM
     const [password, setPassword] = useState("")
     const [firstName, setFirstName] = useState("")
     const [lastName, setLastName] = useState("")
+    const [emailReminders, setEmailReminders] = useState(false)
     const [isVisible, setIsVisible] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
     const [didFail, setDidFail] = useState(false)
@@ -97,7 +98,7 @@ export default function AuthForm({ callbackUrl, leagueId, initialEmail, initialM
     const handleSignup = async () => {
         setIsLoading(true)
         try {
-            await AUTH_CLIENT.userApi.signup({ signupRequest: { email, password, firstName, familyName: lastName } })
+            await AUTH_CLIENT.userApi.signup({ signupRequest: { email, password, firstName, familyName: lastName, emailReminders } })
             await handleLogin()
         } catch {
             setIsLoading(false)
@@ -280,6 +281,14 @@ export default function AuthForm({ callbackUrl, leagueId, initialEmail, initialM
                             </div>
                         )}
                     </div>
+                    <Checkbox
+                        isSelected={emailReminders}
+                        onValueChange={setEmailReminders}
+                        size="sm"
+                        classNames={{label: "text-sm text-slate-600 dark:text-gray-300"}}
+                    >
+                        Email me a reminder on match days if I haven&apos;t predicted yet
+                    </Checkbox>
                     <Button
                         onPress={handleSignup}
                         isLoading={isLoading}

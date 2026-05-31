@@ -46,7 +46,7 @@ export default function PrivacyPolicy(): React.JSX.Element {
                             <ul className="list-disc pl-6 space-y-2">
                                 <li>To create and manage your account and authenticate you when you sign in.</li>
                                 <li>To run the prediction game, calculate scores, and display leaderboards to you and other players in your leagues.</li>
-                                <li>To send you password reset emails using Resend as our email provider.</li>
+                                <li>To send you password reset emails when you request them, and &mdash; if you opt in &mdash; prediction reminder emails on match days when you have unpredicted matches. We use Resend as our email provider. You can turn reminders on or off at any time on your <Link href="/app/profile" className="text-cyan-600 dark:text-cyan-300 underline">profile page</Link>.</li>
                                 <li>To keep the service secure and diagnose problems.</li>
                             </ul>
                         </section>
@@ -55,7 +55,8 @@ export default function PrivacyPolicy(): React.JSX.Element {
                             <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-3">Lawful basis</h2>
                             <p>We rely on the following lawful bases under UK GDPR Article 6:</p>
                             <ul className="list-disc pl-6 space-y-2 mt-2">
-                                <li><strong>Contract</strong> &mdash; to provide the service you signed up for.</li>
+                                <li><strong>Contract</strong> &mdash; to provide the service you signed up for, including password reset emails.</li>
+                                <li><strong>Consent</strong> &mdash; to send prediction reminder emails. You give consent at signup or on your profile page, and you can withdraw it at any time.</li>
                                 <li><strong>Legitimate interests</strong> &mdash; to keep the service secure and prevent abuse.</li>
                             </ul>
                         </section>

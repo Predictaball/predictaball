@@ -7,7 +7,13 @@ import org.openapitools.server.models.Match
 import scorcerer.server.db.tables.*
 import java.time.OffsetDateTime
 
-fun givenUserExists(id: String, firstName: String, familyName: String = "Name", fixedPoints: Int = 0) {
+fun givenUserExists(
+    id: String,
+    firstName: String,
+    familyName: String = "Name",
+    fixedPoints: Int = 0,
+    emailReminders: Boolean = false,
+) {
     transaction {
         MemberTable.insert {
             it[this.id] = id
@@ -17,6 +23,7 @@ fun givenUserExists(id: String, firstName: String, familyName: String = "Name", 
             it[this.doublePointsChips] = 3
             it[this.oneOutChips] = 3
             it[this.email] = "$id@test.com"
+            it[this.emailReminders] = emailReminders
         }
     }
 }

@@ -1,6 +1,7 @@
 package scorcerer.server.services
 
 import scorcerer.server.log
+import scorcerer.server.toJson
 import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
@@ -10,13 +11,25 @@ object EmailService {
     private val apiKey = System.getenv("RESEND_API_KEY")
     private val client = HttpClient.newHttpClient()
 
+    private data class ResendRequest(
+        val from: String,
+        val to: List<String>,
+        val subject: String,
+        val html: String,
+    )
+
     fun send(to: String, subject: String, html: String) {
         if (apiKey.isNullOrBlank()) {
             log.info("RESEND_API_KEY not set, skipping email to $to: $subject")
             return
         }
 
-        val body = """{"from":"Predictaball <noreply@predictaball.live>","to":["$to"],"subject":"$subject","html":"$html"}"""
+        val body = ResendRequest(
+            from = "Predictaball <noreply@predictaball.live>",
+            to = listOf(to),
+            subject = subject,
+            html = html,
+        ).toJson()
 
         try {
             val request = HttpRequest.newBuilder()

@@ -899,6 +899,8 @@ paths:
                   type: string
                 familyName:
                   type: string
+                emailReminders:
+                  type: boolean
               required:
                 - email
                 - password
@@ -1026,6 +1028,66 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/league'
+
+  /user/profile:
+    get:
+      tags:
+        - user
+      operationId: getUserProfile
+      description: Get the signed-in user's profile
+      x-amazon-apigateway-integration:
+        type: "aws_proxy"
+        httpMethod: "POST"
+        uri: "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${apiHandlerArn}/invocations"
+        credentials: "${apiGatewayRoleArn}"
+        payloadFormatVersion: "1.0"
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - firstName
+                  - familyName
+                  - email
+                  - authProvider
+                  - emailReminders
+                properties:
+                  firstName:
+                    type: string
+                  familyName:
+                    type: string
+                  email:
+                    type: string
+                  authProvider:
+                    type: string
+                  emailReminders:
+                    type: boolean
+    patch:
+      tags:
+        - user
+      operationId: updateUserProfile
+      description: Update the signed-in user's profile preferences
+      x-amazon-apigateway-integration:
+        type: "aws_proxy"
+        httpMethod: "POST"
+        uri: "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${apiHandlerArn}/invocations"
+        credentials: "${apiGatewayRoleArn}"
+        payloadFormatVersion: "1.0"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                emailReminders:
+                  type: boolean
+      responses:
+        '200':
+          description: Successful response
 
   /league:
     post:

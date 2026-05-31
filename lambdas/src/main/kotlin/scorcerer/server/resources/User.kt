@@ -17,9 +17,11 @@ import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.jetbrains.exposed.v1.jdbc.update
 import org.openapitools.server.models.GetUserChips200Response
 import org.openapitools.server.models.GetUserPoints200Response
+import org.openapitools.server.models.GetUserProfile200Response
 import org.openapitools.server.models.League
 import org.openapitools.server.models.Prediction
 import org.openapitools.server.models.SignupRequest
+import org.openapitools.server.models.UpdateUserProfileRequest
 import org.openapitools.server.models.User
 import scorcerer.server.ApiResponseError
 import scorcerer.server.auth.AuthProvider
@@ -37,10 +39,6 @@ import scorcerer.utils.livePointsForUser
 data class OAuthSignupRequest(val userId: String, val email: String, val firstName: String, val familyName: String)
 
 data class OAuthSignupResponse(val idToken: String, val refreshToken: String, val userId: String, val isAdmin: Boolean)
-
-data class ProfileResponse(val firstName: String, val familyName: String, val email: String, val authProvider: String, val emailReminders: Boolean)
-
-data class UpdateProfileRequest(val emailReminders: Boolean? = null)
 
 private fun addToGlobalLeague(userId: String) {
     try {
@@ -111,7 +109,7 @@ fun userRoutes(contexts: RequestContexts, leaderboardService: LeaderboardService
         }
 
         val userId = runBlocking {
-            authProvider.signup(body.email, body.password, firstName, familyName)
+            authProvider.signup(body.email, body.password, firstName, familyName, body.emailReminders ?: false)
         }
         log.info("Created user ($userId) and set password successfully")
 
@@ -172,7 +170,7 @@ fun userRoutes(contexts: RequestContexts, leaderboardService: LeaderboardService
                 ?: throw ApiResponseError(Response(Status.BAD_REQUEST).body("User does not exist"))
         }
         Response(Status.OK).body(
-            ProfileResponse(
+            GetUserProfile200Response(
                 firstName = member[MemberTable.firstName],
                 familyName = member[MemberTable.familyName],
                 email = member[MemberTable.email],
@@ -183,7 +181,7 @@ fun userRoutes(contexts: RequestContexts, leaderboardService: LeaderboardService
     },
     "/user/profile" bind Method.PATCH to { req ->
         val userId = contexts.extractUserId(req)
-        val body: UpdateProfileRequest = req.bodyString().fromJson()
+        val body: UpdateUserProfileRequest = req.bodyString().fromJson()
         transaction {
             MemberTable.update({ MemberTable.id eq userId }) {
                 if (body.emailReminders != null) it[emailReminders] = body.emailReminders
