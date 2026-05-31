@@ -1,6 +1,5 @@
 import React from "react";
 import {Header} from "@/app/components/landing-header";
-import CustomCursor from "@/app/components/custom-cursor";
 import FlagGlobe from "@/app/components/flags/flag-globe-client";
 import LegalFooter from "@/app/components/legal-footer";
 
@@ -8,7 +7,6 @@ export default async function Home(): Promise<React.JSX.Element> {
 
     return (
         <main className="bg-slate-50 text-slate-900 dark:bg-gray-900 dark:text-white overflow-auto">
-            <CustomCursor/>
             <section className="relative flex flex-col p-10 h-svh">
                 <div className="absolute top-0 left-0 right-0 p-10 z-50">
                     <Header/>
