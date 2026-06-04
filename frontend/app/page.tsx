@@ -94,6 +94,50 @@ export default async function Home(): Promise<React.JSX.Element> {
                         </div>
                     </div>
 
+                    <div className="mt-28 flex flex-col items-center text-center mb-16">
+                        <span className="text-xs font-semibold tracking-[0.3em] text-cyan-600/90 dark:text-cyan-300/80 uppercase mb-4">Power-ups</span>
+                        <h2 className="text-4xl lg:text-6xl font-black tracking-tight">
+                            <span className="text-slate-900 dark:text-white">Play your </span>
+                            <span className="bg-gradient-to-r from-blue-500 via-cyan-300 to-green-300 bg-clip-text text-transparent">chips</span>
+                            <span className="text-slate-900 dark:text-white"> wisely.</span>
+                        </h2>
+                        <p className="mt-8 max-w-2xl text-lg text-slate-600 dark:text-gray-300 leading-relaxed">
+                            Every player gets <span className="font-semibold text-slate-900 dark:text-white">three of each</span> power-up to spend across the tournament. Attach one to any prediction before kickoff to bend the scoring in your favour — but choose carefully, because once they&apos;re gone, they&apos;re gone.
+                        </p>
+                    </div>
+
+                    <div className="grid md:grid-cols-3 gap-6">
+                        <div className="group relative rounded-2xl bg-gradient-to-br from-slate-900/10 to-slate-900/5 dark:from-white/10 dark:to-white/5 p-[1px] transition-transform hover:-translate-y-1">
+                            <div className="relative h-full rounded-2xl bg-white dark:bg-gray-900/80 backdrop-blur-sm p-8 flex flex-col">
+                                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600/30 to-cyan-400/20 ring-1 ring-cyan-400/30 font-black text-cyan-600 dark:text-cyan-300 mb-5">
+                                    2&times;
+                                </div>
+                                <h3 className="text-xl font-bold mb-2 tracking-tight">Double Points</h3>
+                                <p className="text-slate-600 dark:text-gray-400 leading-relaxed">Doubles every point that prediction earns. Back a banker and cash in twice over.</p>
+                            </div>
+                        </div>
+
+                        <div className="group relative rounded-2xl bg-gradient-to-br from-slate-900/10 to-slate-900/5 dark:from-white/10 dark:to-white/5 p-[1px] transition-transform hover:-translate-y-1">
+                            <div className="relative h-full rounded-2xl bg-white dark:bg-gray-900/80 backdrop-blur-sm p-8 flex flex-col">
+                                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-500/30 to-green-400/20 ring-1 ring-cyan-400/30 font-black text-cyan-600 dark:text-cyan-300 mb-5">
+                                    &plusmn;1
+                                </div>
+                                <h3 className="text-xl font-bold mb-2 tracking-tight">Off by One</h3>
+                                <p className="text-slate-600 dark:text-gray-400 leading-relaxed">Scores as if either side&apos;s goal tally was one closer, so a near-miss can still land the full five points.</p>
+                            </div>
+                        </div>
+
+                        <div className="group relative rounded-2xl bg-gradient-to-br from-slate-900/10 to-slate-900/5 dark:from-white/10 dark:to-white/5 p-[1px] transition-transform hover:-translate-y-1">
+                            <div className="relative h-full rounded-2xl bg-white dark:bg-gray-900/80 backdrop-blur-sm p-8 flex flex-col">
+                                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-green-500/30 to-emerald-400/20 ring-1 ring-green-400/30 font-black text-cyan-600 dark:text-cyan-300 mb-5">
+                                    %
+                                </div>
+                                <h3 className="text-xl font-bold mb-2 tracking-tight">Follow the Crowd</h3>
+                                <p className="text-slate-600 dark:text-gray-400 leading-relaxed">Locks in the most popular prediction at kickoff. Can&apos;t make your mind up? Let the wisdom of the crowd decide.</p>
+                            </div>
+                        </div>
+                    </div>
+
                     <div className="mt-24 relative overflow-hidden rounded-3xl bg-gradient-to-r from-blue-600/20 via-cyan-500/20 to-green-400/20 p-[1px]">
                         <div className="rounded-3xl bg-white dark:bg-gray-900/90 backdrop-blur-sm px-8 py-14 text-center">
                             <h3 className="text-4xl lg:text-5xl font-black tracking-tight">
