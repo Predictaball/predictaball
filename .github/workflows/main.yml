@@ -39,13 +39,14 @@ jobs:
       - name: Lint frontend
         run: cd frontend && npm run lint
 
-  deploy:
+  deploy-staging:
     needs: build
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    environment: staging
     concurrency:
-      group: deploy-dev
+      group: deploy-staging
       cancel-in-progress: false
     steps:
       - uses: actions/checkout@v4
@@ -87,6 +88,7 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.DEV_AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.DEV_AWS_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: eu-west-2
+          CDK_ENV: staging
           CDK_ACCOUNT_ID: ${{ secrets.DEV_CDK_ACCOUNT_ID }}
           CDK_DB_PASSWORD: ${{ secrets.DEV_CDK_DB_PASSWORD }}
           CDK_API_DOMAIN: api.dev.predictaball.live
@@ -99,9 +101,4 @@ jobs:
         if: steps.changes.outputs.deploy == 'true'
         run: |
           sleep 30
-          ALB_URL=$(aws elbv2 describe-load-balancers --query 'LoadBalancers[0].DNSName' --output text)
-          curl -f http://$ALB_URL/ping
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.DEV_AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.DEV_AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: eu-west-2
+          curl -f https://api.dev.predictaball.live/ping

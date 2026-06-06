@@ -1,9 +1,9 @@
 import { App } from "aws-cdk-lib"
 import { Predictaball } from "./stacks/predictaball"
-import { environment } from "./environment"
+import { config, environment } from "./environment"
 
 const app = new App()
 
-new Predictaball(app, "Predictaball", {
+new Predictaball(app, config.stackName, {
   env: environment,
 })

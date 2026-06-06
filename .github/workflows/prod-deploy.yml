@@ -1,0 +1,89 @@
+name: Deploy to production
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Commit SHA, tag, or branch to deploy (defaults to main)"
+        required: false
+        default: "main"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: gradle/actions/setup-gradle@v3
+      - name: Build (assemble + test)
+        run: cd lambdas && ./gradlew build
+      - name: Integration test
+        run: |
+          docker compose up -d
+          timeout 60 sh -c 'until docker compose exec -T postgres pg_isready -U postgres; do sleep 1; done'
+          cd lambdas && ./gradlew integrationTest
+          docker compose down
+      - name: Upload backend jar
+        uses: actions/upload-artifact@v4
+        with:
+          name: scorcerer-jar-prod
+          path: lambdas/build/libs/scorcerer.jar
+          retention-days: 1
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: production
+    concurrency:
+      group: deploy-prod
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: cdk/package-lock.json
+      - name: Download backend jar
+        uses: actions/download-artifact@v4
+        with:
+          name: scorcerer-jar-prod
+          path: lambdas/build/libs/
+      - name: Install CDK dependencies
+        run: cd cdk && npm ci
+      - name: CDK deploy
+        run: cd cdk && npx cdk deploy --require-approval never
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.PROD_AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.PROD_AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: eu-west-2
+          CDK_ENV: prod
+          CDK_ACCOUNT_ID: ${{ secrets.PROD_CDK_ACCOUNT_ID }}
+          CDK_DB_PASSWORD: ${{ secrets.PROD_CDK_DB_PASSWORD }}
+          CDK_API_DOMAIN: api.predictaball.live
+          CDK_ADMIN_API_KEY: ${{ secrets.PROD_ADMIN_API_KEY }}
+          CDK_NEXTAUTH_SECRET: ${{ secrets.PROD_NEXTAUTH_SECRET }}
+          CDK_RESEND_API_KEY: ${{ secrets.PROD_RESEND_API_KEY }}
+          CDK_FRONTEND_DOMAIN: predictaball.live
+          CDK_VERCEL_CNAME: ${{ secrets.PROD_VERCEL_CNAME }}
+      - name: Health check
+        run: |
+          sleep 30
+          curl -f https://api.predictaball.live/ping
+      - name: Promote prod branch (triggers Vercel frontend deploy)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git push origin "${{ github.sha }}:refs/heads/prod" --force

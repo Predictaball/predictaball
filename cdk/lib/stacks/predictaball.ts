@@ -10,7 +10,7 @@ import {
   Vpc
 } from "aws-cdk-lib/aws-ec2"
 import { Credentials, DatabaseInstance, DatabaseInstanceEngine, StorageType } from "aws-cdk-lib/aws-rds"
-import { adminApiKey, apiDomain, dbPassword, frontendDomain, rootDomain, vercelCname } from "../environment"
+import { adminApiKey, apiDomain, config, dbPassword, frontendDomain, vercelCname } from "../environment"
 import { AnyPrincipal, PolicyStatement } from "aws-cdk-lib/aws-iam"
 import { BlockPublicAccess, Bucket, BucketEncryption } from "aws-cdk-lib/aws-s3"
 import { Cluster, ContainerImage, LogDrivers } from "aws-cdk-lib/aws-ecs"
@@ -66,6 +66,7 @@ export class Predictaball extends Stack {
       storageType: StorageType.GP2,
       allocatedStorage: 20,
       credentials: Credentials.fromPassword(dbUser, SecretValue.unsafePlainText(dbPassword)),
+      removalPolicy: config.removalPolicy,
     })
 
     const leaderboardBucket = new Bucket(this, "leaderboardBucket", {
@@ -73,7 +74,8 @@ export class Predictaball extends Stack {
       encryption: BucketEncryption.S3_MANAGED,
       enforceSSL: true,
       versioned: true,
-      removalPolicy: RemovalPolicy.RETAIN,
+      removalPolicy: config.removalPolicy,
+      autoDeleteObjects: config.removalPolicy === RemovalPolicy.DESTROY,
     })
 
     // ECS Cluster + Fargate Service
@@ -134,12 +136,12 @@ export class Predictaball extends Stack {
     // Domain + HTTPS (when CDK_API_DOMAIN is set)
     if (apiDomain) {
       const hostedZone = new HostedZone(this, "hostedZone", {
-        zoneName: rootDomain,
+        zoneName: config.zoneName,
       })
 
       const certificate = new Certificate(this, "certificate", {
-        domainName: `*.${rootDomain}`,
-        subjectAlternativeNames: [rootDomain, `*.dev.${rootDomain}`],
+        domainName: config.zoneName,
+        subjectAlternativeNames: [`*.${config.zoneName}`],
         validation: CertificateValidation.fromDns(hostedZone),
       })
 
