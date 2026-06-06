@@ -177,6 +177,7 @@ fun userRoutes(contexts: RequestContexts, leaderboardService: LeaderboardService
             }
         }
         addToCountryLeague(userId, teamId)
+        runBlocking { leaderboardService.updateGlobalLeaderboard(leaderboardService.getLatestLeaderboardMatchDay()) }
         Response(Status.OK)
     },
     "/user/leagues" bind Method.GET to { req ->
