@@ -6,13 +6,14 @@ import aws.sdk.kotlin.services.s3.model.ListObjectsV2Request
 import aws.sdk.kotlin.services.s3.model.PutObjectRequest
 import aws.smithy.kotlin.runtime.content.ByteStream
 import aws.smithy.kotlin.runtime.content.decodeToString
+import org.jetbrains.exposed.v1.core.JoinType
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.openapitools.server.models.LeaderboardInner
-import org.openapitools.server.models.User
 import scorcerer.server.db.tables.LeagueMembershipTable
 import scorcerer.server.db.tables.MemberTable
+import scorcerer.server.db.tables.TeamTable
 import scorcerer.server.fromJson
 import scorcerer.server.log
 import scorcerer.server.toJson
@@ -65,6 +66,7 @@ fun calculateGlobalLeaderboard(previousGlobalLeaderboard: List<LeaderboardInner>
         val livePoints = livePointsByUser()
 
         (LeagueMembershipTable innerJoin MemberTable)
+            .join(TeamTable, JoinType.LEFT, MemberTable.supportedTeamId, TeamTable.id)
             .select(
                 MemberTable.id,
                 MemberTable.firstName,
@@ -73,21 +75,11 @@ fun calculateGlobalLeaderboard(previousGlobalLeaderboard: List<LeaderboardInner>
                 MemberTable.doublePointsChips,
                 MemberTable.oneOutChips,
                 MemberTable.crowdChips,
+                TeamTable.name,
+                TeamTable.flagCode,
             )
             .where { LeagueMembershipTable.leagueId eq "global" }
-            .map {
-                val userId = it[MemberTable.id]
-                User(
-                    it[MemberTable.firstName],
-                    it[MemberTable.familyName],
-                    userId,
-                    it[MemberTable.doublePointsChips],
-                    it[MemberTable.oneOutChips],
-                    it[MemberTable.crowdChips],
-                    it[MemberTable.fixedPoints],
-                    livePoints[userId] ?: 0,
-                )
-            }
+            .map { it.toUser(livePoints[it[MemberTable.id]] ?: 0) }
     }
 
     val sortedGlobalUsers =

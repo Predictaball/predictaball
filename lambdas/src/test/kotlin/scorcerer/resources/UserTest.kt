@@ -6,6 +6,10 @@ import org.http4k.core.Method
 import org.http4k.core.Request
 import org.http4k.core.RequestContexts
 import org.http4k.core.Status
+import org.jetbrains.exposed.v1.core.and
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.jdbc.selectAll
+import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.junit.jupiter.api.Test
 import org.openapitools.server.models.GetUserPoints200Response
 import org.openapitools.server.models.Prediction
@@ -17,6 +21,8 @@ import scorcerer.givenTeamExists
 import scorcerer.givenUserExists
 import scorcerer.givenUserInLeague
 import scorcerer.server.auth.DatabaseAuthProvider
+import scorcerer.server.db.tables.LeagueMembershipTable
+import scorcerer.server.db.tables.MemberTable
 import scorcerer.server.fromJson
 import scorcerer.server.resources.userRoutes
 import scorcerer.utils.LeaderboardS3Service
@@ -73,5 +79,36 @@ class UserTest : DatabaseTest() {
 
         val response = handler(Request(Method.GET, "/user/leagues"))
         response.status shouldBe Status.OK
+    }
+
+    @Test
+    fun setSupportedTeamJoinsCountryLeague() {
+        givenUserExists("test-user", "name")
+        val teamId = givenTeamExists("England")
+
+        val response = handler(Request(Method.POST, "/user/supported-team").body("""{"teamId":"$teamId"}"""))
+        response.status shouldBe Status.OK
+
+        val supportedTeamId = transaction {
+            MemberTable.selectAll().where { MemberTable.id eq "test-user" }.single()[MemberTable.supportedTeamId]
+        }
+        supportedTeamId shouldBe teamId.toInt()
+
+        val membershipCount = transaction {
+            LeagueMembershipTable.selectAll().where {
+                (LeagueMembershipTable.memberId eq "test-user") and (LeagueMembershipTable.leagueId eq "country-$teamId")
+            }.count()
+        }
+        membershipCount shouldBe 1L
+    }
+
+    @Test
+    fun setSupportedTeamRejectsWhenAlreadySet() {
+        givenUserExists("test-user", "name")
+        val teamId = givenTeamExists("England")
+        handler(Request(Method.POST, "/user/supported-team").body("""{"teamId":"$teamId"}"""))
+
+        val second = handler(Request(Method.POST, "/user/supported-team").body("""{"teamId":"$teamId"}"""))
+        second.status shouldBe Status.BAD_REQUEST
     }
 }

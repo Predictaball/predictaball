@@ -8,6 +8,7 @@ import { AUTH_CLIENT } from "@/app/api/api"
 import { API_GATEWAY } from "@/app/api/constants"
 import { AUTH_INPUT_CLASS_NAMES, BUTTON_CLASS } from "@/app/util/css-classes"
 import GoogleIcon from "@/app/components/icons/google-icon"
+import TeamPicker from "@/app/components/team-picker"
 import { doesContainDigit, doesContainLowerCase } from "@/app/util/regex"
 
 const EMAIL_REGEX = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|.(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
@@ -38,6 +39,7 @@ export default function AuthForm({ callbackUrl, leagueId, initialEmail, initialM
     const [password, setPassword] = useState("")
     const [firstName, setFirstName] = useState("")
     const [lastName, setLastName] = useState("")
+    const [supportedTeamId, setSupportedTeamId] = useState<string | null>(null)
     const [emailReminders, setEmailReminders] = useState(false)
     const [isVisible, setIsVisible] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
@@ -98,7 +100,7 @@ export default function AuthForm({ callbackUrl, leagueId, initialEmail, initialM
     const handleSignup = async () => {
         setIsLoading(true)
         try {
-            await AUTH_CLIENT.userApi.signup({ signupRequest: { email, password, firstName, familyName: lastName, emailReminders } })
+            await AUTH_CLIENT.userApi.signup({ signupRequest: { email, password, firstName, familyName: lastName, emailReminders, supportedTeamId: supportedTeamId! } })
             await handleLogin()
         } catch {
             setIsLoading(false)
@@ -115,6 +117,7 @@ export default function AuthForm({ callbackUrl, leagueId, initialEmail, initialM
         || !containsLowerCase
         || firstName === ""
         || lastName === ""
+        || supportedTeamId === null
 
     return (
         <div className="space-y-5">
@@ -281,6 +284,7 @@ export default function AuthForm({ callbackUrl, leagueId, initialEmail, initialM
                             </div>
                         )}
                     </div>
+                    <TeamPicker value={supportedTeamId} onSelect={setSupportedTeamId} />
                     <Checkbox
                         isSelected={emailReminders}
                         onValueChange={setEmailReminders}

@@ -8,6 +8,7 @@ import org.http4k.core.Status
 import org.http4k.routing.bind
 import org.http4k.routing.path
 import org.http4k.routing.routes
+import org.jetbrains.exposed.v1.core.JoinType
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.inList
 import org.jetbrains.exposed.v1.jdbc.insert
@@ -20,21 +21,24 @@ import org.openapitools.server.models.GetUserPoints200Response
 import org.openapitools.server.models.GetUserProfile200Response
 import org.openapitools.server.models.League
 import org.openapitools.server.models.Prediction
+import org.openapitools.server.models.SetSupportedTeamRequest
 import org.openapitools.server.models.SignupRequest
 import org.openapitools.server.models.UpdateUserProfileRequest
-import org.openapitools.server.models.User
 import scorcerer.server.ApiResponseError
 import scorcerer.server.auth.AuthProvider
 import scorcerer.server.db.tables.LeagueMembershipTable
 import scorcerer.server.db.tables.LeagueTable
 import scorcerer.server.db.tables.MemberTable
 import scorcerer.server.db.tables.PredictionTable
+import scorcerer.server.db.tables.TeamTable
 import scorcerer.server.extractUserId
 import scorcerer.server.fromJson
 import scorcerer.server.log
 import scorcerer.server.toJson
 import scorcerer.utils.LeaderboardService
 import scorcerer.utils.livePointsForUser
+import scorcerer.utils.toTitleCase
+import scorcerer.utils.toUser
 
 data class OAuthSignupRequest(val userId: String, val email: String, val firstName: String, val familyName: String)
 
@@ -57,6 +61,31 @@ private fun addToGlobalLeague(userId: String) {
         }
     } catch (_: Exception) {
         // Already in global league
+    }
+}
+
+// Auto-create (if needed) and join the league for the team a user supports.
+// League id is namespaced by team id to stay within the league id length limit.
+private fun addToCountryLeague(userId: String, teamId: Int) {
+    try {
+        transaction {
+            val leagueId = "country-$teamId"
+            val teamName = TeamTable.select(TeamTable.name).where { TeamTable.id eq teamId }
+                .single()[TeamTable.name].toTitleCase()
+            val leagueExists = LeagueTable.selectAll().where { LeagueTable.id eq leagueId }.count() > 0
+            if (!leagueExists) {
+                LeagueTable.insert {
+                    it[name] = teamName
+                    it[id] = leagueId
+                }
+            }
+            LeagueMembershipTable.insert {
+                it[memberId] = userId
+                it[this.leagueId] = leagueId
+            }
+        }
+    } catch (_: Exception) {
+        // League already exists / already a member
     }
 }
 
@@ -99,6 +128,8 @@ fun userRoutes(contexts: RequestContexts, leaderboardService: LeaderboardService
         val body: SignupRequest = req.bodyString().fromJson()
         val firstName = body.firstName.trim()
         val familyName = body.familyName.trim()
+        val supportedTeamId = body.supportedTeamId.toIntOrNull()
+            ?: throw ApiResponseError(Response(Status.BAD_REQUEST).body("Invalid supportedTeamId"))
 
         val existing = transaction {
             MemberTable.selectAll().where { MemberTable.email eq body.email }.firstOrNull()
@@ -108,14 +139,44 @@ fun userRoutes(contexts: RequestContexts, leaderboardService: LeaderboardService
             throw ApiResponseError(Response(Status.BAD_REQUEST).body("Email already registered via $provider"))
         }
 
+        val teamExists = transaction {
+            TeamTable.selectAll().where { TeamTable.id eq supportedTeamId }.count() > 0
+        }
+        if (!teamExists) {
+            throw ApiResponseError(Response(Status.BAD_REQUEST).body("Team does not exist"))
+        }
+
         val userId = runBlocking {
-            authProvider.signup(body.email, body.password, firstName, familyName, body.emailReminders ?: false)
+            authProvider.signup(body.email, body.password, firstName, familyName, body.emailReminders ?: false, supportedTeamId)
         }
         log.info("Created user ($userId) and set password successfully")
 
         addToGlobalLeague(userId)
-        log.info("Added to global league")
+        addToCountryLeague(userId, supportedTeamId)
+        log.info("Added to global and country leagues")
         runBlocking { leaderboardService.updateGlobalLeaderboard(leaderboardService.getLatestLeaderboardMatchDay()) }
+        Response(Status.OK)
+    },
+    "/user/supported-team" bind Method.POST to { req ->
+        val userId = contexts.extractUserId(req)
+        val body: SetSupportedTeamRequest = req.bodyString().fromJson()
+        val teamId = body.teamId.toIntOrNull()
+            ?: throw ApiResponseError(Response(Status.BAD_REQUEST).body("Invalid teamId"))
+        transaction {
+            val member = MemberTable.selectAll().where { MemberTable.id eq userId }.firstOrNull()
+                ?: throw ApiResponseError(Response(Status.BAD_REQUEST).body("User does not exist"))
+            if (member[MemberTable.supportedTeamId] != null) {
+                throw ApiResponseError(Response(Status.BAD_REQUEST).body("Supported team already set"))
+            }
+            val teamExists = TeamTable.selectAll().where { TeamTable.id eq teamId }.count() > 0
+            if (!teamExists) {
+                throw ApiResponseError(Response(Status.BAD_REQUEST).body("Team does not exist"))
+            }
+            MemberTable.update({ MemberTable.id eq userId }) {
+                it[supportedTeamId] = teamId
+            }
+        }
+        addToCountryLeague(userId, teamId)
         Response(Status.OK)
     },
     "/user/leagues" bind Method.GET to { req ->
@@ -125,11 +186,12 @@ fun userRoutes(contexts: RequestContexts, leaderboardService: LeaderboardService
                 .select(LeagueMembershipTable.leagueId).where { LeagueMembershipTable.memberId eq requesterUserId }
                 .map { it[LeagueMembershipTable.leagueId] }
             (LeagueTable innerJoin LeagueMembershipTable innerJoin MemberTable)
+                .join(TeamTable, JoinType.LEFT, MemberTable.supportedTeamId, TeamTable.id)
                 .selectAll().where { LeagueTable.id inList userLeagueIds }
                 .groupBy { it[LeagueTable.id] }
                 .mapValues { entry ->
                     val leagueName = entry.value.first()[LeagueTable.name]
-                    val users = entry.value.map { User(it[MemberTable.firstName], it[MemberTable.familyName], it[MemberTable.id], it[MemberTable.doublePointsChips], it[MemberTable.oneOutChips], it[MemberTable.crowdChips], it[MemberTable.fixedPoints], 0) }
+                    val users = entry.value.map { it.toUser() }
                     League(entry.key, leagueName, users)
                 }.values.toList()
         }
@@ -165,19 +227,23 @@ fun userRoutes(contexts: RequestContexts, leaderboardService: LeaderboardService
     },
     "/user/profile" bind Method.GET to { req ->
         val userId = contexts.extractUserId(req)
-        val member = transaction {
-            MemberTable.selectAll().where { MemberTable.id eq userId }.firstOrNull()
+        val response = transaction {
+            val member = MemberTable.selectAll().where { MemberTable.id eq userId }.firstOrNull()
                 ?: throw ApiResponseError(Response(Status.BAD_REQUEST).body("User does not exist"))
-        }
-        Response(Status.OK).body(
+            val teamId = member[MemberTable.supportedTeamId]
+            val team = teamId?.let { TeamTable.selectAll().where { TeamTable.id eq it }.firstOrNull() }
             GetUserProfile200Response(
                 firstName = member[MemberTable.firstName],
                 familyName = member[MemberTable.familyName],
                 email = member[MemberTable.email],
                 authProvider = member[MemberTable.authProvider],
                 emailReminders = member[MemberTable.emailReminders],
-            ).toJson(),
-        )
+                supportedTeamId = teamId?.toString(),
+                supportedTeamName = team?.get(TeamTable.name)?.toTitleCase(),
+                supportedTeamFlagCode = team?.get(TeamTable.flagCode),
+            )
+        }
+        Response(Status.OK).body(response.toJson())
     },
     "/user/profile" bind Method.PATCH to { req ->
         val userId = contexts.extractUserId(req)

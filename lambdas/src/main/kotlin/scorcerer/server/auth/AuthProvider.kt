@@ -7,7 +7,7 @@ data class AuthTokens(
 )
 
 interface AuthProvider {
-    suspend fun signup(email: String, pw: String, firstName: String, familyName: String, emailReminders: Boolean): String
+    suspend fun signup(email: String, pw: String, firstName: String, familyName: String, emailReminders: Boolean, supportedTeamId: Int): String
     suspend fun login(email: String, password: String): AuthTokens
     suspend fun refresh(refreshToken: String): AuthTokens
     suspend fun resetPassword(email: String)

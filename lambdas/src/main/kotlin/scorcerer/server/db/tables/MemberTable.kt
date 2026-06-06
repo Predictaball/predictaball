@@ -14,5 +14,6 @@ object MemberTable : Table("member") {
     val passwordHash = varchar("password_hash", 255).nullable()
     val authProvider = varchar("auth_provider", 20).default("email")
     val emailReminders = bool("email_reminders").default(false)
+    val supportedTeamId = integer("supported_team_id").references(TeamTable.id).nullable()
     override val primaryKey = PrimaryKey(id)
 }

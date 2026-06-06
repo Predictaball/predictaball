@@ -17,7 +17,7 @@ import java.util.UUID
 
 class DatabaseAuthProvider : AuthProvider {
 
-    override suspend fun signup(email: String, pw: String, firstName: String, familyName: String, emailReminders: Boolean): String {
+    override suspend fun signup(email: String, pw: String, firstName: String, familyName: String, emailReminders: Boolean, supportedTeamId: Int): String {
         val userId = UUID.randomUUID().toString()
         transaction {
             MemberTable.insert {
@@ -29,6 +29,7 @@ class DatabaseAuthProvider : AuthProvider {
                 it[fixedPoints] = 0
                 it[authProvider] = "email"
                 it[MemberTable.emailReminders] = emailReminders
+                it[MemberTable.supportedTeamId] = supportedTeamId
             }
         }
         return userId

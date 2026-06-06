@@ -13,6 +13,7 @@ import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.junit.jupiter.api.Test
 import scorcerer.DatabaseTest
+import scorcerer.givenTeamExists
 import scorcerer.server.auth.DatabaseAuthProvider
 import scorcerer.server.db.tables.MemberTable
 import scorcerer.server.fromJson
@@ -65,7 +66,8 @@ class AuthTest : DatabaseTest() {
 
     @Test
     fun emailSignupCreatesMemberWithEmailProvider() {
-        val body = """{"email":"new@test.com","password":"pass123","firstName":"New","familyName":"User"}"""
+        val teamId = givenTeamExists("England")
+        val body = """{"email":"new@test.com","password":"pass123","firstName":"New","familyName":"User","supportedTeamId":"$teamId"}"""
         val response = userHandler(Request(Method.POST, "/user").body(body))
         response.status shouldBe Status.OK
 
@@ -80,7 +82,8 @@ class AuthTest : DatabaseTest() {
         val oauthBody = """{"userId":"google_789","email":"taken@gmail.com","firstName":"Google","familyName":"User"}"""
         userHandler(Request(Method.POST, "/user/oauth").body(oauthBody))
 
-        val signupBody = """{"email":"taken@gmail.com","password":"pass123","firstName":"Email","familyName":"User"}"""
+        val teamId = givenTeamExists("England")
+        val signupBody = """{"email":"taken@gmail.com","password":"pass123","firstName":"Email","familyName":"User","supportedTeamId":"$teamId"}"""
         val response = userHandler(Request(Method.POST, "/user").body(signupBody))
         response.status shouldBe Status.BAD_REQUEST
     }
@@ -99,7 +102,8 @@ class AuthTest : DatabaseTest() {
 
     @Test
     fun checkEmailReturnsProviderForEmailUser() {
-        val body = """{"email":"email@test.com","password":"pass123","firstName":"E","familyName":"User"}"""
+        val teamId = givenTeamExists("England")
+        val body = """{"email":"email@test.com","password":"pass123","firstName":"E","familyName":"User","supportedTeamId":"$teamId"}"""
         userHandler(Request(Method.POST, "/user").body(body))
 
         val response = authHandler(Request(Method.GET, "/auth/check-email?email=email@test.com"))
@@ -120,7 +124,8 @@ class AuthTest : DatabaseTest() {
 
     @Test
     fun loginReturnsUserIdAndToken() {
-        val signupBody = """{"email":"login@test.com","password":"pass123","firstName":"Login","familyName":"User"}"""
+        val teamId = givenTeamExists("England")
+        val signupBody = """{"email":"login@test.com","password":"pass123","firstName":"Login","familyName":"User","supportedTeamId":"$teamId"}"""
         userHandler(Request(Method.POST, "/user").body(signupBody))
 
         val loginBody = """{"email":"login@test.com","password":"pass123"}"""
@@ -133,7 +138,8 @@ class AuthTest : DatabaseTest() {
 
     @Test
     fun loginRejectsWrongPassword() {
-        val signupBody = """{"email":"wrong@test.com","password":"pass123","firstName":"Wrong","familyName":"User"}"""
+        val teamId = givenTeamExists("England")
+        val signupBody = """{"email":"wrong@test.com","password":"pass123","firstName":"Wrong","familyName":"User","supportedTeamId":"$teamId"}"""
         userHandler(Request(Method.POST, "/user").body(signupBody))
 
         val loginBody = """{"email":"wrong@test.com","password":"wrongpass"}"""

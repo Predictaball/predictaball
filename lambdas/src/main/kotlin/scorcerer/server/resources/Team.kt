@@ -23,6 +23,14 @@ import scorcerer.server.toJson
 import scorcerer.utils.toTitleCase
 
 fun teamRoutes(contexts: RequestContexts) = routes(
+    "/team" bind Method.GET to {
+        val teams = transaction {
+            TeamTable.selectAll().map { row ->
+                Team(row[TeamTable.id].toString(), row[TeamTable.name].toTitleCase(), row[TeamTable.flagCode])
+            }
+        }
+        Response(Status.OK).body(teams.toJson())
+    },
     "/team" bind Method.POST to { req ->
         requireAdmin(contexts, req) ?: run {
             val requesterUserId = contexts.extractUserId(req)

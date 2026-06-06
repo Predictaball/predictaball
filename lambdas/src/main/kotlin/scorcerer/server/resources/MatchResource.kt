@@ -29,6 +29,7 @@ import scorcerer.server.services.setScore
 import scorcerer.server.toJson
 import scorcerer.utils.LeaderboardService
 import scorcerer.utils.toTitleCase
+import scorcerer.utils.toUser
 
 fun matchRoutes(contexts: RequestContexts, leaderboardService: LeaderboardService) = routes(
     "/match/{matchId}/predictions" bind Method.GET to { req ->
@@ -42,7 +43,8 @@ fun matchRoutes(contexts: RequestContexts, leaderboardService: LeaderboardServic
         }
         if (matchState == Match.State.UPCOMING) throw ApiResponseError(Response(Status.BAD_REQUEST).body("Match does not exist"))
         val result = transaction {
-            val predictions = PredictionTable innerJoin MemberTable
+            val predictions = (PredictionTable innerJoin MemberTable)
+                .join(TeamTable, JoinType.LEFT, MemberTable.supportedTeamId, TeamTable.id)
             if (leagueId.isNullOrBlank()) {
                 predictions.selectAll().where { PredictionTable.matchId eq matchId.toInt() }
             } else {
@@ -50,7 +52,7 @@ fun matchRoutes(contexts: RequestContexts, leaderboardService: LeaderboardServic
             }.map { row ->
                 PredictionWithUser(
                     Prediction(row[PredictionTable.homeScore], row[PredictionTable.chip], row[PredictionTable.awayScore], row[PredictionTable.matchId].toString(), row[PredictionTable.id].toString(), row[PredictionTable.memberId], row[PredictionTable.points]),
-                    User(row[MemberTable.firstName], row[MemberTable.familyName], row[MemberTable.id], row[MemberTable.doublePointsChips], row[MemberTable.oneOutChips], row[MemberTable.crowdChips], row[MemberTable.fixedPoints], 0),
+                    row.toUser(),
                 )
             }
         }

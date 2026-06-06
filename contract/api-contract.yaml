@@ -227,6 +227,10 @@ components:
           type: integer
         livePoints:
           type: integer
+        supportedTeamName:
+          type: string
+        supportedTeamFlagCode:
+          type: string
     toGoThrough:
       description: For knockout games which team will go through
       type: string
@@ -268,6 +272,27 @@ x-amazon-apigateway-request-validators:
     validateRequestBody: true
 paths:
   /team:
+    get:
+      tags:
+        - team
+      operationId: getTeams
+      description: List all teams
+      security: []
+      x-amazon-apigateway-integration:
+        type: "aws_proxy"
+        httpMethod: "POST"
+        uri: "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${apiHandlerArn}/invocations"
+        credentials: "${apiGatewayRoleArn}"
+        payloadFormatVersion: "1.0"
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/team'
     post:
       tags:
         - team
@@ -901,11 +926,40 @@ paths:
                   type: string
                 emailReminders:
                   type: boolean
+                supportedTeamId:
+                  type: string
               required:
                 - email
                 - password
                 - firstName
                 - familyName
+                - supportedTeamId
+      responses:
+        '200':
+          description: Successful response
+  /user/supported-team:
+    post:
+      tags:
+        - user
+      operationId: setSupportedTeam
+      description: Set the signed-in user's supported team and join its country league (set-once)
+      x-amazon-apigateway-integration:
+        type: "aws_proxy"
+        httpMethod: "POST"
+        uri: "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${apiHandlerArn}/invocations"
+        credentials: "${apiGatewayRoleArn}"
+        payloadFormatVersion: "1.0"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                teamId:
+                  type: string
+              required:
+                - teamId
       responses:
         '200':
           description: Successful response
@@ -1065,6 +1119,12 @@ paths:
                     type: string
                   emailReminders:
                     type: boolean
+                  supportedTeamId:
+                    type: string
+                  supportedTeamName:
+                    type: string
+                  supportedTeamFlagCode:
+                    type: string
     patch:
       tags:
         - user

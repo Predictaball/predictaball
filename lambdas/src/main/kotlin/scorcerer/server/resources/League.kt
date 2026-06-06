@@ -8,6 +8,7 @@ import org.http4k.core.Status
 import org.http4k.routing.bind
 import org.http4k.routing.path
 import org.http4k.routing.routes
+import org.jetbrains.exposed.v1.core.JoinType
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
@@ -20,12 +21,12 @@ import org.openapitools.server.models.CreateLeagueRequest
 import org.openapitools.server.models.GetLeagueLeaderboard200Response
 import org.openapitools.server.models.LeaderboardInner
 import org.openapitools.server.models.League
-import org.openapitools.server.models.User
 import org.postgresql.util.PSQLException
 import scorcerer.server.ApiResponseError
 import scorcerer.server.db.tables.LeagueMembershipTable
 import scorcerer.server.db.tables.LeagueTable
 import scorcerer.server.db.tables.MemberTable
+import scorcerer.server.db.tables.TeamTable
 import scorcerer.server.extractUserId
 import scorcerer.server.fromJson
 import scorcerer.server.toJson
@@ -34,6 +35,7 @@ import scorcerer.utils.calculateGlobalLeaderboard
 import scorcerer.utils.calculateMovement
 import scorcerer.utils.filterLeaderboardToLeague
 import scorcerer.utils.throwDatabaseError
+import scorcerer.utils.toUser
 import kotlin.math.min
 
 fun leagueRoutes(contexts: RequestContexts, leaderboardService: LeaderboardService) = routes(
@@ -65,9 +67,10 @@ fun leagueRoutes(contexts: RequestContexts, leaderboardService: LeaderboardServi
         } ?: throw ApiResponseError(Response(Status.BAD_REQUEST).body("League does not exist"))
         val users = transaction {
             (LeagueTable innerJoin LeagueMembershipTable innerJoin MemberTable)
-                .select(MemberTable.firstName, MemberTable.familyName, MemberTable.id, MemberTable.doublePointsChips, MemberTable.oneOutChips, MemberTable.crowdChips, MemberTable.fixedPoints)
+                .join(TeamTable, JoinType.LEFT, MemberTable.supportedTeamId, TeamTable.id)
+                .select(MemberTable.firstName, MemberTable.familyName, MemberTable.id, MemberTable.doublePointsChips, MemberTable.oneOutChips, MemberTable.crowdChips, MemberTable.fixedPoints, TeamTable.name, TeamTable.flagCode)
                 .where { LeagueTable.id eq leagueId }
-                .map { User(it[MemberTable.firstName], it[MemberTable.familyName], it[MemberTable.id], it[MemberTable.doublePointsChips], it[MemberTable.oneOutChips], it[MemberTable.crowdChips], it[MemberTable.fixedPoints], 0) }
+                .map { it.toUser() }
         }
         Response(Status.OK).body(League(leagueId, leagueName, users).toJson())
     },

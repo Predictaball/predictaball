@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react"
 import { Switch } from "@nextui-org/react"
 import { getConfigWithAuthHeaderClient } from "@/app/api/client-config-client-side"
 import { GetUserProfile200Response, UserApi } from "@/client"
+import { FlagImage } from "@/app/components/predictions/flag-image"
 import toast, { Toaster } from "react-hot-toast"
 
 export default function ProfilePage() {
@@ -68,6 +69,15 @@ export default function ProfilePage() {
                                     <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-gray-400">Sign-in method</p>
                                     <p className="text-slate-900 dark:text-white mt-1 capitalize">{profile.authProvider}</p>
                                 </div>
+                                {profile.supportedTeamName && profile.supportedTeamFlagCode && (
+                                    <div>
+                                        <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-gray-400">Supporting</p>
+                                        <div className="flex items-center gap-2 mt-1">
+                                            <FlagImage code={profile.supportedTeamFlagCode} name={profile.supportedTeamName} size={24} />
+                                            <p className="text-slate-900 dark:text-white">{profile.supportedTeamName}</p>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
 

@@ -8,8 +8,9 @@ import { Toaster } from "react-hot-toast";
 import LinkToHistory from "@/app/components/link-to-history"
 import AdminButton from "@/app/components/admin-button";
 import ThemeToggle from "@/app/components/theme-toggle";
+import {redirect} from "next/navigation";
 import {getConfigWithAuthHeader} from "@/app/api/client-config";
-import {ListMatchesFilterTypeEnum, MatchApi} from "@/client";
+import {ListMatchesFilterTypeEnum, MatchApi, UserApi} from "@/client";
 import PredictionPanel from "@/app/components/predictions/prediction-panel";
 import {getUserChips} from "@/app/components/predictions/get-user-chips";
 import {SECTION_EYEBROW, GHOST_BUTTON_CLASS} from "@/app/util/css-classes";
@@ -18,6 +19,12 @@ import {Button} from "@nextui-org/react";
 const Home = async () => {
     const config = await getConfigWithAuthHeader()
     const matchApi = new MatchApi(config)
+
+    // Members who haven't picked a team yet (e.g. Google sign-ups) must do so first.
+    const profile = await new UserApi(config).getUserProfile().catch(() => null)
+    if (profile && !profile.supportedTeamId) {
+        redirect("/app/onboarding")
+    }
 
     const [liveMatches, upcomingMatches, userChips] = await Promise.all([
         matchApi.listMatches({filterType: ListMatchesFilterTypeEnum.Live}).catch(() => []),
