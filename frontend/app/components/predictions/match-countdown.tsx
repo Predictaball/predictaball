@@ -24,7 +24,7 @@ function formatCountdown(datetime: Date): string {
     return `Kick off: ${minutes} min`
 }
 
-function useCountdown(datetime: Date): string | undefined {
+export function useCountdown(datetime: Date): string | undefined {
     const [label, setLabel] = useState<string | undefined>(undefined)
     useEffect(() => {
         setLabel(formatCountdown(datetime))

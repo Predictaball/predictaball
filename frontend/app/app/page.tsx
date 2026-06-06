@@ -8,29 +8,36 @@ import { Toaster } from "react-hot-toast";
 import LinkToHistory from "@/app/components/link-to-history"
 import AdminButton from "@/app/components/admin-button";
 import ThemeToggle from "@/app/components/theme-toggle";
+import SectionHeading from "@/app/components/section-heading";
+import {FlagImage} from "@/app/components/predictions/flag-image";
 import {redirect} from "next/navigation";
 import {getConfigWithAuthHeader} from "@/app/api/client-config";
-import {ListMatchesFilterTypeEnum, MatchApi, UserApi} from "@/client";
+import {League, ListMatchesFilterTypeEnum, MatchApi, UserApi} from "@/client";
 import PredictionPanel from "@/app/components/predictions/prediction-panel";
+import PredictNowBanner from "@/app/components/predictions/predict-now-banner";
+import {MatchSelectionProvider} from "@/app/components/predictions/match-selection";
 import {getUserChips} from "@/app/components/predictions/get-user-chips";
-import {SECTION_EYEBROW, GHOST_BUTTON_CLASS} from "@/app/util/css-classes";
-import {Button} from "@nextui-org/react";
 
 const Home = async () => {
     const config = await getConfigWithAuthHeader()
     const matchApi = new MatchApi(config)
+    const userApi = new UserApi(config)
 
     // Members who haven't picked a team yet (e.g. Google sign-ups) must do so first.
-    const profile = await new UserApi(config).getUserProfile().catch(() => null)
+    const profile = await userApi.getUserProfile().catch(() => null)
     if (profile && !profile.supportedTeamId) {
         redirect("/app/onboarding")
     }
 
-    const [liveMatches, upcomingMatches, userChips] = await Promise.all([
+    const [liveMatches, upcomingMatches, userChips, leagues] = await Promise.all([
         matchApi.listMatches({filterType: ListMatchesFilterTypeEnum.Live}).catch(() => []),
         matchApi.listMatches({filterType: ListMatchesFilterTypeEnum.Upcoming}).catch(() => []),
         getUserChips(),
+        userApi.getUserLeagues().catch((): League[] => []),
     ])
+
+    const initials = profile ? `${profile.firstName.charAt(0)}${profile.familyName.charAt(0)}`.toUpperCase() : "?"
+    const firstMatchId = (liveMatches[0] ?? upcomingMatches[0])?.matchId
 
     return (
         <main className="relative min-h-screen bg-slate-50 text-slate-900 dark:bg-gray-900 dark:text-white overflow-x-hidden">
@@ -48,19 +55,27 @@ const Home = async () => {
                     <div className="flex items-center gap-2">
                         <ThemeToggle sizeClassName="h-8 w-8" />
                         <AdminButton />
-                        <Link href="/app/profile">
-                            <Button size="sm" radius="full" className={GHOST_BUTTON_CLASS}>Profile</Button>
+                        <Link href="/app/profile" aria-label="Profile" className="inline-flex items-center gap-2 rounded-full ring-1 ring-slate-900/10 dark:ring-white/15 hover:ring-cyan-500/50 dark:hover:ring-cyan-400/50 transition-all hover:scale-105 pr-3">
+                            {profile?.supportedTeamFlagCode ? (
+                                <FlagImage code={profile.supportedTeamFlagCode} name={profile.supportedTeamName ?? "Profile"} size={32}/>
+                            ) : (
+                                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 via-cyan-400 to-green-300 text-xs font-black text-white">
+                                    {initials}
+                                </span>
+                            )}
+                            <span className="text-sm font-medium text-slate-700 dark:text-gray-200">Profile</span>
                         </Link>
                         <SignOutButton />
                     </div>
                 </header>
 
-                <HeadlineSuspense />
+                <MatchSelectionProvider initialId={firstMatchId}>
+                    <PredictNowBanner upcomingMatches={upcomingMatches} />
 
-                <section className="space-y-4">
-                    <div className="flex items-center justify-between px-1">
-                        <h2 className={SECTION_EYEBROW}>Matches</h2>
-                    </div>
+                    <HeadlineSuspense />
+
+                    <section id="matches" className="space-y-4">
+                        <SectionHeading title="Matches" count={liveMatches.length + upcomingMatches.length} />
                     <PredictionPanel liveMatches={liveMatches} upcomingMatches={upcomingMatches} userChips={userChips} />
                 </section>
 
@@ -69,22 +84,30 @@ const Home = async () => {
                 </section>
 
                 <section className="space-y-4">
-                    <h2 className={SECTION_EYEBROW + " px-1"}>Your Leagues</h2>
-                    <div className="relative rounded-3xl bg-gradient-to-br from-slate-900/10 to-slate-900/5 dark:from-white/10 dark:to-white/5 p-[1px]">
-                        <div className="rounded-3xl bg-white/40 dark:bg-white/[0.02] backdrop-blur-sm p-5 sm:p-6">
-                            <Dashboard />
+                    <SectionHeading title="Your Leagues" count={leagues.length} />
+                    <div className="relative rounded-3xl bg-gradient-to-br from-slate-900/15 to-slate-900/5 dark:from-white/15 dark:to-white/5 p-[1px] shadow-xl shadow-slate-900/5 dark:shadow-cyan-500/5">
+                        <div className="rounded-3xl bg-white/60 dark:bg-white/[0.03] backdrop-blur-sm p-5 sm:p-6">
+                            <Dashboard initialLeagues={leagues} />
                         </div>
                     </div>
                 </section>
 
                 <section className="space-y-4 pb-10">
-                    <h2 className={SECTION_EYEBROW + " px-1"}>Global Leaderboard</h2>
-                    <div className="relative rounded-3xl bg-gradient-to-br from-slate-900/10 to-slate-900/5 dark:from-white/10 dark:to-white/5 p-[1px]">
-                        <div className="rounded-3xl bg-white/40 dark:bg-white/[0.02] backdrop-blur-sm p-5 sm:p-6">
+                    <SectionHeading
+                        title="Global standing"
+                        action={
+                            <Link href="/app/league/global/leaderboard" className="text-xs font-semibold text-cyan-600 dark:text-cyan-300 hover:text-cyan-700 dark:hover:text-cyan-200 transition-colors">
+                                View all →
+                            </Link>
+                        }
+                    />
+                    <div className="relative rounded-3xl bg-gradient-to-br from-slate-900/15 to-slate-900/5 dark:from-white/15 dark:to-white/5 p-[1px] shadow-xl shadow-slate-900/5 dark:shadow-cyan-500/5">
+                        <div className="rounded-3xl bg-white/60 dark:bg-white/[0.03] backdrop-blur-sm p-5 sm:p-6">
                             <Leaderboard shouldPaginate={false} leagueId={"global"} limit={true} />
                         </div>
                     </div>
                 </section>
+                </MatchSelectionProvider>
             </div>
         </main>
     );

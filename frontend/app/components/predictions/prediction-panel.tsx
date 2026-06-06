@@ -6,6 +6,7 @@ import FocusedGlobeClient from "@/app/components/flags/focused-globe-client"
 import PredictionForm from "@/app/components/predictions/prediction-form"
 import MatchStrip from "@/app/components/predictions/match-strip"
 import {MatchCountdown} from "@/app/components/predictions/match-countdown"
+import {useMatchSelection} from "@/app/components/predictions/match-selection"
 import type {UserChips} from "@/app/components/predictions/get-user-chips"
 
 const ROUND_LABEL: Record<MatchRoundEnum, string> = {
@@ -24,7 +25,7 @@ interface PredictionPanelProps {
 
 export default function PredictionPanel({liveMatches, upcomingMatches, userChips}: PredictionPanelProps): React.JSX.Element {
     const allMatches = useMemo(() => [...liveMatches, ...upcomingMatches], [liveMatches, upcomingMatches])
-    const [selectedId, setSelectedId] = useState<string | undefined>(allMatches[0]?.matchId)
+    const {selectedId, setSelectedId} = useMatchSelection()
     const [chips, setChips] = useState<UserChips>(userChips)
     const selected = allMatches.find(m => m.matchId === selectedId) ?? allMatches[0]
 

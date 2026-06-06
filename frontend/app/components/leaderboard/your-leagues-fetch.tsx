@@ -5,22 +5,26 @@ import React, {useEffect, useState} from "react";
 import LeagueComponent from "@/app/components/leaderboard/league";
 import {getConfigWithAuthHeaderClient} from "@/app/api/client-config-client-side";
 
-export default function YourLeaguesFetch(): React.JSX.Element {
-    const [leagues, setLeagues] = useState<League[] | undefined>(undefined)
+export default function YourLeaguesFetch({initialLeagues}: {initialLeagues: League[]}): React.JSX.Element {
+    // Seed from the server-rendered list so there's no loading flash; we still need a
+    // client config to fetch each league's position.
+    const [leagues, setLeagues] = useState<League[] | undefined>(initialLeagues.length > 0 ? initialLeagues : undefined)
     const [config, setConfig] = useState<Configuration | undefined>(undefined)
 
     useEffect(() => {
         try {
             getConfigWithAuthHeaderClient().then(config => {
                 setConfig(config)
-                const client = new UserApi(config)
-                client.getUserLeagues().then(result => setLeagues(result))
+                if (initialLeagues.length === 0) {
+                    const client = new UserApi(config)
+                    client.getUserLeagues().then(result => setLeagues(result))
+                }
             })
         } catch (error) {
             console.log(error)
             setLeagues([])
         }
-    }, [])
+    }, [initialLeagues])
 
     if (leagues === undefined) {
         return (

@@ -76,6 +76,7 @@ const MatchPill = React.forwardRef<HTMLButtonElement, {match: Match; selected: b
     // Follow-the-Crowd predictions are only locked in at kickoff, so the user's
     // stored score is a placeholder until the match starts — show ?-? until then.
     const crowdPending = predicted?.chip === Chip.Crowd && match.state === MatchStateEnum.Upcoming
+    const needsPrediction = match.state === MatchStateEnum.Upcoming && !predicted
 
     return (
         <button
@@ -85,7 +86,9 @@ const MatchPill = React.forwardRef<HTMLButtonElement, {match: Match; selected: b
             className={`snap-center shrink-0 rounded-2xl p-[1.5px] transition-transform ${
                 selected
                     ? "bg-gradient-to-br from-blue-500 via-cyan-400 to-green-300 scale-[1.02]"
-                    : "bg-slate-900/10 hover:bg-slate-900/20 dark:bg-white/10 dark:hover:bg-white/20"
+                    : needsPrediction
+                        ? "bg-cyan-500/40 hover:bg-cyan-500/60 dark:bg-cyan-400/40 dark:hover:bg-cyan-400/60"
+                        : "bg-slate-900/10 hover:bg-slate-900/20 dark:bg-white/10 dark:hover:bg-white/20"
             }`}
         >
             <div className="rounded-2xl bg-white dark:bg-gray-900/90 px-4 py-3 min-w-[200px] text-left">
@@ -99,8 +102,14 @@ const MatchPill = React.forwardRef<HTMLButtonElement, {match: Match; selected: b
                         <LocalTime date={match.datetime}/>
                     </div>
                     {predicted ? (
-                        <span className="font-bold text-cyan-600 dark:text-cyan-300">
+                        <span className="inline-flex items-center gap-1 font-bold text-cyan-600 dark:text-cyan-300">
                             {crowdPending ? "? - ?" : `${predicted.homeScore} - ${predicted.awayScore}`}
+                            <CheckIcon/>
+                        </span>
+                    ) : needsPrediction ? (
+                        <span className="inline-flex items-center gap-1.5 font-semibold text-cyan-600 dark:text-cyan-300">
+                            <span className="h-1.5 w-1.5 rounded-full bg-cyan-500 animate-pulse"/>
+                            Predict
                         </span>
                     ) : (
                         <span className="text-slate-400 dark:text-gray-500">No prediction</span>
@@ -110,6 +119,14 @@ const MatchPill = React.forwardRef<HTMLButtonElement, {match: Match; selected: b
         </button>
     )
 })
+
+function CheckIcon(): React.JSX.Element {
+    return (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3" aria-hidden>
+            <path d="M20 6 9 17l-5-5"/>
+        </svg>
+    )
+}
 
 function PillFlag({code, name}: {code: string; name: string}) {
     return (
