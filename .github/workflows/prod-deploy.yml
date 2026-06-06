@@ -78,6 +78,7 @@ jobs:
           CDK_RESEND_API_KEY: ${{ secrets.PROD_RESEND_API_KEY }}
           CDK_FRONTEND_DOMAIN: predictaball.live
           CDK_VERCEL_CNAME: ${{ secrets.PROD_VERCEL_CNAME }}
+          CDK_CERT_ARN: ${{ secrets.PROD_CERT_ARN }}
       - name: Health check
         run: |
           sleep 30

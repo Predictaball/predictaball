@@ -17,10 +17,12 @@ export const apiDomain: string | undefined = process.env["CDK_API_DOMAIN"]
 export const adminApiKey: string | undefined = process.env["CDK_ADMIN_API_KEY"]
 export const frontendDomain: string | undefined = process.env["CDK_FRONTEND_DOMAIN"]
 export const vercelCname: string | undefined = process.env["CDK_VERCEL_CNAME"]
+export const rootDomain: string = process.env["CDK_ROOT_DOMAIN"] || "predictaball.live"
+export const certArn: string | undefined = process.env["CDK_CERT_ARN"]
 
 interface EnvConfig {
   stackName: string
-  zoneName: string
+  managesDns: boolean
   removalPolicy: RemovalPolicy
   defaultDesiredCount: number
 }
@@ -28,13 +30,13 @@ interface EnvConfig {
 const ENV_CONFIG: Record<EnvName, EnvConfig> = {
   staging: {
     stackName: "Predictaball",
-    zoneName: "dev.predictaball.live",
+    managesDns: true,
     removalPolicy: RemovalPolicy.DESTROY,
     defaultDesiredCount: 1,
   },
   prod: {
     stackName: "PredictaballProd",
-    zoneName: "predictaball.live",
+    managesDns: false,
     removalPolicy: RemovalPolicy.RETAIN,
     defaultDesiredCount: 1,
   },

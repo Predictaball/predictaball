@@ -10,7 +10,8 @@ import {
   Vpc
 } from "aws-cdk-lib/aws-ec2"
 import { Credentials, DatabaseInstance, DatabaseInstanceEngine, StorageType } from "aws-cdk-lib/aws-rds"
-import { adminApiKey, apiDomain, config, dbPassword, frontendDomain, vercelCname } from "../environment"
+import { adminApiKey, apiDomain, certArn, config, dbPassword, frontendDomain, rootDomain, vercelCname } from "../environment"
+import { ICertificate } from "aws-cdk-lib/aws-certificatemanager"
 import { AnyPrincipal, PolicyStatement } from "aws-cdk-lib/aws-iam"
 import { BlockPublicAccess, Bucket, BucketEncryption } from "aws-cdk-lib/aws-s3"
 import { Cluster, ContainerImage, LogDrivers } from "aws-cdk-lib/aws-ecs"
@@ -134,15 +135,35 @@ export class Predictaball extends Stack {
 
     // Domain + HTTPS (when CDK_API_DOMAIN is set)
     if (apiDomain) {
-      const hostedZone = new HostedZone(this, "hostedZone", {
-        zoneName: config.zoneName,
-      })
+      let certificate: ICertificate
+      if (config.managesDns) {
+        const hostedZone = new HostedZone(this, "hostedZone", {
+          zoneName: rootDomain,
+        })
 
-      const certificate = new Certificate(this, "certificate", {
-        domainName: config.zoneName,
-        subjectAlternativeNames: [`*.${config.zoneName}`],
-        validation: CertificateValidation.fromDns(hostedZone),
-      })
+        certificate = new Certificate(this, "certificate", {
+          domainName: `*.${rootDomain}`,
+          subjectAlternativeNames: [rootDomain, `*.dev.${rootDomain}`],
+          validation: CertificateValidation.fromDns(hostedZone),
+        })
+
+        new ARecord(this, "apiDnsRecord", {
+          zone: hostedZone,
+          recordName: apiDomain,
+          target: RecordTarget.fromAlias(new LoadBalancerTarget(ecsService.loadBalancer)),
+        })
+
+        if (frontendDomain && vercelCname) {
+          new CnameRecord(this, "frontendDnsRecord", {
+            zone: hostedZone,
+            recordName: frontendDomain,
+            domainName: vercelCname,
+          })
+        }
+      } else {
+        if (!certArn) throw new Error("CDK_CERT_ARN must be set when env does not manage DNS")
+        certificate = Certificate.fromCertificateArn(this, "certificate", certArn)
+      }
 
       ecsService.loadBalancer.addListener("httpsListener", {
         port: 443,
@@ -150,20 +171,6 @@ export class Predictaball extends Stack {
         certificates: [certificate],
         defaultTargetGroups: [ecsService.targetGroup],
       })
-
-      new ARecord(this, "apiDnsRecord", {
-        zone: hostedZone,
-        recordName: apiDomain,
-        target: RecordTarget.fromAlias(new LoadBalancerTarget(ecsService.loadBalancer)),
-      })
-
-      if (frontendDomain && vercelCname) {
-        new CnameRecord(this, "frontendDnsRecord", {
-          zone: hostedZone,
-          recordName: frontendDomain,
-          domainName: vercelCname,
-        })
-      }
 
       // EventBridge scheduled tasks (replaces in-process schedulers)
       if (adminApiKey) {
