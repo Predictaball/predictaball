@@ -84,6 +84,10 @@ tasks {
         dependsOn(shadowJar)
     }
 
+    jar {
+        enabled = false
+    }
+
     shadowJar {
         archiveBaseName.set("scorcerer")
         archiveClassifier.set("")
