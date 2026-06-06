@@ -46,7 +46,7 @@ export default function ProfilePage() {
                 <header className="relative flex items-center justify-between">
                     <BackButton/>
                     <Link href="/" className="hidden sm:flex items-baseline font-black tracking-tight text-lg absolute left-1/2 -translate-x-1/2">
-                        <span className="bg-gradient-to-r from-blue-500 via-cyan-300 to-green-300 bg-clip-text text-transparent">predicta</span>
+                        <span className="bg-gradient-to-r from-blue-500 via-cyan-300 to-teal-300 bg-clip-text text-transparent">predicta</span>
                         <span className="text-slate-900 dark:text-white">ball</span>
                         <span className="ml-0.5 text-[10px] font-medium tracking-[0.2em] text-slate-500 dark:text-gray-400">.LIVE</span>
                     </Link>
@@ -71,7 +71,7 @@ export default function ProfilePage() {
                             {profile.supportedTeamFlagCode ? (
                                 <FlagImage code={profile.supportedTeamFlagCode} name={profile.supportedTeamName ?? `${profile.firstName} ${profile.familyName}`} size={76}/>
                             ) : (
-                                <div className="flex h-[76px] w-[76px] items-center justify-center rounded-full bg-gradient-to-br from-blue-500 via-cyan-400 to-green-300 text-2xl font-black text-white shadow-lg shadow-cyan-500/30">
+                                <div className="flex h-[76px] w-[76px] items-center justify-center rounded-full bg-gradient-to-br from-blue-500 via-cyan-400 to-teal-300 text-2xl font-black text-white shadow-lg shadow-cyan-500/30">
                                     {`${profile.firstName.charAt(0)}${profile.familyName.charAt(0)}`.toUpperCase()}
                                 </div>
                             )}

@@ -4,6 +4,7 @@ import React, {useState} from "react"
 import {LeaderboardInner, LeaderboardInnerMovementEnum} from "@/client"
 import FormBadge from "@/app/components/leaderboard/form-badge"
 import {FlagImage} from "@/app/components/predictions/flag-image"
+import {NEGATIVE_CHIP, NEUTRAL_CHIP, POSITIVE_CHIP} from "@/app/util/css-classes"
 
 interface EntryProps {
     entry: LeaderboardInner
@@ -15,9 +16,9 @@ interface EntryProps {
 }
 
 const MOVEMENT_CHIP: Record<LeaderboardInnerMovementEnum, string> = {
-    IMPROVED: "bg-green-500/15 text-green-700 border-green-500/30 dark:bg-green-400/15 dark:text-green-300 dark:border-green-400/30",
-    WORSENED: "bg-red-500/15 text-red-700 border-red-500/30 dark:bg-red-400/15 dark:text-red-300 dark:border-red-400/30",
-    UNCHANGED: "bg-slate-900/5 text-slate-500 border-slate-200 dark:bg-white/5 dark:text-gray-400 dark:border-white/10",
+    IMPROVED: POSITIVE_CHIP,
+    WORSENED: NEGATIVE_CHIP,
+    UNCHANGED: NEUTRAL_CHIP,
 }
 
 export default function Entry(props: EntryProps): React.JSX.Element {
@@ -31,7 +32,7 @@ export default function Entry(props: EntryProps): React.JSX.Element {
             onClick={() => setIsLoading(!props.disablePulse)}
             className={`group relative w-full max-w-2xl rounded-2xl p-[1px] mb-2.5 transition-transform ${
                 isUser
-                    ? "bg-gradient-to-r from-blue-500 via-cyan-400 to-green-300"
+                    ? "bg-gradient-to-r from-blue-500 via-cyan-400 to-teal-300"
                     : isPodium
                         ? "bg-gradient-to-r from-slate-900/20 to-slate-900/10 dark:from-white/25 dark:to-white/10"
                         : "bg-slate-900/10 dark:bg-white/10"
@@ -51,7 +52,7 @@ export default function Entry(props: EntryProps): React.JSX.Element {
                     {props.entry.user.firstName} {props.entry.user.familyName}
                 </div>
                 {props.form.length > 0 && <FormBadge form={props.form}/>}
-                <div className="font-black tabular-nums bg-gradient-to-r from-blue-500 via-cyan-500 to-green-500 dark:from-blue-400 dark:via-cyan-300 dark:to-green-300 bg-clip-text text-transparent">
+                <div className="font-black tabular-nums bg-gradient-to-r from-blue-500 via-cyan-500 to-teal-500 dark:from-blue-400 dark:via-cyan-300 dark:to-teal-300 bg-clip-text text-transparent">
                     {props.entry.user.fixedPoints + props.entry.user.livePoints}
                 </div>
             </div>

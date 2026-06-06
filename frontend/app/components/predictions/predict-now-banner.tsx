@@ -5,7 +5,7 @@ import {Button} from "@nextui-org/react"
 import {Match} from "@/client"
 import {useCountdown} from "@/app/components/predictions/match-countdown"
 import {useMatchSelection} from "@/app/components/predictions/match-selection"
-import {BUTTON_CLASS} from "@/app/util/css-classes"
+import {ACTION_TINT, BUTTON_CLASS} from "@/app/util/css-classes"
 import {SHORT_COUNTRY_NAMES} from "@/app/util/teams"
 
 function shortName(name: string): string {
@@ -29,11 +29,11 @@ export default function PredictNowBanner({upcomingMatches}: {upcomingMatches: Ma
     }
 
     return (
-        <div className="flex items-center justify-between gap-3 rounded-2xl border border-cyan-500/20 bg-cyan-500/10 dark:bg-cyan-400/10 px-4 py-3">
+        <div className={`flex items-center justify-between gap-3 rounded-2xl px-4 py-3 ${ACTION_TINT}`}>
             <div className="flex items-center gap-3 min-w-0">
                 <span className="relative flex h-2.5 w-2.5 shrink-0">
-                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-cyan-400 opacity-75"/>
-                    <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-cyan-500"/>
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-75"/>
+                    <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-amber-500"/>
                 </span>
                 <div className="min-w-0">
                     <p className="text-sm font-bold text-slate-900 dark:text-white truncate">

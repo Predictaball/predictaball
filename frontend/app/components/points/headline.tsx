@@ -32,7 +32,7 @@ export default async function Headline(): Promise<React.JSX.Element> {
         <div className="relative rounded-3xl bg-gradient-to-br from-slate-900/15 to-slate-900/5 dark:from-white/15 dark:to-white/5 p-[1px] shadow-2xl shadow-cyan-500/10">
             <div className="rounded-3xl bg-white dark:bg-gray-900/80 backdrop-blur-sm px-6 py-7 sm:py-10 text-center">
                 <div className="text-5xl sm:text-7xl font-black leading-none tracking-tight">
-                    <span className="bg-gradient-to-r from-blue-500 via-cyan-400 to-green-300 bg-clip-text text-transparent">
+                    <span className="bg-gradient-to-r from-blue-500 via-cyan-400 to-teal-300 bg-clip-text text-transparent">
                         <CountUpWrapped end={total} />
                     </span>
                 </div>
@@ -44,7 +44,7 @@ export default async function Headline(): Promise<React.JSX.Element> {
                         <span className="text-slate-500 dark:text-gray-400 text-[11px] uppercase tracking-[0.15em]">global</span>
                     </span>
                     <span className="inline-flex items-center gap-2 rounded-full bg-slate-900/5 dark:bg-white/5 border border-slate-900/10 dark:border-white/10 px-3.5 py-1.5">
-                        <span className={`h-1.5 w-1.5 rounded-full bg-green-400 ${live > 0 ? "animate-pulse" : ""}`}/>
+                        <span className={`h-1.5 w-1.5 rounded-full bg-red-500 ${live > 0 ? "animate-pulse" : ""}`}/>
                         <span className="font-bold text-slate-900 dark:text-white tabular-nums">{live}</span>
                         <span className="text-slate-500 dark:text-gray-400 text-[11px] uppercase tracking-[0.15em]">live</span>
                     </span>

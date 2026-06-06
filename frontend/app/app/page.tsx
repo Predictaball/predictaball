@@ -48,22 +48,22 @@ const Home = async () => {
 
                 <header className="flex items-center justify-between">
                     <Link href="/" className="flex items-baseline font-black tracking-tight text-lg">
-                        <span className="bg-gradient-to-r from-blue-500 via-cyan-300 to-green-300 bg-clip-text text-transparent">predicta</span>
+                        <span className="bg-gradient-to-r from-blue-500 via-cyan-300 to-teal-300 bg-clip-text text-transparent">predicta</span>
                         <span className="text-slate-900 dark:text-white">ball</span>
                         <span className="ml-0.5 text-[10px] font-medium tracking-[0.2em] text-slate-500 dark:text-gray-400">.LIVE</span>
                     </Link>
                     <div className="flex items-center gap-2">
                         <ThemeToggle sizeClassName="h-8 w-8" />
                         <AdminButton />
-                        <Link href="/app/profile" aria-label="Profile" className="inline-flex items-center gap-2 rounded-full ring-1 ring-slate-900/10 dark:ring-white/15 hover:ring-cyan-500/50 dark:hover:ring-cyan-400/50 transition-all hover:scale-105 pr-3">
+                        <Link href="/app/profile" aria-label="Profile" className="inline-flex items-center gap-2 h-8 rounded-full bg-slate-900/5 border border-slate-900/10 hover:bg-slate-900/10 hover:border-cyan-500/40 dark:bg-white/5 dark:border-white/10 dark:hover:bg-white/10 dark:hover:border-cyan-400/40 transition-colors pr-3">
                             {profile?.supportedTeamFlagCode ? (
                                 <FlagImage code={profile.supportedTeamFlagCode} name={profile.supportedTeamName ?? "Profile"} size={32}/>
                             ) : (
-                                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 via-cyan-400 to-green-300 text-xs font-black text-white">
+                                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 via-cyan-400 to-teal-300 text-xs font-black text-white">
                                     {initials}
                                 </span>
                             )}
-                            <span className="text-sm font-medium text-slate-700 dark:text-gray-200">Profile</span>
+                            <span className="text-xs font-medium text-slate-700 dark:text-gray-200">Profile</span>
                         </Link>
                         <SignOutButton />
                     </div>

@@ -17,7 +17,7 @@ export default async function Home({ params }: { params: Promise<{ leagueId: str
                 <header className="relative flex items-center justify-between gap-3">
                     <BackButton/>
                     <Link href="/" className="hidden sm:flex items-baseline font-black tracking-tight text-lg absolute left-1/2 -translate-x-1/2">
-                        <span className="bg-gradient-to-r from-blue-500 via-cyan-300 to-green-300 bg-clip-text text-transparent">predicta</span>
+                        <span className="bg-gradient-to-r from-blue-500 via-cyan-300 to-teal-300 bg-clip-text text-transparent">predicta</span>
                         <span className="text-slate-900 dark:text-white">ball</span>
                         <span className="ml-0.5 text-[10px] font-medium tracking-[0.2em] text-slate-500 dark:text-gray-400">.LIVE</span>
                     </Link>

@@ -20,7 +20,7 @@ export default async function Home(): Promise<React.JSX.Element> {
                         <div className="text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold leading-[1.05]">
                             JUST GOT
                         </div>
-                        <div className="text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-bold leading-[1.05] bg-gradient-to-r from-blue-600 via-cyan-400 to-green-300 inline-block text-transparent bg-clip-text animate-gradient" style={{backgroundSize: '200% 200%'}}>
+                        <div className="text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-bold leading-[1.05] bg-gradient-to-r from-blue-600 via-cyan-400 to-teal-300 inline-block text-transparent bg-clip-text animate-gradient" style={{backgroundSize: '200% 200%'}}>
                             FUNNER
                         </div>
                         <div className="mt-6 text-lg md:text-xl text-slate-600 dark:text-gray-300">
@@ -41,7 +41,7 @@ export default async function Home(): Promise<React.JSX.Element> {
                     <div className="flex flex-col items-center text-center mb-20">
                         <span className="text-xs font-semibold tracking-[0.3em] text-cyan-600/90 dark:text-cyan-300/80 uppercase mb-4">How it works</span>
                         <h2 className="text-5xl lg:text-7xl font-black tracking-tight">
-                            <span className="bg-gradient-to-r from-blue-500 via-cyan-300 to-green-300 bg-clip-text text-transparent">
+                            <span className="bg-gradient-to-r from-blue-500 via-cyan-300 to-teal-300 bg-clip-text text-transparent">
                                 Predict every game.
                             </span>
                             <br/>
@@ -65,7 +65,7 @@ export default async function Home(): Promise<React.JSX.Element> {
 
                         <div className="group relative rounded-2xl bg-gradient-to-br from-slate-900/10 to-slate-900/5 dark:from-white/10 dark:to-white/5 p-[1px] transition-transform hover:-translate-y-1">
                             <div className="relative h-full rounded-2xl bg-white dark:bg-gray-900/80 backdrop-blur-sm p-8 flex flex-col">
-                                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-500/30 to-green-400/20 ring-1 ring-cyan-400/30 text-2xl mb-5">
+                                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-500/30 to-teal-400/20 ring-1 ring-cyan-400/30 text-2xl mb-5">
                                     &#127942;
                                 </div>
                                 <h3 className="text-xl font-bold mb-2 tracking-tight">Leagues</h3>
@@ -98,7 +98,7 @@ export default async function Home(): Promise<React.JSX.Element> {
                         <span className="text-xs font-semibold tracking-[0.3em] text-cyan-600/90 dark:text-cyan-300/80 uppercase mb-4">Power-ups</span>
                         <h2 className="text-4xl lg:text-6xl font-black tracking-tight">
                             <span className="text-slate-900 dark:text-white">Play your </span>
-                            <span className="bg-gradient-to-r from-blue-500 via-cyan-300 to-green-300 bg-clip-text text-transparent">chips</span>
+                            <span className="bg-gradient-to-r from-blue-500 via-cyan-300 to-teal-300 bg-clip-text text-transparent">chips</span>
                             <span className="text-slate-900 dark:text-white"> wisely.</span>
                         </h2>
                         <p className="mt-8 max-w-2xl text-lg text-slate-600 dark:text-gray-300 leading-relaxed">
@@ -119,7 +119,7 @@ export default async function Home(): Promise<React.JSX.Element> {
 
                         <div className="group relative rounded-2xl bg-gradient-to-br from-slate-900/10 to-slate-900/5 dark:from-white/10 dark:to-white/5 p-[1px] transition-transform hover:-translate-y-1">
                             <div className="relative h-full rounded-2xl bg-white dark:bg-gray-900/80 backdrop-blur-sm p-8 flex flex-col">
-                                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-500/30 to-green-400/20 ring-1 ring-cyan-400/30 font-black text-cyan-600 dark:text-cyan-300 mb-5">
+                                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-500/30 to-teal-400/20 ring-1 ring-cyan-400/30 font-black text-cyan-600 dark:text-cyan-300 mb-5">
                                     &plusmn;1
                                 </div>
                                 <h3 className="text-xl font-bold mb-2 tracking-tight">Off by One</h3>
@@ -138,13 +138,13 @@ export default async function Home(): Promise<React.JSX.Element> {
                         </div>
                     </div>
 
-                    <div className="mt-24 relative overflow-hidden rounded-3xl bg-gradient-to-r from-blue-600/20 via-cyan-500/20 to-green-400/20 p-[1px]">
+                    <div className="mt-24 relative overflow-hidden rounded-3xl bg-gradient-to-r from-blue-600/20 via-cyan-500/20 to-teal-400/20 p-[1px]">
                         <div className="rounded-3xl bg-white dark:bg-gray-900/90 backdrop-blur-sm px-8 py-14 text-center">
                             <h3 className="text-4xl lg:text-5xl font-black tracking-tight">
-                                Ready to <span className="bg-gradient-to-r from-blue-500 via-cyan-300 to-green-300 bg-clip-text text-transparent">play</span>?
+                                Ready to <span className="bg-gradient-to-r from-blue-500 via-cyan-300 to-teal-300 bg-clip-text text-transparent">play</span>?
                             </h3>
                             <p className="mt-4 text-lg text-slate-600 dark:text-gray-300">Sign up now and start predicting.</p>
-                            <a href="/login" className="mt-8 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-blue-600 via-cyan-400 to-green-300 px-7 py-3 font-semibold text-gray-900 shadow-lg shadow-cyan-500/20 transition-transform hover:scale-105">
+                            <a href="/login" className="mt-8 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-blue-600 via-cyan-400 to-teal-300 px-7 py-3 font-semibold text-gray-900 shadow-lg shadow-cyan-500/20 transition-transform hover:scale-105">
                                 Get started
                                 <span>&rarr;</span>
                             </a>

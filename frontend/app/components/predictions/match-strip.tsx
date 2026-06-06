@@ -4,6 +4,7 @@ import React, {useEffect, useRef} from "react"
 import {Chip, Match, MatchStateEnum} from "@/client"
 import {LocalTime} from "@/app/components/ticket/local-time"
 import {FlagImage} from "@/app/components/predictions/flag-image"
+import {ACTION_PILL_BORDER} from "@/app/util/css-classes"
 
 // Power-ups worth surfacing on the pill. Crowd has its own "? - ?" treatment.
 const CHIP_GLYPH: Partial<Record<Chip, string>> = {
@@ -92,9 +93,9 @@ const MatchPill = React.forwardRef<HTMLButtonElement, {match: Match; selected: b
             onClick={onSelect}
             className={`snap-center shrink-0 rounded-2xl p-[1.5px] transition-transform ${
                 selected
-                    ? "bg-gradient-to-br from-blue-500 via-cyan-400 to-green-300 scale-[1.02]"
+                    ? "bg-gradient-to-br from-blue-500 via-cyan-400 to-teal-300 scale-[1.02]"
                     : needsPrediction
-                        ? "bg-cyan-500/40 hover:bg-cyan-500/60 dark:bg-cyan-400/40 dark:hover:bg-cyan-400/60"
+                        ? ACTION_PILL_BORDER
                         : "bg-slate-900/10 hover:bg-slate-900/20 dark:bg-white/10 dark:hover:bg-white/20"
             }`}
         >
@@ -119,8 +120,8 @@ const MatchPill = React.forwardRef<HTMLButtonElement, {match: Match; selected: b
                             <CheckIcon/>
                         </span>
                     ) : needsPrediction ? (
-                        <span className="inline-flex items-center gap-1.5 font-semibold text-cyan-600 dark:text-cyan-300">
-                            <span className="h-1.5 w-1.5 rounded-full bg-cyan-500 animate-pulse"/>
+                        <span className="inline-flex items-center gap-1.5 font-semibold text-amber-600 dark:text-amber-300">
+                            <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse"/>
                             Predict
                         </span>
                     ) : (

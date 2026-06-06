@@ -8,7 +8,7 @@ export function Header(): React.JSX.Element {
         <div className="w-full max-w-[800px] flex justify-between items-center">
             <Link href="/" className="group flex items-center gap-2">
                 <span className="flex items-baseline font-black tracking-tight">
-                    <span className="text-lg bg-gradient-to-r from-blue-500 via-cyan-300 to-green-300 bg-clip-text text-transparent">
+                    <span className="text-lg bg-gradient-to-r from-blue-500 via-cyan-300 to-teal-300 bg-clip-text text-transparent">
                         predicta
                     </span>
                     <span className="text-lg text-slate-900 dark:text-white">ball</span>

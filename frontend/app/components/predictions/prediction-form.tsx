@@ -196,7 +196,7 @@ function ScoreInput({value, onChange, disabled, displayOverride}: {
                 onPointerUp={endDrag}
                 onPointerCancel={endDrag}
                 style={{touchAction: "none"}}
-                className={`w-full rounded-2xl bg-gradient-to-tr from-blue-500 via-cyan-400 to-green-300 p-[2px] transition-transform ${isDragging ? "scale-105" : ""} ${disabled ? "" : "cursor-ns-resize"}`}
+                className={`w-full rounded-2xl bg-gradient-to-tr from-blue-500 via-cyan-400 to-teal-300 p-[2px] transition-transform ${isDragging ? "scale-105" : ""} ${disabled ? "" : "cursor-ns-resize"}`}
             >
                 <div className="w-full aspect-square rounded-2xl bg-white dark:bg-gray-900 flex items-center justify-center text-3xl font-black text-slate-900 dark:text-white select-none">
                     {displayOverride ?? value}

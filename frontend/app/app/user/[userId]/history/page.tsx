@@ -63,7 +63,7 @@ export default async function Home({
                 <header className="relative flex items-center justify-between">
                     <BackButton/>
                     <Link href="/" className="hidden sm:flex items-baseline font-black tracking-tight text-lg absolute left-1/2 -translate-x-1/2">
-                        <span className="bg-gradient-to-r from-blue-500 via-cyan-300 to-green-300 bg-clip-text text-transparent">predicta</span>
+                        <span className="bg-gradient-to-r from-blue-500 via-cyan-300 to-teal-300 bg-clip-text text-transparent">predicta</span>
                         <span className="text-slate-900 dark:text-white">ball</span>
                         <span className="ml-0.5 text-[10px] font-medium tracking-[0.2em] text-slate-500 dark:text-gray-400">.LIVE</span>
                     </Link>
@@ -74,7 +74,7 @@ export default async function Home({
                     {user?.supportedTeamFlagCode ? (
                         <FlagImage code={user.supportedTeamFlagCode} name={user.supportedTeamName ?? fullName} size={76}/>
                     ) : (
-                        <div className="flex h-[76px] w-[76px] items-center justify-center rounded-full bg-gradient-to-br from-blue-500 via-cyan-400 to-green-300 text-2xl font-black text-white shadow-lg shadow-cyan-500/30">
+                        <div className="flex h-[76px] w-[76px] items-center justify-center rounded-full bg-gradient-to-br from-blue-500 via-cyan-400 to-teal-300 text-2xl font-black text-white shadow-lg shadow-cyan-500/30">
                             {initials.toUpperCase()}
                         </div>
                     )}
@@ -94,7 +94,7 @@ export default async function Home({
                             </div>
                             <div className="rounded-2xl border border-slate-200/70 dark:border-white/10 bg-white/70 dark:bg-gray-900/70 backdrop-blur-sm px-5 py-2.5 min-w-[88px]">
                                 <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-gray-400">Points</p>
-                                <p className="text-xl font-black tabular-nums bg-gradient-to-r from-blue-500 via-cyan-500 to-green-500 dark:from-blue-400 dark:via-cyan-300 dark:to-green-300 bg-clip-text text-transparent">{totalPoints}</p>
+                                <p className="text-xl font-black tabular-nums bg-gradient-to-r from-blue-500 via-cyan-500 to-teal-500 dark:from-blue-400 dark:via-cyan-300 dark:to-teal-300 bg-clip-text text-transparent">{totalPoints}</p>
                             </div>
                         </div>
                     )}
