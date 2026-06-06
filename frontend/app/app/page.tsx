@@ -55,7 +55,7 @@ const Home = async () => {
                     <div className="flex items-center gap-2">
                         <ThemeToggle sizeClassName="h-8 w-8" />
                         <AdminButton />
-                        <Link href="/app/profile" aria-label="Profile" className="inline-flex items-center gap-2 h-8 rounded-full bg-slate-900/5 border border-slate-900/10 hover:bg-slate-900/10 hover:border-cyan-500/40 dark:bg-white/5 dark:border-white/10 dark:hover:bg-white/10 dark:hover:border-cyan-400/40 transition-colors pr-3">
+                        <Link href="/app/profile" aria-label="Profile" className="inline-flex items-center gap-2 h-8 rounded-full overflow-hidden bg-slate-900/5 border border-slate-900/10 hover:bg-slate-900/10 hover:border-cyan-500/40 dark:bg-white/5 dark:border-white/10 dark:hover:bg-white/10 dark:hover:border-cyan-400/40 transition-colors pr-3">
                             {profile?.supportedTeamFlagCode ? (
                                 <FlagImage code={profile.supportedTeamFlagCode} name={profile.supportedTeamName ?? "Profile"} size={32}/>
                             ) : (
