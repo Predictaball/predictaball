@@ -5,6 +5,7 @@ import { BRAND_GHOST_BUTTON_CLASS } from "@/app/util/css-classes"
 import { Button } from "@nextui-org/react"
 import toast, { Toaster } from "react-hot-toast"
 import React from "react";
+import { isManagedLeague } from "@/app/util/leagues";
 
 function ShareIcon(): React.JSX.Element {
     return (
@@ -28,7 +29,7 @@ export default function Share({leagueId}: { leagueId: string}): React.JSX.Elemen
         })
     }
 
-    if (leagueId === "global") return <></>
+    if (isManagedLeague(leagueId)) return <></>
 
     return (
         <>

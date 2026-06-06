@@ -4,9 +4,13 @@ import {redirect} from "next/navigation";
 import { Button } from "@nextui-org/react";
 import Link from "next/link";
 import { BUTTON_CLASS } from "@/app/util/css-classes";
+import { isManagedLeague } from "@/app/util/leagues";
 
 export default async function Home({params}: { params: Promise<{ leagueId: string }> }) {
     const { leagueId } = await params
+
+    // Managed leagues (global + country) are assigned automatically and can't be joined.
+    if (isManagedLeague(leagueId)) redirect("/app")
 
     let joined = false
 

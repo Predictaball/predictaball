@@ -6,6 +6,7 @@ import { Button } from "@nextui-org/react"
 import toast, { Toaster } from "react-hot-toast"
 import { getConfigWithAuthHeaderClient } from "@/app/api/client-config-client-side";
 import { navigateTo } from "@/app/actions";
+import { isManagedLeague } from "@/app/util/leagues";
 
 const LEAVE_BUTTON_CLASS = "bg-red-500/10 text-red-600 border border-red-500/20 hover:bg-red-500/20 hover:border-red-500/40 dark:bg-red-400/10 dark:text-red-300 dark:border-red-400/20 dark:hover:bg-red-400/20 transition-colors"
 
@@ -36,7 +37,7 @@ export default function Leave({leagueId}: { leagueId: string}): React.JSX.Elemen
         }
     }
 
-    if (leagueId === "global") return <></>
+    if (isManagedLeague(leagueId)) return <></>
 
     return (
         <>
