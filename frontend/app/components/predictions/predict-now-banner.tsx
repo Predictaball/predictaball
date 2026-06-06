@@ -44,7 +44,7 @@ export default function PredictNowBanner({upcomingMatches}: {upcomingMatches: Ma
                     </p>
                 </div>
             </div>
-            <Button onPress={onPredict} size="sm" radius="full" className={BUTTON_CLASS + " shrink-0"}>
+            <Button onPress={onPredict} size="sm" radius="full" className="bg-cyan-500/10 border border-cyan-500/20 text-cyan-600 hover:bg-cyan-500/20 hover:border-cyan-500/40 dark:bg-cyan-400/10 dark:border-cyan-400/20 dark:text-cyan-300 dark:hover:bg-cyan-400/20 dark:hover:border-cyan-400/40 font-semibold transition-colors shrink-0">
                 Predict now
             </Button>
         </div>
