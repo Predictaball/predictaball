@@ -1,7 +1,7 @@
 'use client'
 
 import React, {useEffect, useRef} from "react"
-import {Match} from "@/client"
+import {Chip, Match, MatchStateEnum} from "@/client"
 import {LocalTime} from "@/app/components/ticket/local-time"
 import {FlagImage} from "@/app/components/predictions/flag-image"
 
@@ -73,6 +73,9 @@ const MatchPill = React.forwardRef<HTMLButtonElement, {match: Match; selected: b
     const homeCode = match.homeTeamFlagCode.toLowerCase()
     const awayCode = match.awayTeamFlagCode.toLowerCase()
     const predicted = match.prediction
+    // Follow-the-Crowd predictions are only locked in at kickoff, so the user's
+    // stored score is a placeholder until the match starts — show ?-? until then.
+    const crowdPending = predicted?.chip === Chip.Crowd && match.state === MatchStateEnum.Upcoming
 
     return (
         <button
@@ -96,7 +99,9 @@ const MatchPill = React.forwardRef<HTMLButtonElement, {match: Match; selected: b
                         <LocalTime date={match.datetime}/>
                     </div>
                     {predicted ? (
-                        <span className="font-bold text-cyan-600 dark:text-cyan-300">{predicted.homeScore} - {predicted.awayScore}</span>
+                        <span className="font-bold text-cyan-600 dark:text-cyan-300">
+                            {crowdPending ? "? - ?" : `${predicted.homeScore} - ${predicted.awayScore}`}
+                        </span>
                     ) : (
                         <span className="text-slate-400 dark:text-gray-500">No prediction</span>
                     )}
