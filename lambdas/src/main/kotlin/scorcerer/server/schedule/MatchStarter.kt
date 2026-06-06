@@ -8,13 +8,17 @@ import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.openapitools.server.models.Match
 import scorcerer.server.db.tables.MatchTable
 import scorcerer.server.log
+import scorcerer.server.services.TournamentStateService
 import scorcerer.server.services.getMatchDay
 import scorcerer.server.services.setScore
 import scorcerer.utils.LeaderboardService
 import java.time.Clock
 import java.time.OffsetDateTime
 
-class MatchStarter(private val leaderboardService: LeaderboardService) {
+class MatchStarter(
+    private val leaderboardService: LeaderboardService,
+    private val tournamentStateService: TournamentStateService,
+) {
     fun run() {
         log.info("Checking for games which have started")
 
@@ -33,7 +37,7 @@ class MatchStarter(private val leaderboardService: LeaderboardService) {
                 log.info("Starting match ${it[MatchTable.id]}")
 
                 val matchDay = getMatchDay(matchId)!!
-                setScore(matchId, matchDay, 0, 0, leaderboardService)
+                setScore(matchId, matchDay, 0, 0, leaderboardService, tournamentStateService)
             }
         }
 

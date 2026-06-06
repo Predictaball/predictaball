@@ -11,6 +11,7 @@ import scorcerer.server.log
 import scorcerer.server.schedule.MatchStarter
 import scorcerer.server.schedule.ScoreUpdater
 import scorcerer.server.services.ReminderService
+import scorcerer.server.services.TournamentStateService
 import scorcerer.server.services.recalculateAllFixedPoints
 import scorcerer.utils.LeaderboardService
 
@@ -26,17 +27,20 @@ private val requireApiKey = Filter { next ->
     }
 }
 
-fun adminRoutes(leaderboardService: LeaderboardService) = requireApiKey.then(
+fun adminRoutes(
+    leaderboardService: LeaderboardService,
+    tournamentStateService: TournamentStateService,
+) = requireApiKey.then(
     routes(
         "/admin/start-matches" bind Method.POST to {
             log.info("Admin: start-matches triggered")
-            runCatching { MatchStarter(leaderboardService).run() }
+            runCatching { MatchStarter(leaderboardService, tournamentStateService).run() }
                 .onFailure { log.error(it.stackTraceToString()) }
             Response(Status.OK)
         },
         "/admin/update-scores" bind Method.POST to {
             log.info("Admin: update-scores triggered")
-            runCatching { ScoreUpdater(leaderboardService).run() }
+            runCatching { ScoreUpdater(leaderboardService, tournamentStateService).run() }
                 .onFailure { log.error(it.stackTraceToString()) }
             Response(Status.OK)
         },

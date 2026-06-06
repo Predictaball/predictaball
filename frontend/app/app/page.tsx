@@ -14,7 +14,7 @@ import MatchesHelp from "@/app/components/predictions/matches-help";
 import {FlagImage} from "@/app/components/predictions/flag-image";
 import {redirect} from "next/navigation";
 import {getConfigWithAuthHeader} from "@/app/api/client-config";
-import {League, ListMatchesFilterTypeEnum, MatchApi, UserApi} from "@/client";
+import {GetTournamentState200ResponseStateEnum, League, ListMatchesFilterTypeEnum, MatchApi, TournamentApi, UserApi} from "@/client";
 import PredictionPanel from "@/app/components/predictions/prediction-panel";
 import PredictNowBanner from "@/app/components/predictions/predict-now-banner";
 import {MatchSelectionProvider} from "@/app/components/predictions/match-selection";
@@ -24,6 +24,7 @@ const Home = async () => {
     const config = await getConfigWithAuthHeader()
     const matchApi = new MatchApi(config)
     const userApi = new UserApi(config)
+    const tournamentApi = new TournamentApi(config)
 
     // Members who haven't picked a team yet (e.g. Google sign-ups) must do so first.
     const profile = await userApi.getUserProfile().catch(() => null)
@@ -31,12 +32,14 @@ const Home = async () => {
         redirect("/app/onboarding")
     }
 
-    const [liveMatches, upcomingMatches, userChips, leagues] = await Promise.all([
+    const [liveMatches, upcomingMatches, userChips, leagues, tournamentState] = await Promise.all([
         matchApi.listMatches({filterType: ListMatchesFilterTypeEnum.Live}).catch(() => []),
         matchApi.listMatches({filterType: ListMatchesFilterTypeEnum.Upcoming}).catch(() => []),
         getUserChips(),
         userApi.getUserLeagues().catch((): League[] => []),
+        tournamentApi.getTournamentState().catch(() => null),
     ])
+    const tournamentStarted = tournamentState ? tournamentState.state !== GetTournamentState200ResponseStateEnum.PreTournament : false
 
     const initials = profile ? `${profile.firstName.charAt(0)}${profile.familyName.charAt(0)}`.toUpperCase() : "?"
     const firstMatchId = (liveMatches[0] ?? upcomingMatches[0])?.matchId
@@ -74,7 +77,7 @@ const Home = async () => {
                 <MatchSelectionProvider initialId={firstMatchId}>
                     <PredictNowBanner upcomingMatches={upcomingMatches} />
 
-                    <HeadlineSuspense />
+                    <HeadlineSuspense tournamentStarted={tournamentStarted} nextKickoff={tournamentState?.nextKickoff} />
 
                     <section id="matches" className="space-y-4">
                         <SectionHeading title="Matches" count={liveMatches.length + upcomingMatches.length} action={<MatchesHelp/>}/>

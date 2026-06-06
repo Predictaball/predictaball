@@ -22,9 +22,11 @@ import scorcerer.server.resources.matchRoutes
 import scorcerer.server.resources.miscRoutes
 import scorcerer.server.resources.predictionRoutes
 import scorcerer.server.resources.teamRoutes
+import scorcerer.server.resources.tournamentRoutes
 import scorcerer.server.resources.userRoutes
 import scorcerer.server.schedule.MatchStarter
 import scorcerer.server.schedule.ScoreUpdater
+import scorcerer.server.services.TournamentStateService
 import scorcerer.utils.LeaderboardS3Service
 import scorcerer.utils.LeaderboardService
 import scorcerer.utils.LocalLeaderboardService
@@ -46,14 +48,17 @@ private val leaderboardService: LeaderboardService = when (leaderboardMode) {
     LeaderboardMode.S3 -> LeaderboardS3Service(s3Client, Environment.LeaderboardBucketName)
 }
 
+private val tournamentStateService = TournamentStateService()
+
 private val allRoutes = routes(
     authRoutes(authProvider),
     miscRoutes,
-    adminRoutes(leaderboardService),
+    adminRoutes(leaderboardService, tournamentStateService),
     leagueRoutes(requestContext, leaderboardService),
-    matchRoutes(requestContext, leaderboardService),
+    matchRoutes(requestContext, leaderboardService, tournamentStateService),
     predictionRoutes(requestContext),
     teamRoutes(requestContext),
+    tournamentRoutes(tournamentStateService),
     userRoutes(requestContext, leaderboardService, authProvider),
 )
 
@@ -93,8 +98,8 @@ fun main() {
     if (schedulerMode == SchedulerMode.IN_PROCESS) {
         log.info("Starting scheduled tasks")
         val scheduler = Executors.newScheduledThreadPool(1)
-        scheduler.scheduleAtFixedRate({ runCatching { MatchStarter(leaderboardService).run() }.onFailure { log.error(it.stackTraceToString()) } }, 0, 15, TimeUnit.MINUTES)
-        scheduler.scheduleAtFixedRate({ runCatching { ScoreUpdater(leaderboardService).run() }.onFailure { log.error(it.stackTraceToString()) } }, 0, 2, TimeUnit.MINUTES)
+        scheduler.scheduleAtFixedRate({ runCatching { MatchStarter(leaderboardService, tournamentStateService).run() }.onFailure { log.error(it.stackTraceToString()) } }, 0, 15, TimeUnit.MINUTES)
+        scheduler.scheduleAtFixedRate({ runCatching { ScoreUpdater(leaderboardService, tournamentStateService).run() }.onFailure { log.error(it.stackTraceToString()) } }, 0, 2, TimeUnit.MINUTES)
     }
 
     log.info("Starting server on port 8080 (leaderboard: $leaderboardMode, scheduler: $schedulerMode)")

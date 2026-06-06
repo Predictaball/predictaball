@@ -23,7 +23,13 @@ import scorcerer.utils.LeaderboardService
 import scorcerer.utils.MatchResult
 import scorcerer.utils.PointsCalculator.calculatePoints
 
-fun endMatch(matchId: String, homeScore: Int, awayScore: Int, leaderboardService: LeaderboardService) = transaction {
+fun endMatch(
+    matchId: String,
+    homeScore: Int,
+    awayScore: Int,
+    leaderboardService: LeaderboardService,
+    tournamentStateService: TournamentStateService = TournamentStateService(),
+) = transaction {
     val matchDay = getMatchDay(matchId)
         ?: throw ApiResponseError(Response(Status.BAD_REQUEST).body("Match does not exist"))
 
@@ -45,33 +51,41 @@ fun endMatch(matchId: String, homeScore: Int, awayScore: Int, leaderboardService
     runBlocking {
         leaderboardService.updateGlobalLeaderboard(matchDay)
     }
+    tournamentStateService.invalidateCache()
 }
 
-fun setScore(matchId: String, matchDay: Int, homeScore: Int, awayScore: Int, leaderboardService: LeaderboardService) =
-    transaction {
-        val matchState = MatchTable.selectAll().where { MatchTable.id eq matchId.toInt() }.first()[MatchTable.state]
-        if (matchState == Match.State.COMPLETED) {
-            log.info("Cannot update score for completed match")
-            return@transaction
-        }
-
-        if (matchState == Match.State.UPCOMING) {
-            substituteCrowdPredictions(matchId)
-            persistPredictionDistribution(matchId)
-        }
-
-        MatchTable.update({ MatchTable.id eq matchId.toInt() }) {
-            it[MatchTable.homeScore] = homeScore
-            it[MatchTable.awayScore] = awayScore
-            it[state] = Match.State.LIVE
-        }
-
-        scorePredictions(matchId, homeScore, awayScore)
-
-        runBlocking {
-            leaderboardService.updateGlobalLeaderboard(matchDay)
-        }
+fun setScore(
+    matchId: String,
+    matchDay: Int,
+    homeScore: Int,
+    awayScore: Int,
+    leaderboardService: LeaderboardService,
+    tournamentStateService: TournamentStateService = TournamentStateService(),
+) = transaction {
+    val matchState = MatchTable.selectAll().where { MatchTable.id eq matchId.toInt() }.first()[MatchTable.state]
+    if (matchState == Match.State.COMPLETED) {
+        log.info("Cannot update score for completed match")
+        return@transaction
     }
+
+    if (matchState == Match.State.UPCOMING) {
+        substituteCrowdPredictions(matchId)
+        persistPredictionDistribution(matchId)
+    }
+
+    MatchTable.update({ MatchTable.id eq matchId.toInt() }) {
+        it[MatchTable.homeScore] = homeScore
+        it[MatchTable.awayScore] = awayScore
+        it[state] = Match.State.LIVE
+    }
+
+    scorePredictions(matchId, homeScore, awayScore)
+
+    runBlocking {
+        leaderboardService.updateGlobalLeaderboard(matchDay)
+    }
+    tournamentStateService.invalidateCache()
+}
 
 private fun substituteCrowdPredictions(matchId: String) {
     val matchIdInt = matchId.toInt()

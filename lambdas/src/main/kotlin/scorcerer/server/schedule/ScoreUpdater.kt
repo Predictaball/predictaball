@@ -11,6 +11,7 @@ import org.openapitools.server.models.Match
 import scorcerer.server.db.tables.MatchTable
 import scorcerer.server.fromJson
 import scorcerer.server.log
+import scorcerer.server.services.TournamentStateService
 import scorcerer.server.services.endMatch
 import scorcerer.server.services.getMatchDay
 import scorcerer.server.services.setScore
@@ -45,7 +46,10 @@ data class LiveMatch(
     val externalMatchId: String,
 )
 
-class ScoreUpdater(private val leaderboardService: LeaderboardService) {
+class ScoreUpdater(
+    private val leaderboardService: LeaderboardService,
+    private val tournamentStateService: TournamentStateService,
+) {
     private val client = JavaHttpClient()
     private val endpoint = "https://www.fotmob.com/api/matchDetails?matchId="
 
@@ -86,11 +90,11 @@ class ScoreUpdater(private val leaderboardService: LeaderboardService) {
             log.info("Home score ($homeScore) Away score ($awayScore) for matchId (${it.matchId})")
 
             if (fotmobResponse.general.finished) {
-                endMatch(it.matchId, homeScore, awayScore, leaderboardService)
+                endMatch(it.matchId, homeScore, awayScore, leaderboardService, tournamentStateService)
                 log.info("Match ended")
             } else {
                 val matchDay = getMatchDay(it.matchId) ?: return@forEach
-                setScore(it.matchId, matchDay, homeScore, awayScore, leaderboardService)
+                setScore(it.matchId, matchDay, homeScore, awayScore, leaderboardService, tournamentStateService)
                 log.info("Score updated")
             }
         }

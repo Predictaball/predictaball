@@ -1292,6 +1292,40 @@ paths:
       responses:
         '200':
           description: Successful response
+  /tournament/state:
+    get:
+      tags:
+        - tournament
+      operationId: getTournamentState
+      description: Lightweight signal for whether the tournament has started, plus the next kickoff time when it hasn't.
+      security: []
+      x-amazon-apigateway-integration:
+        type: "aws_proxy"
+        httpMethod: "POST"
+        uri: "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${apiHandlerArn}/invocations"
+        credentials: "${apiGatewayRoleArn}"
+        payloadFormatVersion: "1.0"
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - state
+                properties:
+                  state:
+                    type: string
+                    enum:
+                      - PRE_TOURNAMENT
+                      - IN_PROGRESS
+                      - COMPLETE
+                  nextKickoff:
+                    description: Datetime of the next upcoming match. Present only when state is PRE_TOURNAMENT.
+                    type: string
+                    format: date-time
+
   /ping:
     get:
       tags:

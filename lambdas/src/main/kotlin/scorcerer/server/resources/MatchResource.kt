@@ -23,6 +23,7 @@ import scorcerer.server.extractUserId
 import scorcerer.server.fromJson
 import scorcerer.server.log
 import scorcerer.server.requireAdmin
+import scorcerer.server.services.TournamentStateService
 import scorcerer.server.services.endMatch
 import scorcerer.server.services.getMatchDay
 import scorcerer.server.services.setScore
@@ -31,7 +32,11 @@ import scorcerer.utils.LeaderboardService
 import scorcerer.utils.toTitleCase
 import scorcerer.utils.toUser
 
-fun matchRoutes(contexts: RequestContexts, leaderboardService: LeaderboardService) = routes(
+fun matchRoutes(
+    contexts: RequestContexts,
+    leaderboardService: LeaderboardService,
+    tournamentStateService: TournamentStateService = TournamentStateService(),
+) = routes(
     "/match/{matchId}/predictions" bind Method.GET to { req ->
         val requesterUserId = contexts.extractUserId(req)
         val matchId = req.path("matchId")!!
@@ -70,7 +75,7 @@ fun matchRoutes(contexts: RequestContexts, leaderboardService: LeaderboardServic
             val matchId = req.path("matchId")!!
             val body: SetMatchScoreRequest = req.bodyString().fromJson()
             val matchDay = getMatchDay(matchId) ?: throw ApiResponseError(Response(Status.BAD_REQUEST).body("Match does not exist"))
-            setScore(matchId, matchDay, body.homeScore, body.awayScore, leaderboardService)
+            setScore(matchId, matchDay, body.homeScore, body.awayScore, leaderboardService, tournamentStateService)
             Response(Status.OK)
         }
     },
@@ -109,7 +114,7 @@ fun matchRoutes(contexts: RequestContexts, leaderboardService: LeaderboardServic
         requireAdmin(contexts, req) ?: run {
             val matchId = req.path("matchId")!!
             val body: CompleteMatchRequest = req.bodyString().fromJson()
-            endMatch(matchId, body.homeScore, body.awayScore, leaderboardService)
+            endMatch(matchId, body.homeScore, body.awayScore, leaderboardService, tournamentStateService)
             Response(Status.OK)
         }
     },
