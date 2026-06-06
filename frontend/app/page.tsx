@@ -48,7 +48,7 @@ export default async function Home(): Promise<React.JSX.Element> {
                             <span className="text-slate-900 dark:text-white">Climb the table.</span>
                         </h2>
                         <p className="mt-8 max-w-2xl text-lg text-slate-600 dark:text-gray-300 leading-relaxed">
-                            Predictaball challenges you to call the score of <span className="font-semibold text-slate-900 dark:text-white">every</span> match of World Cup 2026. Sharper predictions earn more points — come back daily to lock in the next two match days.
+                            Predictaball challenges you to call the score of <span className="font-semibold text-slate-900 dark:text-white">every</span> match of World Cup 2026. Sharper predictions earn more points — come back daily to lock in the next three match days.
                         </p>
                     </div>
 

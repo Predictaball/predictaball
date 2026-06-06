@@ -9,6 +9,8 @@ import LinkToHistory from "@/app/components/link-to-history"
 import AdminButton from "@/app/components/admin-button";
 import ThemeToggle from "@/app/components/theme-toggle";
 import SectionHeading from "@/app/components/section-heading";
+import LeaguesHelp from "@/app/components/leaderboard/leagues-help";
+import MatchesHelp from "@/app/components/predictions/matches-help";
 import {FlagImage} from "@/app/components/predictions/flag-image";
 import {redirect} from "next/navigation";
 import {getConfigWithAuthHeader} from "@/app/api/client-config";
@@ -75,7 +77,7 @@ const Home = async () => {
                     <HeadlineSuspense />
 
                     <section id="matches" className="space-y-4">
-                        <SectionHeading title="Matches" count={liveMatches.length + upcomingMatches.length} />
+                        <SectionHeading title="Matches" count={liveMatches.length + upcomingMatches.length} action={<MatchesHelp/>}/>
                     <PredictionPanel liveMatches={liveMatches} upcomingMatches={upcomingMatches} userChips={userChips} />
                 </section>
 
@@ -84,7 +86,7 @@ const Home = async () => {
                 </section>
 
                 <section className="space-y-4">
-                    <SectionHeading title="Your Leagues" count={leagues.length} />
+                    <SectionHeading title="Your Leagues" count={leagues.length} action={<LeaguesHelp/>}/>
                     <div className="relative rounded-3xl bg-gradient-to-br from-slate-900/15 to-slate-900/5 dark:from-white/15 dark:to-white/5 p-[1px] shadow-xl shadow-slate-900/5 dark:shadow-cyan-500/5">
                         <div className="rounded-3xl bg-white/60 dark:bg-white/[0.03] backdrop-blur-sm p-5 sm:p-6">
                             <Dashboard initialLeagues={leagues} />

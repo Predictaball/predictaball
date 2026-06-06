@@ -145,7 +145,7 @@ private fun listMatches(requesterUserId: String, filterType: String?, userId: St
         }
     }
     if (!filterType.isNullOrBlank() && Match.State.valueOf(filterType.uppercase()) == Match.State.UPCOMING) {
-        log.info("Filtering matches to next 2 match days")
+        log.info("Filtering matches to next 3 match days")
         return getMatchesOnNextThreeDays(matches)
     }
     return matches
