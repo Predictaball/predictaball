@@ -3,6 +3,7 @@
 import React, {useState} from "react"
 import {LeaderboardInner, LeaderboardInnerMovementEnum} from "@/client"
 import FormBadge from "@/app/components/leaderboard/form-badge"
+import {FlagImage} from "@/app/components/predictions/flag-image"
 
 interface EntryProps {
     entry: LeaderboardInner
@@ -43,6 +44,9 @@ export default function Entry(props: EntryProps): React.JSX.Element {
                 <div className={`flex items-center justify-center h-6 w-6 rounded-full border text-[10px] font-bold ${MOVEMENT_CHIP[props.movement]}`}>
                     {props.icon}
                 </div>
+                {props.entry.user.supportedTeamFlagCode && (
+                    <FlagImage code={props.entry.user.supportedTeamFlagCode} name={props.entry.user.supportedTeamName ?? ""} size={22}/>
+                )}
                 <div className="flex-1 min-w-0 text-left font-semibold text-slate-900 dark:text-white truncate">
                     {props.entry.user.firstName} {props.entry.user.familyName}
                 </div>

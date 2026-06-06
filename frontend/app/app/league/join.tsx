@@ -11,7 +11,7 @@ import {
     ModalHeader,
     useDisclosure
 } from "@nextui-org/react";
-import {AUTH_INPUT_CLASS_NAMES, BUTTON_CLASS, GHOST_BUTTON_CLASS} from "@/app/util/css-classes";
+import {AUTH_INPUT_CLASS_NAMES, BRAND_GHOST_BUTTON_CLASS, BUTTON_CLASS, GHOST_BUTTON_CLASS} from "@/app/util/css-classes";
 import {LeagueApi} from "@/client";
 import {PressEvent} from "@react-types/shared";
 import { getConfigWithAuthHeaderClient } from "@/app/api/client-config-client-side";
@@ -62,7 +62,7 @@ export default function JoinLeague(): React.JSX.Element {
 
     return (
         <div className="w-full justify-around ml-2">
-            <Button className={BUTTON_CLASS} style={{width: "100%"}} onPress={onOpen}>
+            <Button className={BRAND_GHOST_BUTTON_CLASS} style={{width: "100%"}} onPress={onOpen}>
                 Join
             </Button>
             <Modal

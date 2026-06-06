@@ -10,7 +10,7 @@ import {
     ModalHeader,
     useDisclosure
 } from "@nextui-org/react";
-import {AUTH_INPUT_CLASS_NAMES, BUTTON_CLASS, GHOST_BUTTON_CLASS} from "@/app/util/css-classes";
+import {AUTH_INPUT_CLASS_NAMES, BRAND_GHOST_BUTTON_CLASS, BUTTON_CLASS, GHOST_BUTTON_CLASS} from "@/app/util/css-classes";
 import React, {useState} from "react";
 import {LeagueApi} from "@/client";
 import {PressEvent} from "@react-types/shared";
@@ -69,7 +69,7 @@ export default function CreateLeague(): React.JSX.Element {
 
     return (
         <div className="w-full justify-around mr-2">
-            <Button className={BUTTON_CLASS} onPress={onOpen} style={{width: "100%"}}>
+            <Button className={BRAND_GHOST_BUTTON_CLASS} onPress={onOpen} style={{width: "100%"}}>
                 Create
             </Button>
             <Modal
