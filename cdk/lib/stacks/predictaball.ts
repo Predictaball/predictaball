@@ -75,7 +75,6 @@ export class Predictaball extends Stack {
       enforceSSL: true,
       versioned: true,
       removalPolicy: config.removalPolicy,
-      autoDeleteObjects: config.removalPolicy === RemovalPolicy.DESTROY,
     })
 
     // ECS Cluster + Fargate Service
