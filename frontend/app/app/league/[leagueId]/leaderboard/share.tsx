@@ -1,10 +1,21 @@
 'use client'
 
 import { copyToClipboard } from "@/app/util/clipboard"
-import { BUTTON_CLASS } from "@/app/util/css-classes"
+import { BRAND_GHOST_BUTTON_CLASS } from "@/app/util/css-classes"
 import { Button } from "@nextui-org/react"
 import toast, { Toaster } from "react-hot-toast"
 import React from "react";
+
+function ShareIcon(): React.JSX.Element {
+    return (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4" aria-hidden>
+            <circle cx="18" cy="5" r="3"/>
+            <circle cx="6" cy="12" r="3"/>
+            <circle cx="18" cy="19" r="3"/>
+            <path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/>
+        </svg>
+    )
+}
 
 export default function Share({leagueId}: { leagueId: string}): React.JSX.Element {
     const shareInvite = () => {
@@ -22,7 +33,9 @@ export default function Share({leagueId}: { leagueId: string}): React.JSX.Elemen
     return (
         <>
             <Toaster/>
-            <Button onPress={shareInvite} className={BUTTON_CLASS}>Share Invite</Button>
+            <Button onPress={shareInvite} size="sm" radius="full" className={BRAND_GHOST_BUTTON_CLASS} startContent={<ShareIcon/>}>
+                Invite
+            </Button>
         </>
     )
 }

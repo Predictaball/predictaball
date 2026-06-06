@@ -2,6 +2,8 @@ export const BUTTON_CLASS = "bg-gradient-to-r from-blue-600 via-cyan-400 to-gree
 
 export const GHOST_BUTTON_CLASS = "bg-slate-900/5 border border-slate-900/10 text-slate-700 hover:bg-slate-900/10 hover:border-cyan-500/40 dark:bg-white/5 dark:border-white/10 dark:text-gray-200 dark:hover:bg-white/10 dark:hover:border-cyan-400/40 transition-colors"
 
+export const BRAND_GHOST_BUTTON_CLASS = "bg-cyan-500/10 border border-cyan-500/20 text-cyan-600 hover:bg-cyan-500/20 hover:border-cyan-500/40 dark:bg-cyan-400/10 dark:border-cyan-400/20 dark:text-cyan-300 dark:hover:bg-cyan-400/20 dark:hover:border-cyan-400/40 transition-colors"
+
 export const SECTION_EYEBROW = "text-xs font-bold uppercase tracking-[0.25em] text-slate-500 dark:text-gray-400"
 
 export const AUTH_INPUT_CLASS_NAMES = {
