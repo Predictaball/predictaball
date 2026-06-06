@@ -5,6 +5,12 @@ import {Chip, Match, MatchStateEnum} from "@/client"
 import {LocalTime} from "@/app/components/ticket/local-time"
 import {FlagImage} from "@/app/components/predictions/flag-image"
 
+// Power-ups worth surfacing on the pill. Crowd has its own "? - ?" treatment.
+const CHIP_GLYPH: Partial<Record<Chip, string>> = {
+    [Chip.DoublePoints]: "2×",
+    [Chip.OneGoalOut]: "±1",
+}
+
 interface MatchStripProps {
     liveMatches: Match[]
     upcomingMatches: Match[]
@@ -77,6 +83,7 @@ const MatchPill = React.forwardRef<HTMLButtonElement, {match: Match; selected: b
     // stored score is a placeholder until the match starts — show ?-? until then.
     const crowdPending = predicted?.chip === Chip.Crowd && match.state === MatchStateEnum.Upcoming
     const needsPrediction = match.state === MatchStateEnum.Upcoming && !predicted
+    const chipGlyph = predicted ? CHIP_GLYPH[predicted.chip] : undefined
 
     return (
         <button
@@ -102,7 +109,12 @@ const MatchPill = React.forwardRef<HTMLButtonElement, {match: Match; selected: b
                         <LocalTime date={match.datetime}/>
                     </div>
                     {predicted ? (
-                        <span className="inline-flex items-center gap-1 font-bold text-cyan-600 dark:text-cyan-300">
+                        <span className="inline-flex items-center gap-1.5 font-bold text-cyan-600 dark:text-cyan-300">
+                            {chipGlyph && (
+                                <span className="rounded border border-cyan-500/30 bg-cyan-500/15 px-1 py-0.5 text-[9px] font-black leading-none tabular-nums text-cyan-700 dark:border-cyan-400/30 dark:bg-cyan-400/15 dark:text-cyan-300">
+                                    {chipGlyph}
+                                </span>
+                            )}
                             {crowdPending ? "? - ?" : `${predicted.homeScore} - ${predicted.awayScore}`}
                             <CheckIcon/>
                         </span>
