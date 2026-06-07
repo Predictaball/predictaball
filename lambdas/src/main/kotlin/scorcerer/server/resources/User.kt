@@ -37,6 +37,7 @@ import scorcerer.server.fromJson
 import scorcerer.server.log
 import scorcerer.server.toJson
 import scorcerer.utils.LeaderboardService
+import scorcerer.utils.capitaliseName
 import scorcerer.utils.filterLeaderboardToLeague
 import scorcerer.utils.livePointsForUser
 import scorcerer.utils.toTitleCase
@@ -112,8 +113,8 @@ fun userRoutes(contexts: RequestContexts, leaderboardService: LeaderboardService
                 transaction {
                     MemberTable.insert {
                         it[id] = userId
-                        it[firstName] = body.firstName.trim()
-                        it[familyName] = body.familyName.trim()
+                        it[firstName] = body.firstName.trim().capitaliseName()
+                        it[familyName] = body.familyName.trim().capitaliseName()
                         it[email] = body.email
                         it[fixedPoints] = 0
                         it[MemberTable.authProvider] = "google"

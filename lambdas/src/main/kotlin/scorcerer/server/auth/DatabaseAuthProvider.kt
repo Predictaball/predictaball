@@ -12,6 +12,7 @@ import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import scorcerer.server.ApiResponseError
 import scorcerer.server.db.tables.MemberTable
 import scorcerer.server.services.PasswordResetService
+import scorcerer.utils.capitaliseName
 import java.util.Date
 import java.util.UUID
 
@@ -22,8 +23,8 @@ class DatabaseAuthProvider : AuthProvider {
         transaction {
             MemberTable.insert {
                 it[id] = userId
-                it[MemberTable.firstName] = firstName
-                it[MemberTable.familyName] = familyName
+                it[MemberTable.firstName] = firstName.capitaliseName()
+                it[MemberTable.familyName] = familyName.capitaliseName()
                 it[MemberTable.email] = email
                 it[passwordHash] = hashPassword(pw)
                 it[fixedPoints] = 0
