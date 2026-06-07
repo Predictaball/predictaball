@@ -19,6 +19,7 @@ import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.openapitools.server.models.CreateLeague200Response
 import org.openapitools.server.models.CreateLeagueRequest
 import org.openapitools.server.models.GetLeagueLeaderboard200Response
+import org.openapitools.server.models.GetLeaguePreview200Response
 import org.openapitools.server.models.LeaderboardInner
 import org.openapitools.server.models.League
 import scorcerer.server.ApiResponseError
@@ -68,6 +69,25 @@ fun leagueRoutes(contexts: RequestContexts, leaderboardService: LeaderboardServi
                 .map { it.toUser() }
         }
         Response(Status.OK).body(League(leagueId, leagueRow[LeagueTable.name], leagueRow[LeagueTable.kind].toApiKind(), users).toJson())
+    },
+    "/league/{leagueId}/preview" bind Method.GET to { req ->
+        val leagueId = req.path("leagueId")!!
+        val response = transaction {
+            val row = LeagueTable.select(LeagueTable.name, LeagueTable.kind)
+                .where { LeagueTable.id eq leagueId }.singleOrNull()
+                ?: throw ApiResponseError(Response(Status.NOT_FOUND).body("League does not exist"))
+            val memberCount = LeagueMembershipTable.selectAll()
+                .where { LeagueMembershipTable.leagueId eq leagueId }
+                .count()
+                .toInt()
+            GetLeaguePreview200Response(
+                leagueId = leagueId,
+                name = row[LeagueTable.name],
+                kind = row[LeagueTable.kind].toPreviewKind(),
+                memberCount = memberCount,
+            )
+        }
+        Response(Status.OK).body(response.toJson())
     },
     "/league/{leagueId}/leaderboard" bind Method.GET to { req ->
         val leagueId = req.path("leagueId")!!

@@ -1,8 +1,10 @@
-import React from "react";
+import React, { Suspense } from "react";
 import Link from "next/link";
 import Leaderboard from "@/app/components/leaderboard/leaderboard";
 import Share from "./share";
 import Leave from "./leave";
+import JustCreatedModal from "./just-created-modal";
+import InvitePrompt from "./invite-prompt";
 import BackButton from "@/app/components/back-button";
 import {getConfigWithAuthHeader} from "@/app/api/client-config";
 import {LeagueApi, LeagueKindEnum} from "@/client";
@@ -11,10 +13,12 @@ import {LeagueApi, LeagueKindEnum} from "@/client";
 export default async function Home({ params }: { params: Promise<{ leagueId: string }> }): Promise<React.JSX.Element> {
     const { leagueId } = await params
 
-    const kind: LeagueKindEnum = await new LeagueApi(await getConfigWithAuthHeader())
+    const league = await new LeagueApi(await getConfigWithAuthHeader())
         .getLeague({ leagueId })
-        .then(l => l.kind)
-        .catch(() => LeagueKindEnum.User)
+        .catch(() => null)
+
+    const kind: LeagueKindEnum = league?.kind ?? LeagueKindEnum.User
+    const showInvitePrompt = league?.kind === LeagueKindEnum.User && league.users.length === 1
 
     return (
         <main className="relative min-h-svh bg-slate-50 text-slate-900 dark:bg-gray-900 dark:text-white overflow-x-hidden">
@@ -36,8 +40,17 @@ export default async function Home({ params }: { params: Promise<{ leagueId: str
 
                 <section className="flex flex-col items-center pb-24">
                     <Leaderboard shouldPaginate={true} leagueId={leagueId} limit={false} />
+                    {showInvitePrompt && league && (
+                        <InvitePrompt leagueId={leagueId} leagueName={league.name}/>
+                    )}
                 </section>
             </div>
+
+            {league && league.kind === LeagueKindEnum.User && (
+                <Suspense>
+                    <JustCreatedModal leagueId={leagueId} leagueName={league.name}/>
+                </Suspense>
+            )}
         </main>
     );
 }

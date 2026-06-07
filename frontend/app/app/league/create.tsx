@@ -60,7 +60,7 @@ export default function CreateLeague(): React.JSX.Element {
         return (_: PressEvent) => {
             createLeague().then(leagueId => {
                 if (leagueId !== undefined) {
-                    navigateTo(`app/league/${leagueId}/leaderboard`)
+                    navigateTo(`app/league/${leagueId}/leaderboard?share=1`)
                     onClose()
                 }
             })

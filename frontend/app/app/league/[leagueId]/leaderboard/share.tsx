@@ -21,7 +21,7 @@ function ShareIcon(): React.JSX.Element {
 
 export default function Share({leagueId, kind}: { leagueId: string; kind: LeagueKindEnum}): React.JSX.Element {
     const shareInvite = () => {
-        copyToClipboard(`https://www.predictaball.live/app/league/${leagueId}/join`).then( didCopy => {
+        copyToClipboard(`https://www.predictaball.live/league/${leagueId}/join`).then( didCopy => {
             if (didCopy) {
                 toast.success("Copied League Invite Link To Clipboard", {duration: 4000})
             } else {

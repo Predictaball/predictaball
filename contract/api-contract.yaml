@@ -1220,6 +1220,52 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/league'
+  /league/{leagueId}/preview:
+    get:
+      tags:
+        - league
+      operationId: getLeaguePreview
+      description: Lightweight, public-readable league summary for invite link previews. Does not expose member identities.
+      security: []
+      x-amazon-apigateway-integration:
+        type: "aws_proxy"
+        httpMethod: "POST"
+        uri: "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${apiHandlerArn}/invocations"
+        credentials: "${apiGatewayRoleArn}"
+        payloadFormatVersion: "1.0"
+      parameters:
+        - in: path
+          name: leagueId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - leagueId
+                  - name
+                  - kind
+                  - memberCount
+                properties:
+                  leagueId:
+                    type: string
+                  name:
+                    type: string
+                  kind:
+                    type: string
+                    enum:
+                      - GLOBAL
+                      - COUNTRY
+                      - USER
+                  memberCount:
+                    type: integer
+                    format: int32
+                    minimum: 0
   /league/{leagueId}/leaderboard:
     get:
       tags:

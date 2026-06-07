@@ -1,6 +1,7 @@
 package scorcerer.server.db.tables
 
 import org.jetbrains.exposed.v1.core.Table
+import org.openapitools.server.models.GetLeaguePreview200Response
 import org.openapitools.server.models.League
 
 enum class LeagueKind {
@@ -13,6 +14,12 @@ enum class LeagueKind {
         GLOBAL -> League.Kind.GLOBAL
         COUNTRY -> League.Kind.COUNTRY
         USER -> League.Kind.USER
+    }
+
+    fun toPreviewKind(): GetLeaguePreview200Response.Kind = when (this) {
+        GLOBAL -> GetLeaguePreview200Response.Kind.GLOBAL
+        COUNTRY -> GetLeaguePreview200Response.Kind.COUNTRY
+        USER -> GetLeaguePreview200Response.Kind.USER
     }
 }
 

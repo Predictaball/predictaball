@@ -1,11 +1,11 @@
 'use client'
 
 import React, {useState} from "react";
+import {useRouter} from "next/navigation";
 import {LeagueApi, LeagueKindEnum} from "@/client";
 import { Button } from "@nextui-org/react"
 import toast, { Toaster } from "react-hot-toast"
 import { getConfigWithAuthHeaderClient } from "@/app/api/client-config-client-side";
-import { navigateTo } from "@/app/actions";
 import { isManagedLeague } from "@/app/util/leagues";
 
 const LEAVE_BUTTON_CLASS = "bg-red-500/10 text-red-600 border border-red-500/20 hover:bg-red-500/20 hover:border-red-500/40 dark:bg-red-400/10 dark:text-red-300 dark:border-red-400/20 dark:hover:bg-red-400/20 transition-colors"
@@ -21,6 +21,7 @@ function LeaveIcon(): React.JSX.Element {
 }
 
 export default function Leave({leagueId, kind}: { leagueId: string; kind: LeagueKindEnum}): React.JSX.Element {
+    const router = useRouter()
     const [isLoading, setIsLoading] = useState(false)
 
     async function leaveLeague() {
@@ -28,9 +29,8 @@ export default function Leave({leagueId, kind}: { leagueId: string; kind: League
         try {
             const leagueApi = new LeagueApi(await getConfigWithAuthHeaderClient())
             await leagueApi.leaveLeague({leagueId: leagueId})
-            setIsLoading(false)
             toast.success("Left league")
-            navigateTo(`app/`)
+            router.push("/app")
         } catch (error) {
             toast.error("Failed To leave league")
             setIsLoading(false)
