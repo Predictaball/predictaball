@@ -1,7 +1,7 @@
 'use client'
 
-import React, { useState } from "react"
-import { useRouter } from "next/navigation"
+import React, { Suspense, useState } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@nextui-org/react"
 import toast, { Toaster } from "react-hot-toast"
 import { getConfigWithAuthHeaderClient } from "@/app/api/client-config-client-side"
@@ -10,7 +10,17 @@ import TeamPicker from "@/app/components/team-picker"
 import { BUTTON_CLASS } from "@/app/util/css-classes"
 
 export default function OnboardingPage() {
+    return (
+        <Suspense>
+            <OnboardingContent/>
+        </Suspense>
+    )
+}
+
+function OnboardingContent() {
     const router = useRouter()
+    const searchParams = useSearchParams()
+    const next = searchParams.get("next")
     const [supportedTeamId, setSupportedTeamId] = useState<string | null>(null)
     const [isSaving, setIsSaving] = useState(false)
 
@@ -20,7 +30,10 @@ export default function OnboardingPage() {
         try {
             const userApi = new UserApi(await getConfigWithAuthHeaderClient())
             await userApi.setSupportedTeam({ setSupportedTeamRequest: { teamId: supportedTeamId } })
-            router.replace("/app/onboarding/how-it-works")
+            const destination = next
+                ? `/app/onboarding/how-it-works?next=${encodeURIComponent(next)}`
+                : "/app/onboarding/how-it-works"
+            router.replace(destination)
         } catch {
             toast.error("Couldn't save your team — try again")
             setIsSaving(false)

@@ -4,8 +4,9 @@ import { redirect } from "next/navigation"
 import { Button } from "@nextui-org/react"
 import type { Metadata } from "next"
 import { auth } from "@/auth"
-import { Configuration, GetLeaguePreview200Response, GetLeaguePreview200ResponseKindEnum, LeagueApi } from "@/client"
+import { Configuration, GetLeaguePreview200Response, GetLeaguePreview200ResponseKindEnum, LeagueApi, UserApi } from "@/client"
 import { API_GATEWAY } from "@/app/api/constants"
+import { getConfigWithAuthHeader } from "@/app/api/client-config"
 import { BUTTON_CLASS, GHOST_BUTTON_CLASS } from "@/app/util/css-classes"
 import JoinButton from "./join-button"
 
@@ -65,6 +66,19 @@ export default async function JoinLeagueInvite(
     const session = await auth()
     const isLoggedIn = !!session?.user
     const fromSignup = resolvedSearchParams.fromSignup === "1"
+
+    // Logged-in users must have picked a supported team before they can land
+    // here — otherwise they'd join the league without a flag and end up stuck.
+    // OAuth signups in particular skip the credentials onboarding chain, so we
+    // enforce the team-pick here too. After picking a team they come back.
+    if (isLoggedIn) {
+        const userApi = new UserApi(await getConfigWithAuthHeader())
+        const profile = await userApi.getUserProfile().catch(() => null)
+        if (profile && !profile.supportedTeamId) {
+            const next = `/league/${leagueId}/join${fromSignup ? "?fromSignup=1" : ""}`
+            redirect(`/app/onboarding?next=${encodeURIComponent(next)}`)
+        }
+    }
 
     const preview = await fetchPreview(leagueId)
 
