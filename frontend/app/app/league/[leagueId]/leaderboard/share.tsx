@@ -6,6 +6,7 @@ import { Button } from "@nextui-org/react"
 import toast, { Toaster } from "react-hot-toast"
 import React from "react";
 import { isManagedLeague } from "@/app/util/leagues";
+import { LeagueKindEnum } from "@/client";
 
 function ShareIcon(): React.JSX.Element {
     return (
@@ -18,7 +19,7 @@ function ShareIcon(): React.JSX.Element {
     )
 }
 
-export default function Share({leagueId}: { leagueId: string}): React.JSX.Element {
+export default function Share({leagueId, kind}: { leagueId: string; kind: LeagueKindEnum}): React.JSX.Element {
     const shareInvite = () => {
         copyToClipboard(`https://www.predictaball.live/app/league/${leagueId}/join`).then( didCopy => {
             if (didCopy) {
@@ -29,7 +30,7 @@ export default function Share({leagueId}: { leagueId: string}): React.JSX.Elemen
         })
     }
 
-    if (isManagedLeague(leagueId)) return <></>
+    if (isManagedLeague(kind)) return <></>
 
     return (
         <>

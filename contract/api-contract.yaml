@@ -149,6 +149,7 @@ components:
       required:
         - leagueId
         - name
+        - kind
         - users
       properties:
         leagueId:
@@ -157,6 +158,13 @@ components:
         name:
           description: League name
           type: string
+        kind:
+          description: Whether the league is auto-managed by the system or user-created.
+          type: string
+          enum:
+            - GLOBAL
+            - COUNTRY
+            - USER
         users:
           description: List of users in the league
           type: array

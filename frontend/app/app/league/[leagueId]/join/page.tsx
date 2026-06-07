@@ -9,13 +9,13 @@ import { isManagedLeague } from "@/app/util/leagues";
 export default async function Home({params}: { params: Promise<{ leagueId: string }> }) {
     const { leagueId } = await params
 
-    // Managed leagues (global + country) are assigned automatically and can't be joined.
-    if (isManagedLeague(leagueId)) redirect("/app")
-
     let joined = false
 
     try {
         const leagueApi = new LeagueApi(await getConfigWithAuthHeader())
+        const league = await leagueApi.getLeague({ leagueId })
+        // Managed leagues (global + country) are assigned automatically and can't be joined.
+        if (isManagedLeague(league.kind)) redirect("/app")
         await leagueApi.joinLeague({ leagueId: leagueId })
         joined = true
     } catch (error) {

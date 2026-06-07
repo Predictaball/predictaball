@@ -40,15 +40,7 @@ class LeagueTest : DatabaseTest() {
         val response = handler(Request(Method.POST, "/league").body("""{"leagueName":"Test League"}"""))
         response.status shouldBe Status.OK
         val body: CreateLeague200Response = response.bodyString().fromJson()
-        body.leagueId shouldBe "test-league"
-    }
-
-    @Test
-    fun createLeagueWithExtraWhitespace() {
-        val response = handler(Request(Method.POST, "/league").body("""{"leagueName":" Test    League "}"""))
-        response.status shouldBe Status.OK
-        val body: CreateLeague200Response = response.bodyString().fromJson()
-        body.leagueId shouldBe "test-league"
+        body.leagueId!!.matches(UUID_REGEX) shouldBe true
     }
 
     @Test
@@ -56,7 +48,18 @@ class LeagueTest : DatabaseTest() {
         val response = handler(Request(Method.POST, "/league").body("""{"leagueName":"Alex's Minions"}"""))
         response.status shouldBe Status.OK
         val body: CreateLeague200Response = response.bodyString().fromJson()
-        body.leagueId shouldBe "alexs-minions"
+        body.leagueId!!.matches(UUID_REGEX) shouldBe true
+    }
+
+    @Test
+    fun createLeagueAllowsDuplicateNames() {
+        val first = handler(Request(Method.POST, "/league").body("""{"leagueName":"Test League"}"""))
+        first.status shouldBe Status.OK
+        val second = handler(Request(Method.POST, "/league").body("""{"leagueName":"Test League"}"""))
+        second.status shouldBe Status.OK
+        val firstId: CreateLeague200Response = first.bodyString().fromJson()
+        val secondId: CreateLeague200Response = second.bodyString().fromJson()
+        (firstId.leagueId == secondId.leagueId) shouldBe false
     }
 
     @Test
@@ -113,11 +116,6 @@ class LeagueTest : DatabaseTest() {
         }
         memberships shouldBe 1
     }
-
-    @Test
-    fun createLeagueRaisesExceptionWhenLeagueExists() {
-        givenLeagueExists("test-league", "Test League")
-        val response = handler(Request(Method.POST, "/league").body("""{"leagueName":"Test League"}"""))
-        response.status shouldBe Status.INTERNAL_SERVER_ERROR
-    }
 }
+
+private val UUID_REGEX = Regex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")

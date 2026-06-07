@@ -21,8 +21,8 @@ import org.openapitools.server.models.CreateLeagueRequest
 import org.openapitools.server.models.GetLeagueLeaderboard200Response
 import org.openapitools.server.models.LeaderboardInner
 import org.openapitools.server.models.League
-import org.postgresql.util.PSQLException
 import scorcerer.server.ApiResponseError
+import scorcerer.server.db.tables.LeagueKind
 import scorcerer.server.db.tables.LeagueMembershipTable
 import scorcerer.server.db.tables.LeagueTable
 import scorcerer.server.db.tables.MemberTable
@@ -34,7 +34,6 @@ import scorcerer.utils.LeaderboardService
 import scorcerer.utils.calculateGlobalLeaderboard
 import scorcerer.utils.calculateMovement
 import scorcerer.utils.filterLeaderboardToLeague
-import scorcerer.utils.throwDatabaseError
 import scorcerer.utils.toUser
 import kotlin.math.min
 
@@ -42,28 +41,24 @@ fun leagueRoutes(contexts: RequestContexts, leaderboardService: LeaderboardServi
     "/league" bind Method.POST to { req ->
         val requesterUserId = contexts.extractUserId(req)
         val body: CreateLeagueRequest = req.bodyString().fromJson()
-        val id = try {
-            transaction {
-                LeagueTable.insert {
-                    it[name] = body.leagueName
-                    it[id] = body.leagueName.trim().lowercase().replace("\\s+".toRegex(), "-").replace("[^a-zA-Z0-9-]".toRegex(), "")
-                } get LeagueTable.id
-            }
-        } catch (e: PSQLException) {
-            throwDatabaseError(e, "League already exists")
-        }
+        val newLeagueId = java.util.UUID.randomUUID().toString()
         transaction {
+            LeagueTable.insert {
+                it[id] = newLeagueId
+                it[name] = body.leagueName
+                it[kind] = LeagueKind.USER
+            }
             LeagueMembershipTable.insert {
                 it[memberId] = requesterUserId
-                it[leagueId] = id
+                it[leagueId] = newLeagueId
             }
         }
-        Response(Status.OK).body(CreateLeague200Response(id).toJson())
+        Response(Status.OK).body(CreateLeague200Response(newLeagueId).toJson())
     },
     "/league/{leagueId}" bind Method.GET to { req ->
         val leagueId = req.path("leagueId")!!
-        val leagueName = transaction {
-            LeagueTable.select(LeagueTable.name).where { LeagueTable.id eq leagueId }.singleOrNull()?.get(LeagueTable.name)
+        val leagueRow = transaction {
+            LeagueTable.select(LeagueTable.name, LeagueTable.kind).where { LeagueTable.id eq leagueId }.singleOrNull()
         } ?: throw ApiResponseError(Response(Status.BAD_REQUEST).body("League does not exist"))
         val users = transaction {
             (LeagueTable innerJoin LeagueMembershipTable innerJoin MemberTable)
@@ -72,7 +67,7 @@ fun leagueRoutes(contexts: RequestContexts, leaderboardService: LeaderboardServi
                 .where { LeagueTable.id eq leagueId }
                 .map { it.toUser() }
         }
-        Response(Status.OK).body(League(leagueId, leagueName, users).toJson())
+        Response(Status.OK).body(League(leagueId, leagueRow[LeagueTable.name], leagueRow[LeagueTable.kind].toApiKind(), users).toJson())
     },
     "/league/{leagueId}/leaderboard" bind Method.GET to { req ->
         val leagueId = req.path("leagueId")!!

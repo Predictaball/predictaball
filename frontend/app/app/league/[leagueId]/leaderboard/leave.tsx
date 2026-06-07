@@ -1,7 +1,7 @@
 'use client'
 
 import React, {useState} from "react";
-import {LeagueApi} from "@/client";
+import {LeagueApi, LeagueKindEnum} from "@/client";
 import { Button } from "@nextui-org/react"
 import toast, { Toaster } from "react-hot-toast"
 import { getConfigWithAuthHeaderClient } from "@/app/api/client-config-client-side";
@@ -20,7 +20,7 @@ function LeaveIcon(): React.JSX.Element {
     )
 }
 
-export default function Leave({leagueId}: { leagueId: string}): React.JSX.Element {
+export default function Leave({leagueId, kind}: { leagueId: string; kind: LeagueKindEnum}): React.JSX.Element {
     const [isLoading, setIsLoading] = useState(false)
 
     async function leaveLeague() {
@@ -37,7 +37,7 @@ export default function Leave({leagueId}: { leagueId: string}): React.JSX.Elemen
         }
     }
 
-    if (isManagedLeague(leagueId)) return <></>
+    if (isManagedLeague(kind)) return <></>
 
     return (
         <>

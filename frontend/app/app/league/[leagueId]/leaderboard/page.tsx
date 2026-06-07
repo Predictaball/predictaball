@@ -4,10 +4,17 @@ import Leaderboard from "@/app/components/leaderboard/leaderboard";
 import Share from "./share";
 import Leave from "./leave";
 import BackButton from "@/app/components/back-button";
+import {getConfigWithAuthHeader} from "@/app/api/client-config";
+import {LeagueApi, LeagueKindEnum} from "@/client";
 
 
 export default async function Home({ params }: { params: Promise<{ leagueId: string }> }): Promise<React.JSX.Element> {
     const { leagueId } = await params
+
+    const kind: LeagueKindEnum = await new LeagueApi(await getConfigWithAuthHeader())
+        .getLeague({ leagueId })
+        .then(l => l.kind)
+        .catch(() => LeagueKindEnum.User)
 
     return (
         <main className="relative min-h-svh bg-slate-50 text-slate-900 dark:bg-gray-900 dark:text-white overflow-x-hidden">
@@ -22,8 +29,8 @@ export default async function Home({ params }: { params: Promise<{ leagueId: str
                         <span className="ml-0.5 text-[10px] font-medium tracking-[0.2em] text-slate-500 dark:text-gray-400">.LIVE</span>
                     </Link>
                     <div className="flex items-center gap-2">
-                        <Share leagueId={leagueId}/>
-                        <Leave leagueId={leagueId}/>
+                        <Share leagueId={leagueId} kind={kind}/>
+                        <Leave leagueId={leagueId} kind={kind}/>
                     </div>
                 </header>
 

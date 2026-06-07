@@ -26,6 +26,7 @@ import org.openapitools.server.models.SignupRequest
 import org.openapitools.server.models.UpdateUserProfileRequest
 import scorcerer.server.ApiResponseError
 import scorcerer.server.auth.AuthProvider
+import scorcerer.server.db.tables.LeagueKind
 import scorcerer.server.db.tables.LeagueMembershipTable
 import scorcerer.server.db.tables.LeagueTable
 import scorcerer.server.db.tables.MemberTable
@@ -53,6 +54,7 @@ private fun addToGlobalLeague(userId: String) {
                 LeagueTable.insert {
                     it[name] = "Global"
                     it[id] = "global"
+                    it[kind] = LeagueKind.GLOBAL
                 }
             }
             LeagueMembershipTable.insert {
@@ -66,18 +68,21 @@ private fun addToGlobalLeague(userId: String) {
 }
 
 // Auto-create (if needed) and join the league for the team a user supports.
-// League id is namespaced by team id to stay within the league id length limit.
+// League id is the slug of the team name (e.g. "south-africa"); since user
+// leagues use UUIDs there's no risk of collision.
 private fun addToCountryLeague(userId: String, teamId: Int) {
     try {
         transaction {
-            val leagueId = "country-$teamId"
-            val teamName = TeamTable.select(TeamTable.name).where { TeamTable.id eq teamId }
-                .single()[TeamTable.name].toTitleCase()
+            val rawTeamName = TeamTable.select(TeamTable.name).where { TeamTable.id eq teamId }
+                .single()[TeamTable.name]
+            val leagueId = rawTeamName.lowercase().replace(Regex("\\s+"), "-")
+            val leagueName = rawTeamName.toTitleCase()
             val leagueExists = LeagueTable.selectAll().where { LeagueTable.id eq leagueId }.count() > 0
             if (!leagueExists) {
                 LeagueTable.insert {
-                    it[name] = teamName
+                    it[name] = leagueName
                     it[id] = leagueId
+                    it[kind] = LeagueKind.COUNTRY
                 }
             }
             LeagueMembershipTable.insert {
@@ -183,7 +188,8 @@ fun userRoutes(contexts: RequestContexts, leaderboardService: LeaderboardService
     },
     "/user/leagues" bind Method.GET to { req ->
         val requesterUserId = contexts.extractUserId(req)
-        val leaguesByMembership = transaction {
+        data class LeagueRow(val name: String, val kind: LeagueKind, val userIds: List<String>, val users: List<org.openapitools.server.models.User>)
+        val leaguesByMembership: Map<String, LeagueRow> = transaction {
             val userLeagueIds = LeagueMembershipTable
                 .select(LeagueMembershipTable.leagueId).where { LeagueMembershipTable.memberId eq requesterUserId }
                 .map { it[LeagueMembershipTable.leagueId] }
@@ -192,10 +198,12 @@ fun userRoutes(contexts: RequestContexts, leaderboardService: LeaderboardService
                 .selectAll().where { LeagueTable.id inList userLeagueIds }
                 .groupBy { it[LeagueTable.id] }
                 .mapValues { entry ->
-                    val leagueName = entry.value.first()[LeagueTable.name]
-                    val leagueUserIds = entry.value.map { it[MemberTable.id] }
-                    val users = entry.value.map { it.toUser() }
-                    Triple(leagueName, leagueUserIds, users)
+                    LeagueRow(
+                        name = entry.value.first()[LeagueTable.name],
+                        kind = entry.value.first()[LeagueTable.kind],
+                        userIds = entry.value.map { it[MemberTable.id] },
+                        users = entry.value.map { it.toUser() },
+                    )
                 }
         }
 
@@ -204,15 +212,14 @@ fun userRoutes(contexts: RequestContexts, leaderboardService: LeaderboardService
             leaderboardService.getLeaderboard(matchDay)
         }
 
-        val leagues = leaguesByMembership.map { (leagueId, triple) ->
-            val (leagueName, leagueUserIds, users) = triple
-            val yourPosition = if (leagueId == "global") {
+        val leagues = leaguesByMembership.map { (leagueId, row) ->
+            val yourPosition = if (row.kind == LeagueKind.GLOBAL) {
                 globalLeaderboard?.firstOrNull { it.user.userId == requesterUserId }?.position
             } else {
-                filterLeaderboardToLeague(globalLeaderboard, leagueUserIds)
+                filterLeaderboardToLeague(globalLeaderboard, row.userIds)
                     .firstOrNull { it.user.userId == requesterUserId }?.position
             }
-            League(leagueId, leagueName, users, yourPosition)
+            League(leagueId, row.name, row.kind.toApiKind(), row.users, yourPosition)
         }
         Response(Status.OK).body(leagues.toJson())
     },

@@ -96,7 +96,7 @@ class UserTest : DatabaseTest() {
 
         val membershipCount = transaction {
             LeagueMembershipTable.selectAll().where {
-                (LeagueMembershipTable.memberId eq "test-user") and (LeagueMembershipTable.leagueId eq "country-$teamId")
+                (LeagueMembershipTable.memberId eq "test-user") and (LeagueMembershipTable.leagueId eq "england")
             }.count()
         }
         membershipCount shouldBe 1L

@@ -66,6 +66,11 @@ fun givenLeagueExists(leagueId: String, leagueName: String) {
         LeagueTable.insert {
             it[this.id] = leagueId
             it[this.name] = leagueName
+            it[this.kind] = when {
+                leagueId == "global" -> LeagueKind.GLOBAL
+                leagueId.startsWith("country-") -> LeagueKind.COUNTRY
+                else -> LeagueKind.USER
+            }
         }
     }
 }
