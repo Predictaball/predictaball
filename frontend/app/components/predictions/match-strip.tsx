@@ -2,7 +2,7 @@
 
 import React, {useEffect, useRef} from "react"
 import {Chip, Match, MatchStateEnum} from "@/client"
-import {LocalTime} from "@/app/components/ticket/local-time"
+import {LocalTime} from "@/app/components/predictions/local-time"
 import {FlagImage} from "@/app/components/predictions/flag-image"
 import {ACTION_PILL_BORDER} from "@/app/util/css-classes"
 

@@ -11,7 +11,7 @@ import useWindowDimensions from "@/app/hooks/use-window-dimension";
 import {BUTTON_CLASS, SECTION_EYEBROW} from "@/app/util/css-classes";
 import FocusedGlobeClient from "@/app/components/flags/focused-globe-client";
 import {FlagImage} from "@/app/components/predictions/flag-image";
-import {LocalTime} from "@/app/components/ticket/local-time";
+import {LocalTime} from "@/app/components/predictions/local-time";
 import {COUNTRY_CODES} from "@/app/util/teams";
 
 const ROUND_LABEL: Record<MatchRoundEnum, string> = {

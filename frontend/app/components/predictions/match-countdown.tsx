@@ -2,7 +2,7 @@
 
 import React, {useEffect, useState} from "react"
 import {Match, MatchStateEnum} from "@/client"
-import {LocalTime} from "@/app/components/ticket/local-time"
+import {LocalTime} from "@/app/components/predictions/local-time"
 
 const COUNTDOWN_TICK_MS = 60_000
 

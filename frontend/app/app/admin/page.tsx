@@ -1,6 +1,5 @@
 import { isAdmin } from "@/app/auth/jwt-handler";
 import SignOutButton from "@/app/components/sign-out-button";
-import LiveMatches from "@/app/components/ticket/live-matches";
 import { BUTTON_CLASS } from "@/app/util/css-classes";
 import { Button } from "@nextui-org/react";
 import Link from "next/link";
@@ -20,7 +19,6 @@ const Admin = async () => {
             </div>
             <p className="text-xl font-bold mt-4 text-slate-900 dark:text-white">PREDICTABALL</p>
             <div className="max-w-3xl absolute text-center pt-40">
-                <LiveMatches admin/>
                 <Link href="/app"><Button size="sm" className={"mt-10 " + BUTTON_CLASS}>Back to App</Button></Link>
             </div>
         </main>

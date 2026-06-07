@@ -2,7 +2,7 @@ import React from "react"
 import Link from "next/link"
 import {Chip, Match, MatchRoundEnum, MatchStateEnum} from "@/client"
 import {FlagImage} from "@/app/components/predictions/flag-image"
-import {LocalTime} from "@/app/components/ticket/local-time"
+import {LocalTime} from "@/app/components/predictions/local-time"
 
 const ROUND_LABEL: Record<MatchRoundEnum, string> = {
     GROUP_STAGE: "Group Stage",

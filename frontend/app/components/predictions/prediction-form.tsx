@@ -3,7 +3,7 @@
 import DistributionBar from "@/app/components/predictions/distribution-bar"
 import { FlagImage } from "@/app/components/predictions/flag-image"
 import type { UserChips } from "@/app/components/predictions/get-user-chips"
-import { handlePrediction } from "@/app/components/ticket/submit-prediction"
+import { handlePrediction } from "@/app/components/predictions/submit-prediction"
 import { BUTTON_CLASS } from "@/app/util/css-classes"
 import { SHORT_COUNTRY_NAMES } from "@/app/util/teams"
 import { Chip, Match, MatchStateEnum } from "@/client"
