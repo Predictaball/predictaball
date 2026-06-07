@@ -1,9 +1,9 @@
 'use client'
 
-import React, {useEffect, useState} from "react";
+import React, {useState} from "react";
 import Link from "next/link";
-import {League, Match, MatchApi, MatchRoundEnum, MatchStateEnum, PredictionWithUser} from "@/client";
-import {getConfigWithAuthHeaderClient} from "@/app/api/client-config-client-side";
+import {useRouter} from "next/navigation";
+import {League, Match, MatchRoundEnum, MatchStateEnum, PredictionWithUser} from "@/client";
 import PredictionData from "@/app/app/match/[matchId]/predictions/prediction";
 import {Pagination, Select, SelectItem} from "@nextui-org/react"
 import BackButton from "@/app/components/back-button"
@@ -21,17 +21,6 @@ const ROUND_LABEL: Record<MatchRoundEnum, string> = {
     SEMI_FINAL: "Semi-Final",
     FINAL: "Final",
 }
-
-const sortPredictions = (preds: PredictionWithUser[]): PredictionWithUser[] =>
-    [...preds].sort((a, b) => {
-        const pointsComparison = b.prediction.points! - a.prediction.points!;
-        if (pointsComparison !== 0) return pointsComparison;
-
-        const familyNameComparison = a.user.familyName.localeCompare(b.user.familyName);
-        if (familyNameComparison !== 0) return familyNameComparison;
-
-        return a.user.firstName.localeCompare(b.user.firstName)
-    })
 
 function teamLabel(team: string): string {
     return COUNTRY_CODES[team.toLowerCase()] ?? team
@@ -91,11 +80,11 @@ export default function Predictions(
         matchId: string,
         leagues: League[],
         match: Match,
+        predictions: PredictionWithUser[],
         currentUserId?: string
     }
 ): React.JSX.Element {
-    const [leagueId, setLeagueId] = useState(props.leagueId)
-    const [predictions, setPredictions] = useState<PredictionWithUser[]>([])
+    const router = useRouter()
     const [currentPage, setCurrentPage] = useState(0)
     const windowsSize = useWindowDimensions()
     const itemsPerPage = windowsSize.height !== undefined ? Math.max((Math.round(windowsSize.height / 80)) - 5, 1) : 5
@@ -109,32 +98,14 @@ export default function Predictions(
         setCurrentPage(page - 1);
     };
 
-    const totalPages = Math.ceil(predictions.length / itemsPerPage);
+    const totalPages = Math.ceil(props.predictions.length / itemsPerPage);
 
     // Ensure the active filter always has a matching option, otherwise the
     // controlled Select renders an empty trigger (e.g. the default "global").
     const leagueOptions: {leagueId: string; name: string}[] = props.leagues.map(l => ({leagueId: l.leagueId, name: l.name}))
-    if (!leagueOptions.some(o => o.leagueId === leagueId)) {
-        leagueOptions.unshift({leagueId, name: leagueId === "global" ? "Global" : "All predictions"})
+    if (!leagueOptions.some(o => o.leagueId === props.leagueId)) {
+        leagueOptions.unshift({leagueId: props.leagueId, name: props.leagueId === "global" ? "Global" : "All predictions"})
     }
-
-    useEffect(() => {
-        try {
-            getConfigWithAuthHeaderClient().then(config => {
-                const matchApi = new MatchApi(config)
-                matchApi
-                    .getMatchPredictions({
-                        matchId: props.matchId,
-                        leagueId: leagueId
-                    }).then(preds => {
-                        setPredictions(sortPredictions(preds))
-                        setCurrentPage(0)
-                    })
-            })
-        } catch (error) {
-            console.log(error)
-        }
-    }, [leagueId, props.matchId])
 
     return (
         <main className="relative min-h-svh bg-slate-50 text-slate-900 dark:bg-gray-900 dark:text-white overflow-x-hidden">
@@ -162,10 +133,11 @@ export default function Predictions(
                                 size="sm"
                                 radius="full"
                                 disallowEmptySelection
-                                selectedKeys={[leagueId]}
+                                selectedKeys={[props.leagueId]}
                                 onSelectionChange={(keys) => {
                                     const next = Array.from(keys)[0]
-                                    if (typeof next === "string") setLeagueId(next)
+                                    if (typeof next !== "string" || next === props.leagueId) return
+                                    router.push(`/app/match/${props.matchId}/predictions?leagueId=${encodeURIComponent(next)}`)
                                 }}
                                 startContent={<GlobeIcon/>}
                                 className="max-w-[12rem]"
@@ -188,7 +160,7 @@ export default function Predictions(
                         )}
                     </div>
                     <div className="flex flex-col items-center">
-                        {getPaginatedPredictions(predictions).map((predictionWithUser, index) => (
+                        {getPaginatedPredictions(props.predictions).map((predictionWithUser, index) => (
                             <PredictionData
                                 key={predictionWithUser.user.userId}
                                 predictionWithUser={predictionWithUser}

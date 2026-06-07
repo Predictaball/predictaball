@@ -1,29 +1,22 @@
 'use client'
 
-import {Configuration, League, UserApi} from "@/client";
+import {League, UserApi} from "@/client";
 import React, {useEffect, useState} from "react";
 import LeagueComponent from "@/app/components/leaderboard/league";
 import {getConfigWithAuthHeaderClient} from "@/app/api/client-config-client-side";
 
 export default function YourLeaguesFetch({initialLeagues}: {initialLeagues: League[]}): React.JSX.Element {
-    // Seed from the server-rendered list so there's no loading flash; we still need a
-    // client config to fetch each league's position.
+    // Seed from the server-rendered list. Only refetch when the seed is empty (e.g. the
+    // user has just created or joined their first league via a client mutation).
     const [leagues, setLeagues] = useState<League[] | undefined>(initialLeagues.length > 0 ? initialLeagues : undefined)
-    const [config, setConfig] = useState<Configuration | undefined>(undefined)
 
     useEffect(() => {
-        try {
-            getConfigWithAuthHeaderClient().then(config => {
-                setConfig(config)
-                if (initialLeagues.length === 0) {
-                    const client = new UserApi(config)
-                    client.getUserLeagues().then(result => setLeagues(result))
-                }
-            })
-        } catch (error) {
-            console.log(error)
-            setLeagues([])
-        }
+        if (initialLeagues.length > 0) return
+        getConfigWithAuthHeaderClient().then(config => {
+            new UserApi(config).getUserLeagues()
+                .then(result => setLeagues(result))
+                .catch(() => setLeagues([]))
+        }).catch(() => setLeagues([]))
     }, [initialLeagues])
 
     if (leagues === undefined) {
@@ -53,7 +46,7 @@ export default function YourLeaguesFetch({initialLeagues}: {initialLeagues: Leag
                     key={league.leagueId}
                     leagueId={league.leagueId}
                     leagueName={league.name}
-                    config={config}
+                    yourPosition={league.yourPosition}
                 />
             ))}
         </div>

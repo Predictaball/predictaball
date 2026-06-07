@@ -162,6 +162,11 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/user'
+        yourPosition:
+          description: Position of the requesting user within this league. Omitted when not relevant (e.g. unauthenticated requests).
+          type: integer
+          format: int32
+          minimum: 1
     team:
       type: object
       required:

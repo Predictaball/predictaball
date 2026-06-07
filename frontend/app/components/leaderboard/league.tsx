@@ -1,29 +1,14 @@
-'use client'
-
-import React, {useEffect, useState} from "react";
-import Link from "next/link";
-import {getPositionForLeague} from "@/app/app/league/get-position-for-league";
-import {Configuration} from "@/client";
-import {getUserIdClient} from "@/app/auth/jwt-handler-client";
+import React from "react"
+import Link from "next/link"
 
 interface LeagueProps {
     leagueId: string,
     leagueName: string,
-    config: Configuration | undefined
+    yourPosition?: number
 }
 
 export default function LeagueComponent(props: LeagueProps): React.JSX.Element {
-    const [position, setPosition] = useState<string>("…")
-    const isLoading = props.config === undefined
-
-    useEffect(() => {
-        if (props.config === undefined) return
-        getUserIdClient().then(userId =>
-            getPositionForLeague(props.leagueId, props.config!, userId).then(
-                res => setPosition(res.toString())
-            )
-        )
-    }, [props.leagueId, props.config])
+    const positionLabel = props.yourPosition !== undefined ? props.yourPosition.toString() : "—"
 
     return (
         <Link href={`app/league/${props.leagueId}/leaderboard`} className="block">
@@ -34,11 +19,11 @@ export default function LeagueComponent(props: LeagueProps): React.JSX.Element {
                             {props.leagueName.slice(0, 1).toUpperCase()}
                         </div>
                         <div className="font-semibold text-slate-900 dark:text-white truncate">
-                            {isLoading ? <span className="inline-block h-4 w-24 bg-slate-900/10 dark:bg-white/10 rounded animate-pulse"/> : props.leagueName}
+                            {props.leagueName}
                         </div>
                     </div>
                     <div className="font-black tabular-nums bg-gradient-to-r from-blue-500 via-cyan-500 to-teal-500 dark:from-blue-400 dark:via-cyan-300 dark:to-teal-300 bg-clip-text text-transparent">
-                        {isLoading ? "…" : position}
+                        {positionLabel}
                     </div>
                 </div>
             </div>

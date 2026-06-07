@@ -1,40 +1,16 @@
-'use client'
-
-import React, { useEffect, useState } from "react"
+import React from "react"
 import Link from "next/link"
-import { Switch } from "@nextui-org/react"
-import { getConfigWithAuthHeaderClient } from "@/app/api/client-config-client-side"
-import { GetUserProfile200Response, UserApi } from "@/client"
+import { Toaster } from "react-hot-toast"
+import { getConfigWithAuthHeader } from "@/app/api/client-config"
+import { UserApi } from "@/client"
 import { FlagImage } from "@/app/components/predictions/flag-image"
 import BackButton from "@/app/components/back-button"
+import RemindersToggle from "@/app/components/profile/reminders-toggle"
 import { SECTION_EYEBROW } from "@/app/util/css-classes"
-import toast, { Toaster } from "react-hot-toast"
 
-export default function ProfilePage() {
-    const [profile, setProfile] = useState<GetUserProfile200Response | null>(null)
-    const [loading, setLoading] = useState(true)
-
-    useEffect(() => {
-        (async () => {
-            try {
-                const userApi = new UserApi(await getConfigWithAuthHeaderClient())
-                setProfile(await userApi.getUserProfile())
-            } finally {
-                setLoading(false)
-            }
-        })()
-    }, [])
-
-    async function toggleReminders(enabled: boolean) {
-        const userApi = new UserApi(await getConfigWithAuthHeaderClient())
-        try {
-            await userApi.updateUserProfile({ updateUserProfileRequest: { emailReminders: enabled } })
-            setProfile(prev => prev ? { ...prev, emailReminders: enabled } : null)
-            toast.success(enabled ? "Reminders enabled" : "Reminders disabled")
-        } catch {
-            toast.error("Failed to update preferences")
-        }
-    }
+export default async function ProfilePage(): Promise<React.JSX.Element> {
+    const userApi = new UserApi(await getConfigWithAuthHeader())
+    const profile = await userApi.getUserProfile().catch(() => null)
 
     return (
         <main className="relative min-h-screen bg-slate-50 text-slate-900 dark:bg-gray-900 dark:text-white overflow-x-hidden">
@@ -53,13 +29,7 @@ export default function ProfilePage() {
                     <div className="w-10"/>
                 </header>
 
-                {loading && (
-                    <div className="flex justify-center py-12">
-                        <div className="h-6 w-6 animate-spin rounded-full border-2 border-cyan-500 border-t-transparent" />
-                    </div>
-                )}
-
-                {!loading && !profile && (
+                {!profile && (
                     <p className="text-sm text-slate-600 dark:text-gray-300">
                         Couldn&apos;t load your profile. Try refreshing the page.
                     </p>
@@ -110,12 +80,7 @@ export default function ProfilePage() {
                                                 Get an email on match days if you haven&apos;t predicted yet
                                             </p>
                                         </div>
-                                        <Switch
-                                            isSelected={profile.emailReminders}
-                                            onValueChange={toggleReminders}
-                                            color="success"
-                                            className="shrink-0"
-                                        />
+                                        <RemindersToggle initialEnabled={profile.emailReminders}/>
                                     </div>
                                 </div>
                             </div>

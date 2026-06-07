@@ -1,6 +1,6 @@
 import { getConfigWithAuthHeader } from "@/app/api/client-config"
 import Predictions from "@/app/app/match/[matchId]/predictions/predictions"
-import { League, Match, MatchApi, UserApi } from "@/client"
+import { League, Match, MatchApi, PredictionWithUser, UserApi } from "@/client"
 import { getUserId } from "@/app/auth/jwt-handler"
 import React from "react"
 
@@ -40,9 +40,28 @@ export default async function Home(
         }
     }
 
-    const leagues: League[] = await getLeagues()
-    const match: Match | null = await getMatchData()
-    const currentUserId = await getUserId()
+    async function getPredictions(): Promise<PredictionWithUser[]> {
+        try {
+            const preds = await new MatchApi(config).getMatchPredictions({ matchId, leagueId: leagueIdAsString })
+            return preds.sort((a, b) => {
+                const pointsComparison = (b.prediction.points ?? 0) - (a.prediction.points ?? 0)
+                if (pointsComparison !== 0) return pointsComparison
+                const familyNameComparison = a.user.familyName.localeCompare(b.user.familyName)
+                if (familyNameComparison !== 0) return familyNameComparison
+                return a.user.firstName.localeCompare(b.user.firstName)
+            })
+        } catch (error) {
+            console.log(error)
+            return []
+        }
+    }
+
+    const [leagues, match, predictions, currentUserId] = await Promise.all([
+        getLeagues(),
+        getMatchData(),
+        getPredictions(),
+        getUserId(),
+    ])
 
     return (
         <>
@@ -51,6 +70,7 @@ export default async function Home(
                 leagues={leagues}
                 leagueId={leagueIdAsString}
                 matchId={matchId}
+                predictions={predictions}
                 currentUserId={currentUserId}
             />}
         </>

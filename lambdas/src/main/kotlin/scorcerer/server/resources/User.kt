@@ -36,6 +36,7 @@ import scorcerer.server.fromJson
 import scorcerer.server.log
 import scorcerer.server.toJson
 import scorcerer.utils.LeaderboardService
+import scorcerer.utils.filterLeaderboardToLeague
 import scorcerer.utils.livePointsForUser
 import scorcerer.utils.toTitleCase
 import scorcerer.utils.toUser
@@ -182,7 +183,7 @@ fun userRoutes(contexts: RequestContexts, leaderboardService: LeaderboardService
     },
     "/user/leagues" bind Method.GET to { req ->
         val requesterUserId = contexts.extractUserId(req)
-        val leagues = transaction {
+        val leaguesByMembership = transaction {
             val userLeagueIds = LeagueMembershipTable
                 .select(LeagueMembershipTable.leagueId).where { LeagueMembershipTable.memberId eq requesterUserId }
                 .map { it[LeagueMembershipTable.leagueId] }
@@ -192,9 +193,26 @@ fun userRoutes(contexts: RequestContexts, leaderboardService: LeaderboardService
                 .groupBy { it[LeagueTable.id] }
                 .mapValues { entry ->
                     val leagueName = entry.value.first()[LeagueTable.name]
+                    val leagueUserIds = entry.value.map { it[MemberTable.id] }
                     val users = entry.value.map { it.toUser() }
-                    League(entry.key, leagueName, users)
-                }.values.toList()
+                    Triple(leagueName, leagueUserIds, users)
+                }
+        }
+
+        val globalLeaderboard = runBlocking {
+            val matchDay = leaderboardService.getLatestLeaderboardMatchDay()
+            leaderboardService.getLeaderboard(matchDay)
+        }
+
+        val leagues = leaguesByMembership.map { (leagueId, triple) ->
+            val (leagueName, leagueUserIds, users) = triple
+            val yourPosition = if (leagueId == "global") {
+                globalLeaderboard?.firstOrNull { it.user.userId == requesterUserId }?.position
+            } else {
+                filterLeaderboardToLeague(globalLeaderboard, leagueUserIds)
+                    .firstOrNull { it.user.userId == requesterUserId }?.position
+            }
+            League(leagueId, leagueName, users, yourPosition)
         }
         Response(Status.OK).body(leagues.toJson())
     },
