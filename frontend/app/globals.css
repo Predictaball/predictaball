@@ -1,3 +1,34 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Chrome / Safari autofill overrides the input text colour to black, which is
+   unreadable on our dark-mode inputs. The long inset box-shadow trick re-paints
+   the autofill background; -webkit-text-fill-color overrides the autofill text
+   colour. The transition delay keeps it from flashing back to the default. */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+    -webkit-text-fill-color: rgb(15 23 42); /* slate-900 */
+    -webkit-box-shadow: 0 0 0 1000px white inset;
+    transition: background-color 5000s ease-in-out 0s;
+}
+
+@media (prefers-color-scheme: dark) {
+    input:-webkit-autofill,
+    input:-webkit-autofill:hover,
+    input:-webkit-autofill:focus,
+    input:-webkit-autofill:active {
+        -webkit-text-fill-color: rgb(255 255 255);
+        -webkit-box-shadow: 0 0 0 1000px rgb(17 24 39) inset; /* gray-900 */
+    }
+}
+
+.dark input:-webkit-autofill,
+.dark input:-webkit-autofill:hover,
+.dark input:-webkit-autofill:focus,
+.dark input:-webkit-autofill:active {
+    -webkit-text-fill-color: rgb(255 255 255);
+    -webkit-box-shadow: 0 0 0 1000px rgb(17 24 39) inset;
+}
