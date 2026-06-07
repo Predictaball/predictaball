@@ -81,7 +81,7 @@ export default function AuthForm({ callbackUrl, leagueId, initialEmail, initialM
         }
     }
 
-    const handleLogin = async () => {
+    const handleLogin = async (destination: string = redirectTo) => {
         setIsLoading(true)
         setDidFail(false)
         const result = await signIn("credentials", {
@@ -93,7 +93,7 @@ export default function AuthForm({ callbackUrl, leagueId, initialEmail, initialM
             setDidFail(true)
             setIsLoading(false)
         } else {
-            window.location.href = redirectTo
+            window.location.href = destination
         }
     }
 
@@ -101,7 +101,9 @@ export default function AuthForm({ callbackUrl, leagueId, initialEmail, initialM
         setIsLoading(true)
         try {
             await AUTH_CLIENT.userApi.signup({ signupRequest: { email, password, firstName, familyName: lastName, emailReminders, supportedTeamId: supportedTeamId! } })
-            await handleLogin()
+            // New accounts go through the onboarding flow first; carry the real
+            // destination (e.g. a league invite) through as `next`.
+            await handleLogin(`/app/onboarding/how-it-works?next=${encodeURIComponent(redirectTo)}`)
         } catch {
             setIsLoading(false)
         }
@@ -229,7 +231,7 @@ export default function AuthForm({ callbackUrl, leagueId, initialEmail, initialM
                         </a>
                     </div>
                     <Button
-                        onPress={handleLogin}
+                        onPress={() => handleLogin()}
                         isLoading={isLoading}
                         type="button"
                         className={"w-full " + BUTTON_CLASS}

@@ -26,9 +26,11 @@ interface PredictionFormProps {
     userChips: UserChips
     onChipsChanged: (chips: UserChips) => void
     onStatusChange?: (status: {saved: boolean; hasChanges: boolean}) => void
+    /** Onboarding: draw attention to the power-up selector with an explainer. */
+    coachPowerUps?: boolean
 }
 
-export default function PredictionForm({match, onPredictionSaved, userChips, onChipsChanged, onStatusChange}: PredictionFormProps): React.JSX.Element {
+export default function PredictionForm({match, onPredictionSaved, userChips, onChipsChanged, onStatusChange, coachPowerUps}: PredictionFormProps): React.JSX.Element {
     const isUpcoming = match.state === MatchStateEnum.Upcoming
     const [homeScore, setHomeScore] = useState<number>(match.prediction?.homeScore ?? 0)
     const [awayScore, setAwayScore] = useState<number>(match.prediction?.awayScore ?? 0)
@@ -96,12 +98,22 @@ export default function PredictionForm({match, onPredictionSaved, userChips, onC
             </div>
 
             {isUpcoming && (
-                <ChipSelector
-                    selected={chip}
-                    onSelect={setChip}
-                    chips={userChips}
-                    savedChip={savedPrediction?.chip ?? Chip.None}
-                />
+                <div className="mt-1">
+                    {coachPowerUps && (
+                        <div className="mb-2 flex items-start gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-700 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-200">
+                            <span aria-hidden>✨</span>
+                            <span>
+                                <span className="font-bold">Power-ups</span> — tap one below to bend the scoring in your favour. You get 3 of each for the whole tournament, so spend them wisely (optional).
+                            </span>
+                        </div>
+                    )}
+                    <ChipSelector
+                        selected={chip}
+                        onSelect={setChip}
+                        chips={userChips}
+                        savedChip={savedPrediction?.chip ?? Chip.None}
+                    />
+                </div>
             )}
 
             {isUpcoming && (
