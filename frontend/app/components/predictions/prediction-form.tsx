@@ -7,7 +7,7 @@ import { handlePrediction } from "@/app/components/predictions/submit-prediction
 import { ACTION_BUTTON_CLASS } from "@/app/util/css-classes"
 import { SHORT_COUNTRY_NAMES } from "@/app/util/teams"
 import { Chip, Match, MatchStateEnum } from "@/client"
-import { Button } from "@nextui-org/react"
+import { Button, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, useDisclosure } from "@nextui-org/react"
 import React, { useEffect, useRef, useState } from "react"
 import toast from "react-hot-toast"
 
@@ -28,14 +28,18 @@ interface PredictionFormProps {
     onStatusChange?: (status: {saved: boolean; hasChanges: boolean}) => void
     /** Onboarding: draw attention to the power-up selector with an explainer. */
     coachPowerUps?: boolean
+    /** Onboarding: confirm with a modal if the user submits without changing the default 0-0 score. */
+    confirmIfUntouched?: boolean
 }
 
-export default function PredictionForm({match, onPredictionSaved, userChips, onChipsChanged, onStatusChange, coachPowerUps}: PredictionFormProps): React.JSX.Element {
+export default function PredictionForm({match, onPredictionSaved, userChips, onChipsChanged, onStatusChange, coachPowerUps, confirmIfUntouched}: PredictionFormProps): React.JSX.Element {
     const isUpcoming = match.state === MatchStateEnum.Upcoming
     const [homeScore, setHomeScore] = useState<number>(match.prediction?.homeScore ?? 0)
     const [awayScore, setAwayScore] = useState<number>(match.prediction?.awayScore ?? 0)
     const [chip, setChip] = useState<Chip>(match.prediction?.chip ?? Chip.None)
     const [isSending, setIsSending] = useState(false)
+    const [hasTouchedScore, setHasTouchedScore] = useState(false)
+    const {isOpen: isConfirmOpen, onOpen: openConfirm, onClose: closeConfirm} = useDisclosure()
     const [savedPrediction, setSavedPrediction] = useState(
         match.prediction
             ? {home: match.prediction.homeScore, away: match.prediction.awayScore, chip: match.prediction.chip}
@@ -71,6 +75,23 @@ export default function PredictionForm({match, onPredictionSaved, userChips, onC
         }
     }
 
+    function handleSubmitClick() {
+        if (confirmIfUntouched && !hasTouchedScore && chip !== Chip.Crowd) {
+            openConfirm()
+            return
+        }
+        submit()
+    }
+
+    function handleHomeChange(v: number) {
+        setHasTouchedScore(true)
+        setHomeScore(v)
+    }
+    function handleAwayChange(v: number) {
+        setHasTouchedScore(true)
+        setAwayScore(v)
+    }
+
     const hasChanges = savedPrediction === undefined
         || savedPrediction.home !== homeScore
         || savedPrediction.away !== awayScore
@@ -90,9 +111,9 @@ export default function PredictionForm({match, onPredictionSaved, userChips, onC
             <div className="flex items-center justify-between gap-2">
                 <TeamSide code={homeCode} name={match.homeTeam} ranking={match.homeTeamRanking}/>
                 <div className="flex items-center gap-2">
-                    <ScoreInput value={homeScore} onChange={setHomeScore} disabled={!isUpcoming || chip === Chip.Crowd} displayOverride={chip === Chip.Crowd ? "?" : undefined}/>
+                    <ScoreInput value={homeScore} onChange={handleHomeChange} disabled={!isUpcoming || chip === Chip.Crowd} displayOverride={chip === Chip.Crowd ? "?" : undefined}/>
                     <span className="text-3xl font-black text-slate-400 dark:text-gray-500">:</span>
-                    <ScoreInput value={awayScore} onChange={setAwayScore} disabled={!isUpcoming || chip === Chip.Crowd} displayOverride={chip === Chip.Crowd ? "?" : undefined}/>
+                    <ScoreInput value={awayScore} onChange={handleAwayChange} disabled={!isUpcoming || chip === Chip.Crowd} displayOverride={chip === Chip.Crowd ? "?" : undefined}/>
                 </div>
                 <TeamSide code={awayCode} name={match.awayTeam} ranking={match.awayTeamRanking} reverse/>
             </div>
@@ -118,7 +139,7 @@ export default function PredictionForm({match, onPredictionSaved, userChips, onC
 
             {isUpcoming && (
                 <Button
-                    onPress={submit}
+                    onPress={handleSubmitClick}
                     isLoading={isSending}
                     isDisabled={!hasChanges}
                     className={`mt-4 w-full h-11 rounded-xl ${ACTION_BUTTON_CLASS}`}
@@ -126,6 +147,35 @@ export default function PredictionForm({match, onPredictionSaved, userChips, onC
                     {savedPrediction ? "Update prediction" : "Submit prediction"}
                 </Button>
             )}
+
+            <Modal isOpen={isConfirmOpen} onClose={closeConfirm} placement="center" backdrop="blur" size="sm">
+                <ModalContent>
+                    {(onClose) => (
+                        <>
+                            <ModalHeader className="flex flex-col gap-1">Predicting 0–0?</ModalHeader>
+                            <ModalBody>
+                                <p className="text-sm text-slate-600 dark:text-gray-300">
+                                    You haven&apos;t changed the score. Tap <span className="font-bold">+</span> on either side to pick what you actually think the result will be.
+                                </p>
+                            </ModalBody>
+                            <ModalFooter>
+                                <Button variant="light" onPress={onClose}>
+                                    Pick a score
+                                </Button>
+                                <Button
+                                    onPress={() => {
+                                        onClose()
+                                        submit()
+                                    }}
+                                    className={ACTION_BUTTON_CLASS}
+                                >
+                                    Submit 0–0
+                                </Button>
+                            </ModalFooter>
+                        </>
+                    )}
+                </ModalContent>
+            </Modal>
 
             {!isUpcoming && (
                 <div className="mt-4 text-center text-sm text-slate-500 dark:text-gray-400">

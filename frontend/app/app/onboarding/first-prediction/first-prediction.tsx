@@ -41,7 +41,7 @@ export default function FirstPrediction({match, userChips, destination}: FirstPr
                     <span className="text-xs font-semibold tracking-[0.3em] text-cyan-600/90 dark:text-cyan-300/80 uppercase">Last step</span>
                     <h1 className="mt-3 text-3xl font-black tracking-tight">Make your first prediction</h1>
                     <p className="mt-3 text-slate-500 dark:text-gray-400">
-                        Call the score, optionally add a power-up, and you&apos;re in.
+                        Call the score, optionally add a power-up, and you&apos;re in. You can change your prediction any time before kickoff.
                     </p>
                 </div>
 
@@ -66,6 +66,7 @@ export default function FirstPrediction({match, userChips, destination}: FirstPr
                             onChipsChanged={setChips}
                             onPredictionSaved={() => router.push(destination)}
                             coachPowerUps
+                            confirmIfUntouched
                         />
                     </div>
                 </div>

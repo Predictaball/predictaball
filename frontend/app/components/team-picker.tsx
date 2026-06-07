@@ -31,7 +31,7 @@ export default function TeamPicker({ value, onSelect, label = "Who are you suppo
             variant="bordered"
             selectedKey={value}
             onSelectionChange={(key) => onSelect(key ? key.toString() : null)}
-            inputProps={{ classNames: AUTH_INPUT_CLASS_NAMES }}
+            inputProps={{ classNames: AUTH_INPUT_CLASS_NAMES, style: { fontSize: "16px" } }}
             defaultItems={teams}
         >
             {(team) => (
