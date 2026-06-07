@@ -64,6 +64,7 @@ export default async function JoinLeagueInvite(
 
     const session = await auth()
     const isLoggedIn = !!session?.user
+    const fromSignup = resolvedSearchParams.fromSignup === "1"
 
     const preview = await fetchPreview(leagueId)
 
@@ -96,7 +97,7 @@ export default async function JoinLeagueInvite(
                                     : `${preview.memberCount} predictors are already in. Pick a score, climb the leaderboard.`}
                             </p>
                             {isLoggedIn ? (
-                                <JoinButton leagueId={leagueId}/>
+                                <JoinButton leagueId={leagueId} fromSignup={fromSignup}/>
                             ) : (
                                 <>
                                     <Button
@@ -109,7 +110,7 @@ export default async function JoinLeagueInvite(
                                     </Button>
                                     <Button
                                         as={Link}
-                                        href={`/login?callbackUrl=${encodeURIComponent(`/league/${leagueId}/join`)}`}
+                                        href={`/login?callbackUrl=${encodeURIComponent(`/league/${leagueId}/join?fromSignup=1`)}`}
                                         radius="full"
                                         className={"mt-3 w-full " + GHOST_BUTTON_CLASS}
                                     >

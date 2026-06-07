@@ -20,7 +20,7 @@ export default function OnboardingPage() {
         try {
             const userApi = new UserApi(await getConfigWithAuthHeaderClient())
             await userApi.setSupportedTeam({ setSupportedTeamRequest: { teamId: supportedTeamId } })
-            router.push("/app/onboarding/how-it-works")
+            router.replace("/app/onboarding/how-it-works")
         } catch {
             toast.error("Couldn't save your team — try again")
             setIsSaving(false)

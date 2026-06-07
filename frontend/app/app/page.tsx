@@ -1,4 +1,5 @@
-import React from "react";
+import React, { Suspense } from "react";
+import WelcomeModal from "@/app/components/onboarding/welcome-modal";
 import Link from "next/link";
 import Leaderboard from "@/app/components/leaderboard/leaderboard";
 import SignOutButton from "@/app/components/sign-out-button";
@@ -20,7 +21,10 @@ import PredictNowBanner from "@/app/components/predictions/predict-now-banner";
 import {MatchSelectionProvider} from "@/app/components/predictions/match-selection";
 import {getUserChips} from "@/app/components/predictions/get-user-chips";
 
-const Home = async () => {
+const Home = async ({searchParams}: {searchParams: Promise<Record<string, string | string[] | undefined>>}) => {
+    const resolvedSearchParams = await searchParams
+    const joinedLeagueId = typeof resolvedSearchParams.joinedLeague === "string" ? resolvedSearchParams.joinedLeague : undefined
+
     const config = await getConfigWithAuthHeader()
     const matchApi = new MatchApi(config)
     const userApi = new UserApi(config)
@@ -117,6 +121,15 @@ const Home = async () => {
                 </section>
                 </MatchSelectionProvider>
             </div>
+
+            {joinedLeagueId && (() => {
+                const joinedLeague = leagues.find(l => l.leagueId === joinedLeagueId)
+                return joinedLeague ? (
+                    <Suspense>
+                        <WelcomeModal leagueName={joinedLeague.name}/>
+                    </Suspense>
+                ) : null
+            })()}
         </main>
     );
 }

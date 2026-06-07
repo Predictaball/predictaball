@@ -64,7 +64,7 @@ export default function FirstPrediction({match, userChips, destination}: FirstPr
                             match={match}
                             userChips={chips}
                             onChipsChanged={setChips}
-                            onPredictionSaved={() => router.push(destination)}
+                            onPredictionSaved={() => router.replace(destination)}
                             coachPowerUps
                             confirmIfUntouched
                         />
@@ -72,7 +72,7 @@ export default function FirstPrediction({match, userChips, destination}: FirstPr
                 </div>
 
                 <div className="mt-6 text-center">
-                    <Link href={destination} className="text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors">
+                    <Link href={destination} replace className="text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors">
                         Skip for now
                     </Link>
                 </div>

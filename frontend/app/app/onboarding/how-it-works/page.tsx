@@ -38,6 +38,7 @@ export default async function OnboardingHowItWorksPage({searchParams}: {searchPa
                     <div className="mt-20 flex justify-center">
                         <Link
                             href={firstPredictionHref}
+                            replace
                             className={`inline-flex items-center gap-2 rounded-full px-8 py-4 text-lg ${ACTION_BUTTON_CLASS}`}
                         >
                             Make your first prediction
