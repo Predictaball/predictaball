@@ -7,15 +7,14 @@ import React from "react";
 const montserrat = Montserrat({subsets: ["latin"]});
 
 export const metadata: Metadata = {
-    title: "Predictaball.live",
-    description: "A score predictor for World Cup 2026",
+    metadataBase: new URL("https://www.predictaball.live"),
+    title: "Predictaball — World Cup 2026 score predictor",
+    description: "Predict every match. Climb the table. Prove your ball knowledge.",
     openGraph: {
-        title: "Predictaball.live",
-        description: "A score predictor for World Cup 2026",
-        images: {
-            url: "https://predictaball-teamflagsbucketb6ca46de-2uk8faboxd6r.s3.eu-west-2.amazonaws.com/hidden-image.png"
-        }
-    }
+        title: "Predictaball — World Cup 2026 score predictor",
+        description: "Predict every match. Climb the table. Prove your ball knowledge.",
+        type: "website",
+    },
 };
 
 export default function RootLayout({children}: Readonly<{
