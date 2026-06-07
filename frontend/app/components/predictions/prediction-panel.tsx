@@ -1,6 +1,6 @@
 'use client'
 
-import React, {useMemo, useState} from "react"
+import React, {useEffect, useMemo, useState} from "react"
 import {Match, MatchRoundEnum, MatchStateEnum} from "@/client"
 import FocusedGlobeClient from "@/app/components/flags/focused-globe-client"
 import PredictionForm from "@/app/components/predictions/prediction-form"
@@ -27,7 +27,15 @@ export default function PredictionPanel({liveMatches, upcomingMatches, userChips
     const allMatches = useMemo(() => [...liveMatches, ...upcomingMatches], [liveMatches, upcomingMatches])
     const {selectedId, setSelectedId} = useMatchSelection()
     const [chips, setChips] = useState<UserChips>(userChips)
+    const [status, setStatus] = useState<{saved: boolean; hasChanges: boolean}>({saved: false, hasChanges: true})
     const selected = allMatches.find(m => m.matchId === selectedId) ?? allMatches[0]
+
+    // Reset the status when switching matches so the badge never shows the
+    // previous match's state before the (remounted) form reports its own.
+    useEffect(() => {
+        if (!selected) return
+        setStatus({saved: selected.prediction !== undefined, hasChanges: selected.prediction === undefined})
+    }, [selected?.matchId, selected?.prediction])
 
     if (!selected) {
         return (
@@ -56,13 +64,16 @@ export default function PredictionPanel({liveMatches, upcomingMatches, userChips
                                 <div className="absolute inset-0">
                                     <FocusedGlobeClient homeCode={homeCode} awayCode={awayCode} venue={selected.venue}/>
                                 </div>
-                                <div className="absolute top-4 left-4 right-4 flex items-center justify-between pointer-events-none">
+                                <div className="absolute top-4 left-4 right-4 flex items-center justify-between gap-2 pointer-events-none">
                                     <span className="inline-flex items-center gap-2 rounded-full bg-white/80 border border-slate-200 text-slate-700 dark:bg-black/50 dark:border-white/10 dark:text-gray-200 px-3 py-1 text-xs font-semibold backdrop-blur">
                                         {selected.state === MatchStateEnum.Live && (
                                             <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse"/>
                                         )}
                                         {selected.state === MatchStateEnum.Live ? "Live" : ROUND_LABEL[selected.round]}
                                     </span>
+                                    {selected.state === MatchStateEnum.Upcoming && (
+                                        <StatusBadge saved={status.saved} hasChanges={status.hasChanges}/>
+                                    )}
                                 </div>
                                 <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between pointer-events-none">
                                     <span className="rounded-full bg-white/80 border border-slate-200 text-slate-600 dark:bg-black/50 dark:border-white/10 dark:text-gray-300 px-3 py-1 text-xs backdrop-blur">
@@ -76,6 +87,7 @@ export default function PredictionPanel({liveMatches, upcomingMatches, userChips
                                 onPredictionSaved={advanceToNext}
                                 userChips={chips}
                                 onChipsChanged={setChips}
+                                onStatusChange={setStatus}
                             />
                         </div>
                     </div>
@@ -88,5 +100,35 @@ export default function PredictionPanel({liveMatches, upcomingMatches, userChips
                 onSelect={setSelectedId}
             />
         </div>
+    )
+}
+
+// Globe overlay pill mirroring the round/countdown pills, but colour-coded:
+// emerald when the prediction is locked in, amber when it still needs action.
+function StatusBadge({saved, hasChanges}: {saved: boolean; hasChanges: boolean}): React.JSX.Element {
+    const pillBase = "pointer-events-none inline-flex items-center gap-1.5 rounded-full bg-white/80 border dark:bg-black/50 px-3 py-1 text-xs font-semibold backdrop-blur"
+
+    if (saved && !hasChanges) {
+        return (
+            <span className={`${pillBase} border-emerald-500/30 text-emerald-600 dark:border-emerald-400/30 dark:text-emerald-300`}>
+                <CheckIcon/>
+                Saved
+            </span>
+        )
+    }
+
+    return (
+        <span className={`${pillBase} border-amber-500/30 text-amber-600 dark:border-amber-400/30 dark:text-amber-300`}>
+            <span className="h-1.5 w-1.5 rounded-full bg-amber-500 dark:bg-amber-400 animate-pulse"/>
+            {saved ? "Unsaved changes" : "Not predicted yet"}
+        </span>
+    )
+}
+
+function CheckIcon(): React.JSX.Element {
+    return (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5" aria-hidden>
+            <path d="M20 6 9 17l-5-5"/>
+        </svg>
     )
 }

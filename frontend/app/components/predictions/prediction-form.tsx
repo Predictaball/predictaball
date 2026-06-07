@@ -4,11 +4,11 @@ import DistributionBar from "@/app/components/predictions/distribution-bar"
 import { FlagImage } from "@/app/components/predictions/flag-image"
 import type { UserChips } from "@/app/components/predictions/get-user-chips"
 import { handlePrediction } from "@/app/components/predictions/submit-prediction"
-import { BUTTON_CLASS } from "@/app/util/css-classes"
+import { ACTION_BUTTON_CLASS } from "@/app/util/css-classes"
 import { SHORT_COUNTRY_NAMES } from "@/app/util/teams"
 import { Chip, Match, MatchStateEnum } from "@/client"
 import { Button } from "@nextui-org/react"
-import React, { useRef, useState } from "react"
+import React, { useEffect, useRef, useState } from "react"
 import toast from "react-hot-toast"
 
 const ADVANCE_DELAY_MS = 800
@@ -25,9 +25,10 @@ interface PredictionFormProps {
     onPredictionSaved: () => void
     userChips: UserChips
     onChipsChanged: (chips: UserChips) => void
+    onStatusChange?: (status: {saved: boolean; hasChanges: boolean}) => void
 }
 
-export default function PredictionForm({match, onPredictionSaved, userChips, onChipsChanged}: PredictionFormProps): React.JSX.Element {
+export default function PredictionForm({match, onPredictionSaved, userChips, onChipsChanged, onStatusChange}: PredictionFormProps): React.JSX.Element {
     const isUpcoming = match.state === MatchStateEnum.Upcoming
     const [homeScore, setHomeScore] = useState<number>(match.prediction?.homeScore ?? 0)
     const [awayScore, setAwayScore] = useState<number>(match.prediction?.awayScore ?? 0)
@@ -73,6 +74,11 @@ export default function PredictionForm({match, onPredictionSaved, userChips, onC
         || savedPrediction.away !== awayScore
         || savedPrediction.chip !== chip
 
+    // Surface saved/unsaved state to the panel, which renders it on the globe.
+    useEffect(() => {
+        onStatusChange?.({saved: savedPrediction !== undefined, hasChanges})
+    }, [savedPrediction, hasChanges, onStatusChange])
+
     return (
         <div className="flex-1 min-w-0 p-4 sm:p-6 flex flex-col justify-center">
             <div className="hidden md:block lg:pb-4 sm:pb-2 lg:font-bold text-center md:text-left text-xs uppercase tracking-[0.2em] text-slate-500 dark:text-gray-400 mb-1">
@@ -103,9 +109,9 @@ export default function PredictionForm({match, onPredictionSaved, userChips, onC
                     onPress={submit}
                     isLoading={isSending}
                     isDisabled={!hasChanges}
-                    className="mt-4 w-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-600 hover:bg-cyan-500/20 hover:border-cyan-500/40 dark:bg-cyan-400/10 dark:border-cyan-400/20 dark:text-cyan-300 dark:hover:bg-cyan-400/20 dark:hover:border-cyan-400/40 font-semibold transition-colors"
+                    className={`mt-4 w-full h-11 rounded-xl ${ACTION_BUTTON_CLASS}`}
                 >
-                    {savedPrediction ? "Update prediction" : "Submit Prediction"}
+                    {savedPrediction ? "Update prediction" : "Submit prediction"}
                 </Button>
             )}
 

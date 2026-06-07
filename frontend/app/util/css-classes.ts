@@ -28,6 +28,9 @@ export const ACTION_TEXT = "text-amber-600 dark:text-amber-300"
 export const ACTION_DOT = "bg-amber-500 dark:bg-amber-400"
 // Match-strip pill border for an unpredicted upcoming match.
 export const ACTION_PILL_BORDER = "bg-amber-500/40 hover:bg-amber-500/60 dark:bg-amber-400/40 dark:hover:bg-amber-400/60"
+// Primary call-to-action — solid warm amber/orange that pops against the cool
+// brand UI. Use for the single most important action on a surface.
+export const ACTION_BUTTON_CLASS = "bg-gradient-to-r from-amber-400 to-orange-500 text-gray-950 font-bold shadow-lg shadow-orange-500/25 transition-transform hover:scale-[1.01]"
 
 // Semantic chips (border + tint + text), used for leaderboard movement etc.
 export const POSITIVE_CHIP = "bg-emerald-500/15 text-emerald-700 border-emerald-500/30 dark:bg-emerald-400/15 dark:text-emerald-300 dark:border-emerald-400/30"
