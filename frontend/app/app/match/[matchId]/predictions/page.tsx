@@ -1,6 +1,7 @@
 import { getConfigWithAuthHeader } from "@/app/api/client-config"
 import Predictions from "@/app/app/match/[matchId]/predictions/predictions"
 import { League, Match, MatchApi, UserApi } from "@/client"
+import { getUserId } from "@/app/auth/jwt-handler"
 import React from "react"
 
 export default async function Home(
@@ -41,14 +42,16 @@ export default async function Home(
 
     const leagues: League[] = await getLeagues()
     const match: Match | null = await getMatchData()
+    const currentUserId = await getUserId()
 
     return (
         <>
-            {match !== null && <Predictions 
-                match={match} 
-                leagues={leagues} 
-                leagueId={leagueIdAsString} 
+            {match !== null && <Predictions
+                match={match}
+                leagues={leagues}
+                leagueId={leagueIdAsString}
                 matchId={matchId}
+                currentUserId={currentUserId}
             />}
         </>
     )

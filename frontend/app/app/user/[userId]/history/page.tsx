@@ -1,5 +1,5 @@
 import {getConfigWithAuthHeader} from "@/app/api/client-config"
-import Ticket from "@/app/components/ticket/ticket"
+import HistoryMatchCard from "@/app/components/history/history-match-card"
 import {LeaderboardInner, LeagueApi, ListMatchesFilterTypeEnum, Match, MatchApi} from "@/client"
 import BackButton from "@/app/components/back-button";
 import Link from "next/link";
@@ -70,54 +70,55 @@ export default async function Home({
                     <div className="w-10"/>
                 </header>
 
-                <section className="flex flex-col items-center text-center">
-                    {user?.supportedTeamFlagCode ? (
-                        <FlagImage code={user.supportedTeamFlagCode} name={user.supportedTeamName ?? fullName} size={76}/>
-                    ) : (
-                        <div className="flex h-[76px] w-[76px] items-center justify-center rounded-full bg-gradient-to-br from-blue-500 via-cyan-400 to-teal-300 text-2xl font-black text-white shadow-lg shadow-cyan-500/30">
-                            {initials.toUpperCase()}
-                        </div>
-                    )}
-
-                    <h1 className="mt-4 text-3xl font-black tracking-tight text-slate-900 dark:text-white">{fullName}</h1>
-                    {user?.supportedTeamName && (
-                        <p className="mt-1 text-sm text-slate-500 dark:text-gray-400">
-                            Supporting <span className="font-semibold text-slate-700 dark:text-gray-200">{user.supportedTeamName}</span>
-                        </p>
-                    )}
-
-                    {leaderboardEntry && (
-                        <div className="mt-5 flex items-stretch justify-center gap-3">
-                            <div className="rounded-2xl border border-slate-200/70 dark:border-white/10 bg-white/70 dark:bg-gray-900/70 backdrop-blur-sm px-5 py-2.5 min-w-[88px]">
-                                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-gray-400">Rank</p>
-                                <p className="text-xl font-black tabular-nums text-slate-900 dark:text-white">#{leaderboardEntry.position}</p>
+                <section className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
+                    <div className="flex items-center gap-4">
+                        {user?.supportedTeamFlagCode ? (
+                            <FlagImage code={user.supportedTeamFlagCode} name={user.supportedTeamName ?? fullName} size={76}/>
+                        ) : (
+                            <div className="flex h-[76px] w-[76px] shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 via-cyan-400 to-teal-300 text-2xl font-black text-white shadow-lg shadow-cyan-500/30">
+                                {initials.toUpperCase()}
                             </div>
-                            <div className="rounded-2xl border border-slate-200/70 dark:border-white/10 bg-white/70 dark:bg-gray-900/70 backdrop-blur-sm px-5 py-2.5 min-w-[88px]">
-                                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-gray-400">Points</p>
-                                <p className="text-xl font-black tabular-nums bg-gradient-to-r from-blue-500 via-cyan-500 to-teal-500 dark:from-blue-400 dark:via-cyan-300 dark:to-teal-300 bg-clip-text text-transparent">{totalPoints}</p>
-                            </div>
+                        )}
+                        <div className="min-w-0">
+                            <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white truncate">{fullName}</h1>
+                            {user?.supportedTeamName && (
+                                <p className="mt-1 text-sm text-slate-500 dark:text-gray-400">
+                                    Supporting <span className="font-semibold text-slate-700 dark:text-gray-200">{user.supportedTeamName}</span>
+                                </p>
+                            )}
                         </div>
-                    )}
+                    </div>
 
-                    {form.length > 0 && (
-                        <div className="mt-5 flex flex-col items-center gap-2">
-                            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-gray-400">Recent form</p>
-                            <FormBadge form={form}/>
+                    {(leaderboardEntry || form.length > 0) && (
+                        <div className="flex flex-col items-start sm:items-end gap-4 shrink-0">
+                            {leaderboardEntry && (
+                                <div className="flex items-stretch gap-3">
+                                    <div className="rounded-2xl border border-slate-200/70 dark:border-white/10 bg-white/70 dark:bg-gray-900/70 backdrop-blur-sm px-5 py-2.5 min-w-[88px] text-center">
+                                        <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-gray-400">Rank</p>
+                                        <p className="text-xl font-black tabular-nums text-slate-900 dark:text-white">#{leaderboardEntry.position}</p>
+                                    </div>
+                                    <div className="rounded-2xl border border-slate-200/70 dark:border-white/10 bg-white/70 dark:bg-gray-900/70 backdrop-blur-sm px-5 py-2.5 min-w-[88px] text-center">
+                                        <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-gray-400">Points</p>
+                                        <p className="text-xl font-black tabular-nums bg-gradient-to-r from-blue-500 via-cyan-500 to-teal-500 dark:from-blue-400 dark:via-cyan-300 dark:to-teal-300 bg-clip-text text-transparent">{totalPoints}</p>
+                                    </div>
+                                </div>
+                            )}
+
+                            {form.length > 0 && (
+                                <div className="flex flex-col items-start sm:items-end gap-2">
+                                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-gray-400">Recent form</p>
+                                    <FormBadge form={form}/>
+                                </div>
+                            )}
                         </div>
                     )}
                 </section>
 
                 <section className="space-y-4">
                     <h2 className={SECTION_EYEBROW + " text-center"}>Match history</h2>
-                    <div className="flex flex-col items-center">
+                    <div className="flex flex-col items-center gap-3">
                         {games.length > 0 ? games.map((match) => (
-                            <Ticket
-                                match={match}
-                                key={match.matchId}
-                                collapse={true}
-                                admin={false}
-                                forPredictionPage={false}
-                            />
+                            <HistoryMatchCard match={match} key={match.matchId}/>
                         )) : (
                             <p className="py-8 text-center text-sm text-slate-500 dark:text-gray-400">No completed matches yet — check back once games have been played.</p>
                         )}
