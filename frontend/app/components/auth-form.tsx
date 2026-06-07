@@ -45,6 +45,8 @@ export default function AuthForm({ callbackUrl, leagueId, initialEmail, initialM
     const [isLoading, setIsLoading] = useState(false)
     const [didFail, setDidFail] = useState(false)
     const [checkError, setCheckError] = useState(false)
+    // Only flag a bad email once the user has left the field, not mid-typing.
+    const [emailTouched, setEmailTouched] = useState(false)
 
     const [googleEmail, setGoogleEmail] = useState(false)
 
@@ -158,7 +160,9 @@ export default function AuthForm({ callbackUrl, leagueId, initialEmail, initialM
                         onChange={(e) => {
                             setEmail(e.target.value.toLowerCase())
                             setCheckError(false)
+                            setEmailTouched(false)
                         }}
+                        onBlur={() => setEmailTouched(true)}
                         onKeyDown={(e) => {
                             if (e.key === "Enter" && validEmail) {
                                 e.preventDefault()
@@ -170,7 +174,8 @@ export default function AuthForm({ callbackUrl, leagueId, initialEmail, initialM
                         id="email"
                         label="Email"
                         variant="bordered"
-                        isInvalid={email.length > 0 && !validEmail}
+                        isInvalid={emailTouched && email.length > 0 && !validEmail}
+                        errorMessage="Enter a valid email address"
                         classNames={AUTH_INPUT_CLASS_NAMES}
                         style={{ fontSize: "18px" }}
                         autoFocus
