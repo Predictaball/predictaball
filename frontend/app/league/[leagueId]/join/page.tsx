@@ -44,8 +44,24 @@ export async function generateMetadata({params}: {params: Promise<{leagueId: str
     }
 }
 
-export default async function JoinLeagueInvite({params}: {params: Promise<{leagueId: string}>}): Promise<React.JSX.Element> {
+// Tracking params some platforms append to shared links. They serve no purpose
+// here and can interfere with client-side routing on some mobile browsers, so
+// we strip them with a server-side redirect to the canonical URL.
+const TRACKING_PARAMS = ["fbclid", "gclid", "utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content"]
+
+export default async function JoinLeagueInvite(
+    {params, searchParams}: {
+        params: Promise<{leagueId: string}>
+        searchParams: Promise<Record<string, string | string[] | undefined>>
+    },
+): Promise<React.JSX.Element> {
     const { leagueId } = await params
+    const resolvedSearchParams = await searchParams
+    const hasTrackingParam = TRACKING_PARAMS.some(p => p in resolvedSearchParams)
+    if (hasTrackingParam) {
+        redirect(`/league/${leagueId}/join`)
+    }
+
     const session = await auth()
     const isLoggedIn = !!session?.user
 
@@ -83,12 +99,22 @@ export default async function JoinLeagueInvite({params}: {params: Promise<{leagu
                                 <JoinButton leagueId={leagueId}/>
                             ) : (
                                 <>
-                                    <Link href={`/login?callbackUrl=${encodeURIComponent(`/league/${leagueId}/join`)}`}>
-                                        <Button radius="full" className={"mt-6 w-full " + BUTTON_CLASS}>Sign in to join</Button>
-                                    </Link>
-                                    <Link href={`/login?callbackUrl=${encodeURIComponent(`/league/${leagueId}/join`)}`}>
-                                        <Button radius="full" className={"mt-3 w-full " + GHOST_BUTTON_CLASS}>New here? Sign up</Button>
-                                    </Link>
+                                    <Button
+                                        as={Link}
+                                        href={`/login?callbackUrl=${encodeURIComponent(`/league/${leagueId}/join`)}`}
+                                        radius="full"
+                                        className={"mt-6 w-full " + BUTTON_CLASS}
+                                    >
+                                        Sign in to join
+                                    </Button>
+                                    <Button
+                                        as={Link}
+                                        href={`/login?callbackUrl=${encodeURIComponent(`/league/${leagueId}/join`)}`}
+                                        radius="full"
+                                        className={"mt-3 w-full " + GHOST_BUTTON_CLASS}
+                                    >
+                                        New here? Sign up
+                                    </Button>
                                 </>
                             )}
                         </>
@@ -98,9 +124,9 @@ export default async function JoinLeagueInvite({params}: {params: Promise<{leagu
                             <p className="mt-2 text-sm text-slate-500 dark:text-gray-400">
                                 The invite link may be invalid or expired.
                             </p>
-                            <Link href="/">
-                                <Button radius="full" className={"mt-6 w-full " + BUTTON_CLASS}>Back to homepage</Button>
-                            </Link>
+                            <Button as={Link} href="/" radius="full" className={"mt-6 w-full " + BUTTON_CLASS}>
+                                Back to homepage
+                            </Button>
                         </>
                     )}
                 </div>
