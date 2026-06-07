@@ -49,7 +49,7 @@ export default function LeaderboardPagination(props: LeaderboardPaginationProps)
                         className="fixed bottom-4 left-1/2 -translate-x-1/2 rounded-full bg-white/70 dark:bg-gray-900/70 backdrop-blur-md border border-slate-200/70 dark:border-white/10 shadow-lg shadow-slate-900/5 p-1"
                         classNames={{
                             cursor: BUTTON_CLASS,
-                            item: "bg-transparent text-slate-900 dark:text-white hover:text-white dark:hover:text-black hover:bg-slate-900 dark:hover:bg-white"
+                            item: "bg-transparent text-slate-700 dark:text-gray-200 hover:bg-slate-900/10 dark:hover:bg-white/10 transition-colors"
                         }}
             />}
     </>
