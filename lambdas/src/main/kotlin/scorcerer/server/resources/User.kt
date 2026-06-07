@@ -135,6 +135,14 @@ fun userRoutes(contexts: RequestContexts, leaderboardService: LeaderboardService
         val body: SignupRequest = req.bodyString().fromJson()
         val firstName = body.firstName.trim()
         val familyName = body.familyName.trim()
+        if (firstName.isEmpty() || familyName.isEmpty()) {
+            throw ApiResponseError(Response(Status.BAD_REQUEST).body("First and last name are required"))
+        }
+        // Browser autofill sometimes drops an email into a name field if the
+        // form lacks autocomplete hints. Reject as a defensive check.
+        if (firstName.contains("@") || familyName.contains("@")) {
+            throw ApiResponseError(Response(Status.BAD_REQUEST).body("Names cannot contain '@'"))
+        }
         val supportedTeamId = body.supportedTeamId.toIntOrNull()
             ?: throw ApiResponseError(Response(Status.BAD_REQUEST).body("Invalid supportedTeamId"))
 

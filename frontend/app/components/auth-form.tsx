@@ -172,6 +172,7 @@ export default function AuthForm({ callbackUrl, leagueId, initialEmail, initialM
                         type="email"
                         name="email"
                         id="email"
+                        autoComplete="email"
                         label="Email"
                         variant="bordered"
                         isInvalid={emailTouched && email.length > 0 && !validEmail}
@@ -216,6 +217,8 @@ export default function AuthForm({ callbackUrl, leagueId, initialEmail, initialM
                             }
                         }}
                         type={isVisible ? "text" : "password"}
+                        name="password"
+                        autoComplete="current-password"
                         label="Password"
                         variant="bordered"
                         isInvalid={didFail}
@@ -252,6 +255,8 @@ export default function AuthForm({ callbackUrl, leagueId, initialEmail, initialM
                         <Input
                             onChange={(e) => setFirstName(e.target.value)}
                             type="text"
+                            name="given-name"
+                            autoComplete="given-name"
                             label="First name"
                             variant="bordered"
                             classNames={AUTH_INPUT_CLASS_NAMES}
@@ -261,6 +266,8 @@ export default function AuthForm({ callbackUrl, leagueId, initialEmail, initialM
                         <Input
                             onChange={(e) => setLastName(e.target.value)}
                             type="text"
+                            name="family-name"
+                            autoComplete="family-name"
                             label="Last name"
                             variant="bordered"
                             classNames={AUTH_INPUT_CLASS_NAMES}
@@ -271,6 +278,8 @@ export default function AuthForm({ callbackUrl, leagueId, initialEmail, initialM
                         <Input
                             onChange={(e) => setPassword(e.target.value)}
                             type={isVisible ? "text" : "password"}
+                            name="new-password"
+                            autoComplete="new-password"
                             label="Password"
                             variant="bordered"
                             classNames={AUTH_INPUT_CLASS_NAMES}
