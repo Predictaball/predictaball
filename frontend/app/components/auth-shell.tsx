@@ -1,7 +1,6 @@
 import React from "react"
 import Link from "next/link"
 import FlagGlobeClient from "@/app/components/flags/flag-globe-client"
-import LegalFooter from "@/app/components/legal-footer"
 
 interface AuthShellProps {
     title: string
@@ -54,10 +53,6 @@ export default function AuthShell({title, children}: AuthShellProps): React.JSX.
                         Cookie Policy
                     </Link>.
                 </p>
-            </div>
-
-            <div className="relative">
-                <LegalFooter/>
             </div>
         </section>
     )

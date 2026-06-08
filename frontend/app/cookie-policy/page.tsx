@@ -1,7 +1,6 @@
 import React from "react"
 import Link from "next/link"
 import {Header} from "@/app/components/landing-header"
-import LegalFooter from "@/app/components/legal-footer"
 
 export const metadata = {
     title: "Cookie Policy | Predictaball.live",
@@ -93,8 +92,6 @@ export default function CookiePolicy(): React.JSX.Element {
                     </div>
                 </div>
             </section>
-
-            <LegalFooter/>
         </main>
     )
 }

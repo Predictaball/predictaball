@@ -2,6 +2,7 @@ import type {Metadata} from "next";
 import {Montserrat} from "next/font/google";
 import "./globals.css";
 import {Providers} from "@/app/providers";
+import LegalFooter from "@/app/components/legal-footer";
 import React from "react";
 
 const montserrat = Montserrat({subsets: ["latin"]});
@@ -25,6 +26,7 @@ export default function RootLayout({children}: Readonly<{
             <body className={montserrat.className + " bg-slate-50 text-slate-900 dark:bg-gray-900 dark:text-white"}>
             <Providers>
                 {children}
+                <LegalFooter/>
             </Providers>
             </body>
         </html>

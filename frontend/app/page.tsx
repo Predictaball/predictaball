@@ -1,7 +1,6 @@
 import React from "react";
 import {Header} from "@/app/components/landing-header";
 import FlagGlobe from "@/app/components/flags/flag-globe-client";
-import LegalFooter from "@/app/components/legal-footer";
 import HowItWorks from "@/app/components/landing/how-it-works";
 
 export default async function Home(): Promise<React.JSX.Element> {
@@ -54,7 +53,6 @@ export default async function Home(): Promise<React.JSX.Element> {
                 </HowItWorks>
             </section>
 
-            <LegalFooter/>
         </main>
     );
 }
