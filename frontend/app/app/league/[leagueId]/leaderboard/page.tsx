@@ -21,7 +21,7 @@ export default async function Home({ params }: { params: Promise<{ leagueId: str
     const showInvitePrompt = league?.kind === LeagueKindEnum.User && league.users.length === 1
 
     return (
-        <main className="relative min-h-svh bg-slate-50 text-slate-900 dark:bg-gray-900 dark:text-white overflow-x-hidden">
+        <main className="relative min-h-dvh bg-slate-50 text-slate-900 dark:bg-gray-900 dark:text-white overflow-x-hidden">
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(59,130,246,0.08),transparent_55%),radial-gradient(ellipse_at_bottom,rgba(34,197,94,0.05),transparent_60%)] dark:bg-[radial-gradient(ellipse_at_top,rgba(59,130,246,0.15),transparent_55%),radial-gradient(ellipse_at_bottom,rgba(34,197,94,0.10),transparent_60%)]"/>
 
             <div className="relative w-full max-w-3xl mx-auto px-4 sm:px-6 py-6 space-y-8">

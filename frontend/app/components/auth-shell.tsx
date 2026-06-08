@@ -10,7 +10,7 @@ interface AuthShellProps {
 
 export default function AuthShell({title, children}: AuthShellProps): React.JSX.Element {
     return (
-        <section className="relative min-h-svh bg-slate-50 text-slate-900 dark:bg-gray-900 dark:text-white overflow-hidden">
+        <section className="relative min-h-dvh bg-slate-50 text-slate-900 dark:bg-gray-900 dark:text-white overflow-hidden">
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(59,130,246,0.08),transparent_55%),radial-gradient(ellipse_at_bottom,rgba(34,197,94,0.06),transparent_55%)] dark:bg-[radial-gradient(ellipse_at_top,rgba(59,130,246,0.18),transparent_55%),radial-gradient(ellipse_at_bottom,rgba(34,197,94,0.12),transparent_55%)]"/>
 
             <div
@@ -24,7 +24,7 @@ export default function AuthShell({title, children}: AuthShellProps): React.JSX.
                 </div>
             </div>
 
-            <div className="relative flex flex-col items-center justify-center px-6 py-12 min-h-svh">
+            <div className="relative flex flex-col items-center justify-center px-6 py-12 min-h-dvh">
                 <Link href="/" className="group flex items-center mb-8">
                     <span className="flex items-baseline font-black tracking-tight text-lg">
                         <span className="bg-gradient-to-r from-blue-500 via-cyan-300 to-teal-300 bg-clip-text text-transparent">

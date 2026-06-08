@@ -35,7 +35,7 @@ export default async function Home(): Promise<React.JSX.Element> {
                 </div>
             </section>
 
-            <section className="relative flex flex-col items-center px-6 lg:px-10 py-24 min-h-svh overflow-hidden">
+            <section className="relative flex flex-col items-center px-6 lg:px-10 py-24 min-h-dvh overflow-hidden">
                 <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(59,130,246,0.12),transparent_55%),radial-gradient(ellipse_at_bottom,rgba(34,197,94,0.10),transparent_55%)]"/>
 
                 <HowItWorks>

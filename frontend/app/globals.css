@@ -2,6 +2,18 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Anchor the viewport background on the root element so iOS Safari's dynamic
+   toolbar resize and rubber-band overscroll never expose a flat black strip
+   below the page content. Pages size their <main> with min-h-dvh, but the
+   bounce/overscroll area paints the html background. */
+html {
+    background-color: rgb(248 250 252); /* slate-50 */
+}
+
+html.dark {
+    background-color: rgb(17 24 39); /* gray-900 */
+}
+
 /* Chrome / Safari autofill overrides the input text colour to black, which is
    unreadable on our dark-mode inputs. The long inset box-shadow trick re-paints
    the autofill background; -webkit-text-fill-color overrides the autofill text

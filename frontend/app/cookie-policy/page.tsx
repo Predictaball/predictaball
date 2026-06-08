@@ -10,7 +10,7 @@ export const metadata = {
 
 export default function CookiePolicy(): React.JSX.Element {
     return (
-        <main className="bg-slate-50 text-slate-900 dark:bg-gray-900 dark:text-white min-h-svh flex flex-col">
+        <main className="bg-slate-50 text-slate-900 dark:bg-gray-900 dark:text-white min-h-dvh flex flex-col">
             <div className="p-10">
                 <Header/>
             </div>
