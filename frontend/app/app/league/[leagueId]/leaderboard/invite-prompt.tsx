@@ -5,6 +5,8 @@ import { Button } from "@nextui-org/react"
 import toast, { Toaster } from "react-hot-toast"
 import { copyToClipboard } from "@/app/util/clipboard"
 import { BUTTON_CLASS } from "@/app/util/css-classes"
+import { inviteUrl } from "@/app/util/leagues"
+import InviteQRCode from "@/app/components/leaderboard/invite-qr-code"
 
 interface InvitePromptProps {
     leagueId: string
@@ -13,10 +15,10 @@ interface InvitePromptProps {
 
 export default function InvitePrompt({ leagueId, leagueName }: InvitePromptProps): React.JSX.Element {
     const [copied, setCopied] = useState(false)
-    const inviteUrl = `https://www.predictaball.live/league/${leagueId}/join`
+    const url = inviteUrl(leagueId)
 
     async function copy() {
-        const ok = await copyToClipboard(inviteUrl)
+        const ok = await copyToClipboard(url)
         if (ok) {
             setCopied(true)
             toast.success("Invite link copied")
@@ -34,8 +36,11 @@ export default function InvitePrompt({ leagueId, leagueName }: InvitePromptProps
                     You&apos;re the only one in &ldquo;{leagueName}&rdquo;
                 </h3>
                 <p className="mt-2 text-sm text-slate-600 dark:text-gray-300">
-                    Share the invite link to get the league going. Friends can sign up straight from the link if they&apos;re new.
+                    Share the invite link or QR code to get the league going. Friends can sign up straight from the link if they&apos;re new.
                 </p>
+                <div className="mt-4 flex justify-center">
+                    <InviteQRCode leagueId={leagueId} size={160}/>
+                </div>
                 <Button onPress={copy} radius="full" className={"mt-4 " + BUTTON_CLASS}>
                     {copied ? "Copied!" : "Copy invite link"}
                 </Button>

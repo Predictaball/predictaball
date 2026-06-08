@@ -6,6 +6,8 @@ import { useRouter, useSearchParams } from "next/navigation"
 import toast, { Toaster } from "react-hot-toast"
 import { copyToClipboard } from "@/app/util/clipboard"
 import { BUTTON_CLASS, GHOST_BUTTON_CLASS } from "@/app/util/css-classes"
+import { inviteUrl } from "@/app/util/leagues"
+import InviteQRCode from "@/app/components/leaderboard/invite-qr-code"
 
 interface JustCreatedModalProps {
     leagueId: string
@@ -19,7 +21,7 @@ export default function JustCreatedModal({ leagueId, leagueName }: JustCreatedMo
     const { isOpen, onOpen, onClose } = useDisclosure()
     const [copied, setCopied] = useState(false)
 
-    const inviteUrl = `https://www.predictaball.live/league/${leagueId}/join`
+    const url = inviteUrl(leagueId)
 
     useEffect(() => {
         if (shouldOpen) onOpen()
@@ -35,7 +37,7 @@ export default function JustCreatedModal({ leagueId, leagueName }: JustCreatedMo
     }
 
     async function copy() {
-        const ok = await copyToClipboard(inviteUrl)
+        const ok = await copyToClipboard(url)
         if (ok) {
             setCopied(true)
             toast.success("Invite link copied")
@@ -60,10 +62,13 @@ export default function JustCreatedModal({ leagueId, leagueName }: JustCreatedMo
                     </ModalHeader>
                     <ModalBody className="space-y-3">
                         <p className="text-sm text-slate-600 dark:text-gray-300">
-                            Share this link with friends to invite them. If they&apos;re new, they can sign up straight from the link.
+                            Share this link with friends to invite them, or let them scan the QR code. If they&apos;re new, they can sign up straight from the link.
                         </p>
+                        <div className="flex justify-center py-1">
+                            <InviteQRCode leagueId={leagueId}/>
+                        </div>
                         <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 px-3 py-2.5">
-                            <p className="text-xs text-slate-500 dark:text-gray-400 break-all font-mono">{inviteUrl}</p>
+                            <p className="text-xs text-slate-500 dark:text-gray-400 break-all font-mono">{url}</p>
                         </div>
                         <p className="text-xs text-slate-500 dark:text-gray-400">
                             You can find this link any time via the <span className="font-semibold text-slate-700 dark:text-gray-200">Invite</span> button at the top.
