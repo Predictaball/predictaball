@@ -24,9 +24,9 @@ export default function RootLayout({children}: Readonly<{
 }>) {
     return (
         <html lang="en" suppressHydrationWarning>
-            <body className={`${montserrat.variable} ${spaceGrotesk.variable} ${montserrat.className} bg-slate-50 text-slate-900 dark:bg-gray-900 dark:text-white min-h-screen flex flex-col`}>
+            <body className={`${montserrat.variable} ${spaceGrotesk.variable} ${montserrat.className} bg-slate-50 text-slate-900 dark:bg-gray-900 dark:text-white`}>
             <Providers>
-                <div className="flex-1">{children}</div>
+                <div className="min-h-screen">{children}</div>
                 <LegalFooter/>
             </Providers>
             </body>
