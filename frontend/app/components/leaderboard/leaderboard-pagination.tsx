@@ -46,7 +46,7 @@ export default function LeaderboardPagination(props: LeaderboardPaginationProps)
         ))}
         {props.shouldPaginate && totalPages > 1 &&
             <Pagination showControls radius="full" total={totalPages} initialPage={1} onChange={handlePageChange}
-                        className="fixed bottom-4 left-1/2 -translate-x-1/2 rounded-full bg-white/70 dark:bg-gray-900/70 backdrop-blur-md border border-slate-200/70 dark:border-white/10 shadow-lg shadow-slate-900/5 p-1"
+                        className="sticky bottom-4 self-center mt-4 rounded-full bg-white/70 dark:bg-gray-900/70 backdrop-blur-md border border-slate-200/70 dark:border-white/10 shadow-lg shadow-slate-900/5 p-1"
                         classNames={{
                             cursor: BUTTON_CLASS,
                             item: "bg-transparent text-slate-700 dark:text-gray-200 hover:bg-slate-900/10 dark:hover:bg-white/10 transition-colors"

@@ -38,7 +38,7 @@ export default async function Home({ params }: { params: Promise<{ leagueId: str
                     </div>
                 </header>
 
-                <section className="flex flex-col items-center pb-24">
+                <section className="flex flex-col items-center">
                     <Leaderboard shouldPaginate={true} leagueId={leagueId} limit={false} />
                     {showInvitePrompt && league && (
                         <InvitePrompt leagueId={leagueId} leagueName={league.name}/>
