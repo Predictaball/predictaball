@@ -13,17 +13,17 @@ export default async function Home(): Promise<React.JSX.Element> {
                 </div>
 
                 <div className="relative z-40 flex flex-1 flex-col lg:flex-row items-center gap-8 lg:gap-12 pt-20 lg:pt-0">
-                    <div className="flex-1 w-full max-w-[700px] text-center lg:text-left">
-                        <div className="text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold leading-[1.05]">
+                    <div className="flex-1 w-full max-w-[700px] text-center lg:text-left font-display">
+                        <div className="text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold leading-[1.05] tracking-tight">
                             FOOTBALL
                         </div>
-                        <div className="text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold leading-[1.05]">
+                        <div className="text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold leading-[1.05] tracking-tight">
                             JUST GOT
                         </div>
-                        <div className="text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-bold leading-[1.05] bg-gradient-to-r from-blue-600 via-cyan-400 to-teal-300 inline-block text-transparent bg-clip-text animate-gradient" style={{backgroundSize: '200% 200%'}}>
+                        <div className="text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-bold leading-[1.05] tracking-tight bg-gradient-to-r from-blue-600 via-cyan-400 to-teal-300 inline-block text-transparent bg-clip-text animate-gradient" style={{backgroundSize: '200% 200%'}}>
                             FUNNER
                         </div>
-                        <div className="mt-6 text-lg md:text-xl text-slate-600 dark:text-gray-300">
+                        <div className="font-sans mt-6 text-lg md:text-xl text-slate-600 dark:text-gray-300">
                             World Cup 2026 Score Predictor
                         </div>
                     </div>
@@ -40,7 +40,7 @@ export default async function Home(): Promise<React.JSX.Element> {
                 <HowItWorks>
                     <div className="mt-24 relative overflow-hidden rounded-3xl bg-gradient-to-r from-blue-600/20 via-cyan-500/20 to-teal-400/20 p-[1px]">
                         <div className="rounded-3xl bg-white dark:bg-gray-900/90 backdrop-blur-sm px-8 py-14 text-center">
-                            <h3 className="text-4xl lg:text-5xl font-black tracking-tight">
+                            <h3 className="font-display text-4xl lg:text-5xl font-black tracking-tight">
                                 Ready to <span className="bg-gradient-to-r from-blue-500 via-cyan-300 to-teal-300 bg-clip-text text-transparent">play</span>?
                             </h3>
                             <p className="mt-4 text-lg text-slate-600 dark:text-gray-300">Sign up now and start predicting.</p>

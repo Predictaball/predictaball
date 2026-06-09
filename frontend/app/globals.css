@@ -2,6 +2,17 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Type pairing: Montserrat is the body default (set on <body>); Space Grotesk
+   is the display face for every heading. Applying it here in the base layer
+   means all h1–h4 across the app inherit it automatically — no per-heading
+   class needed. Non-heading display text (the hero wordmark, big landing
+   numerals) opts in explicitly with the `font-display` utility. */
+@layer base {
+    h1, h2, h3, h4 {
+        font-family: var(--font-display), var(--font-montserrat), sans-serif;
+    }
+}
+
 /* Chrome / Safari autofill overrides the input text colour to black, which is
    unreadable on our dark-mode inputs. The long inset box-shadow trick re-paints
    the autofill background; -webkit-text-fill-color overrides the autofill text

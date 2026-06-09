@@ -1,11 +1,12 @@
 import type {Metadata} from "next";
-import {Montserrat} from "next/font/google";
+import {Montserrat, Space_Grotesk} from "next/font/google";
 import "./globals.css";
 import {Providers} from "@/app/providers";
 import LegalFooter from "@/app/components/legal-footer";
 import React from "react";
 
-const montserrat = Montserrat({subsets: ["latin"]});
+const montserrat = Montserrat({subsets: ["latin"], variable: "--font-montserrat"});
+const spaceGrotesk = Space_Grotesk({subsets: ["latin"], variable: "--font-display"});
 
 export const metadata: Metadata = {
     metadataBase: new URL("https://www.predictaball.live"),
@@ -23,7 +24,7 @@ export default function RootLayout({children}: Readonly<{
 }>) {
     return (
         <html lang="en" suppressHydrationWarning>
-            <body className={montserrat.className + " bg-slate-50 text-slate-900 dark:bg-gray-900 dark:text-white"}>
+            <body className={`${montserrat.variable} ${spaceGrotesk.variable} ${montserrat.className} bg-slate-50 text-slate-900 dark:bg-gray-900 dark:text-white`}>
             <Providers>
                 {children}
                 <LegalFooter/>

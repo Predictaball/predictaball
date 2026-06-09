@@ -7,7 +7,7 @@ export function Header(): React.JSX.Element {
     return <div className="z-50 w-full items-center justify-center text-sm flex">
         <div className="w-full max-w-[800px] flex justify-between items-center">
             <Link href="/" className="group flex items-center gap-2">
-                <span className="flex items-baseline font-black tracking-tight">
+                <span className="font-display flex items-baseline font-black tracking-tight">
                     <span className="text-lg bg-gradient-to-r from-blue-500 via-cyan-300 to-teal-300 bg-clip-text text-transparent">
                         predicta
                     </span>

@@ -12,7 +12,7 @@ export default function HowItWorks({children, compact}: {children?: React.ReactN
         <div className="relative max-w-5xl w-full mx-auto">
             <div className={`flex flex-col items-center text-center ${compact ? "mb-12" : "mb-20"}`}>
                 <span className="text-xs font-semibold tracking-[0.3em] text-cyan-600/90 dark:text-cyan-300/80 uppercase mb-4">How it works</span>
-                <h2 className={`${primaryHeading} font-black tracking-tight`}>
+                <h2 className={`font-display ${primaryHeading} font-black tracking-tight`}>
                     <span className="bg-gradient-to-r from-blue-500 via-cyan-300 to-teal-300 bg-clip-text text-transparent">
                         Predict every game.
                     </span>
@@ -68,7 +68,7 @@ export default function HowItWorks({children, compact}: {children?: React.ReactN
 
             <div className={`flex flex-col items-center text-center ${compact ? "mt-20 mb-12" : "mt-28 mb-16"}`}>
                 <span className="text-xs font-semibold tracking-[0.3em] text-cyan-600/90 dark:text-cyan-300/80 uppercase mb-4">Power-ups</span>
-                <h2 className={`${secondaryHeading} font-black tracking-tight`}>
+                <h2 className={`font-display ${secondaryHeading} font-black tracking-tight`}>
                     <span className="text-slate-900 dark:text-white">Play your </span>
                     <span className="bg-gradient-to-r from-blue-500 via-cyan-300 to-teal-300 bg-clip-text text-transparent">chips</span>
                     <span className="text-slate-900 dark:text-white"> wisely.</span>
