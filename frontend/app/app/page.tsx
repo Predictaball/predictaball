@@ -10,6 +10,7 @@ import LinkToHistory from "@/app/components/link-to-history"
 import AdminButton from "@/app/components/admin-button";
 import ThemeToggle from "@/app/components/theme-toggle";
 import SectionHeading from "@/app/components/section-heading";
+import {PitchPerspective} from "@/app/components/atmosphere";
 import LeaguesHelp from "@/app/components/leaderboard/leagues-help";
 import MatchesHelp from "@/app/components/predictions/matches-help";
 import {FlagImage} from "@/app/components/predictions/flag-image";
@@ -54,6 +55,7 @@ const Home = async ({searchParams}: {searchParams: Promise<Record<string, string
     return (
         <main className="relative min-h-screen bg-slate-50 text-slate-900 dark:bg-gray-900 dark:text-white overflow-x-hidden">
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(59,130,246,0.08),transparent_55%),radial-gradient(ellipse_at_bottom,rgba(34,197,94,0.05),transparent_60%)] dark:bg-[radial-gradient(ellipse_at_top,rgba(59,130,246,0.15),transparent_55%),radial-gradient(ellipse_at_bottom,rgba(34,197,94,0.10),transparent_60%)]"/>
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-svh"><PitchPerspective/></div>
 
             <div className="relative w-full max-w-screen-lg mx-auto px-4 sm:px-6 py-6 space-y-10">
                 <Toaster />
