@@ -9,8 +9,10 @@ import org.http4k.routing.bind
 import org.http4k.routing.path
 import org.http4k.routing.routes
 import org.jetbrains.exposed.v1.core.JoinType
+import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.inList
+import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.selectAll
@@ -283,10 +285,54 @@ fun userRoutes(contexts: RequestContexts, leaderboardService: LeaderboardService
     "/user/profile" bind Method.PATCH to { req ->
         val userId = contexts.extractUserId(req)
         val body: UpdateUserProfileRequest = req.bodyString().fromJson()
-        transaction {
+
+        val newFirstName = body.firstName?.trim()
+        val newFamilyName = body.familyName?.trim()
+        if (newFirstName?.isEmpty() == true || newFamilyName?.isEmpty() == true) {
+            throw ApiResponseError(Response(Status.BAD_REQUEST).body("Name cannot be empty"))
+        }
+        if (newFirstName?.contains("@") == true || newFamilyName?.contains("@") == true) {
+            throw ApiResponseError(Response(Status.BAD_REQUEST).body("Names cannot contain '@'"))
+        }
+        val newTeamId = body.supportedTeamId?.toIntOrNull()
+        if (body.supportedTeamId != null && newTeamId == null) {
+            throw ApiResponseError(Response(Status.BAD_REQUEST).body("Invalid supportedTeamId"))
+        }
+
+        val (teamChanged, finalTeamId) = transaction {
+            val current = MemberTable.selectAll().where { MemberTable.id eq userId }.firstOrNull()
+                ?: throw ApiResponseError(Response(Status.BAD_REQUEST).body("User does not exist"))
+            val previousTeamId = current[MemberTable.supportedTeamId]
+
+            if (newTeamId != null) {
+                val teamExists = TeamTable.selectAll().where { TeamTable.id eq newTeamId }.count() > 0
+                if (!teamExists) {
+                    throw ApiResponseError(Response(Status.BAD_REQUEST).body("Team does not exist"))
+                }
+            }
+
             MemberTable.update({ MemberTable.id eq userId }) {
                 if (body.emailReminders != null) it[emailReminders] = body.emailReminders
+                if (newFirstName != null) it[firstName] = newFirstName.capitaliseName()
+                if (newFamilyName != null) it[familyName] = newFamilyName.capitaliseName()
+                if (newTeamId != null) it[supportedTeamId] = newTeamId
             }
+
+            // When the team changes, swap the country-league membership.
+            if (newTeamId != null && previousTeamId != null && previousTeamId != newTeamId) {
+                val previousLeagueId = TeamTable.select(TeamTable.name).where { TeamTable.id eq previousTeamId }
+                    .single()[TeamTable.name].lowercase().replace(Regex("\\s+"), "-")
+                LeagueMembershipTable.deleteWhere {
+                    (LeagueMembershipTable.memberId eq userId).and(LeagueMembershipTable.leagueId eq previousLeagueId)
+                }
+            }
+            Pair(newTeamId != null && previousTeamId != newTeamId, newTeamId)
+        }
+        if (teamChanged && finalTeamId != null) {
+            addToCountryLeague(userId, finalTeamId)
+        }
+        if (newFirstName != null || newFamilyName != null || teamChanged) {
+            runBlocking { leaderboardService.updateGlobalLeaderboard(leaderboardService.getLatestLeaderboardMatchDay()) }
         }
         Response(Status.OK)
     },

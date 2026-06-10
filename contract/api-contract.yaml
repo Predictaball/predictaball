@@ -1158,6 +1158,12 @@ paths:
               properties:
                 emailReminders:
                   type: boolean
+                firstName:
+                  type: string
+                familyName:
+                  type: string
+                supportedTeamId:
+                  type: string
       responses:
         '200':
           description: Successful response

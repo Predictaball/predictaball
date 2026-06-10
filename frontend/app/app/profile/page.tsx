@@ -6,6 +6,7 @@ import { UserApi } from "@/client"
 import { FlagImage } from "@/app/components/predictions/flag-image"
 import BackButton from "@/app/components/back-button"
 import RemindersToggle from "@/app/components/profile/reminders-toggle"
+import EditProfileButton from "@/app/components/profile/edit-profile-button"
 import { SECTION_EYEBROW } from "@/app/util/css-classes"
 
 export default async function ProfilePage(): Promise<React.JSX.Element> {
@@ -51,6 +52,13 @@ export default async function ProfilePage(): Promise<React.JSX.Element> {
                                     Supporting <span className="font-semibold text-slate-700 dark:text-gray-200">{profile.supportedTeamName}</span>
                                 </p>
                             )}
+                            <div className="mt-4">
+                                <EditProfileButton
+                                    initialFirstName={profile.firstName}
+                                    initialFamilyName={profile.familyName}
+                                    initialSupportedTeamId={profile.supportedTeamId ?? null}
+                                />
+                            </div>
                         </section>
 
                         <section className="space-y-3">
