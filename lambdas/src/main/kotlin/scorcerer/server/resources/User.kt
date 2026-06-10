@@ -34,6 +34,7 @@ import scorcerer.server.db.tables.LeagueTable
 import scorcerer.server.db.tables.MemberTable
 import scorcerer.server.db.tables.PredictionTable
 import scorcerer.server.db.tables.TeamTable
+import scorcerer.server.emitCount
 import scorcerer.server.extractUserId
 import scorcerer.server.fromJson
 import scorcerer.server.log
@@ -127,6 +128,7 @@ fun userRoutes(contexts: RequestContexts, leaderboardService: LeaderboardService
             }
             addToGlobalLeague(userId)
             log.info("Created OAuth member ($userId)")
+            emitCount("SignupOAuth")
             runBlocking { leaderboardService.updateGlobalLeaderboard(leaderboardService.getLatestLeaderboardMatchDay()) }
         }
         val tokens = runBlocking { authProvider.generateTokensForOAuth(userId, body.email, body.firstName, body.familyName) }
@@ -171,6 +173,7 @@ fun userRoutes(contexts: RequestContexts, leaderboardService: LeaderboardService
         addToGlobalLeague(userId)
         addToCountryLeague(userId, supportedTeamId)
         log.info("Added to global and country leagues")
+        emitCount("SignupCredentials")
         runBlocking { leaderboardService.updateGlobalLeaderboard(leaderboardService.getLatestLeaderboardMatchDay()) }
         Response(Status.OK)
     },

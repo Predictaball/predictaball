@@ -16,6 +16,7 @@ import org.openapitools.server.models.ResetPasswordRequest
 import scorcerer.server.ApiResponseError
 import scorcerer.server.auth.AuthProvider
 import scorcerer.server.db.tables.MemberTable
+import scorcerer.server.emitCount
 import scorcerer.server.fromJson
 import scorcerer.server.log
 import scorcerer.server.toJson
@@ -48,6 +49,7 @@ fun authRoutes(authProvider: AuthProvider) = routes(
         runBlocking {
             try {
                 authProvider.resetPassword(body.email)
+                emitCount("PasswordResetRequested")
             } catch (e: Exception) {
                 log.error("Failed to reset password - $e")
                 throw ApiResponseError(Response(Status.BAD_REQUEST).body("Failed to reset password"))
@@ -61,6 +63,7 @@ fun authRoutes(authProvider: AuthProvider) = routes(
         runBlocking {
             try {
                 authProvider.confirmReset(body.email, body.otp, body.password)
+                emitCount("PasswordResetConfirmed")
             } catch (e: Exception) {
                 log.error("Failed to confirm password reset - $e")
                 throw ApiResponseError(Response(Status.BAD_REQUEST).body("Failed to reset password"))

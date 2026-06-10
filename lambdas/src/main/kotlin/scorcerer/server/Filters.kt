@@ -29,6 +29,7 @@ fun authFilter(requestContext: RequestContexts) = Filter { next ->
                 )
             } catch (e: Exception) {
                 log.error("JWT verification failed: ${e.message}")
+                emitCount("AuthFailure")
             }
             next(req)
         }

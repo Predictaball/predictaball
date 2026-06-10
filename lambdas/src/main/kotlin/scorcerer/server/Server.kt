@@ -88,6 +88,7 @@ private val schedulerMode = try {
 private val httpServer = cors
     .then(InitialiseRequestContext(requestContext))
     .then(loggingFilter)
+    .then(metricsFilter)
     .then(CatchAll(::handleError))
     .then(authFilter(requestContext))
     .then(allRoutes)
