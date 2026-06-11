@@ -1,0 +1,80 @@
+-- Replace football-data IDs with TheSportsDB IDs.
+-- football-data's free tier doesn't actually provide live in-match scores
+-- (only documented as 'delayed', empirically still TIMED with null scores
+-- 30+ min into a match). TheSportsDB's free public key returns live data
+-- accurately during the match. Mappings derived 2026-06-11 from a mix of
+-- /eventsday and /lookupevent calls, joined to our rows by team pair +
+-- nearest kickoff.
+
+UPDATE match SET external_match_id = '2391728' WHERE id = 1;
+UPDATE match SET external_match_id = '2461103' WHERE id = 2;
+UPDATE match SET external_match_id = '2461104' WHERE id = 3;
+UPDATE match SET external_match_id = '2391729' WHERE id = 4;
+UPDATE match SET external_match_id = '2391732' WHERE id = 5;
+UPDATE match SET external_match_id = '2391730' WHERE id = 6;
+UPDATE match SET external_match_id = '2391731' WHERE id = 7;
+UPDATE match SET external_match_id = '2461105' WHERE id = 8;
+UPDATE match SET external_match_id = '2391733' WHERE id = 9;
+UPDATE match SET external_match_id = '2391735' WHERE id = 10;
+UPDATE match SET external_match_id = '2391734' WHERE id = 11;
+UPDATE match SET external_match_id = '2461106' WHERE id = 12;
+UPDATE match SET external_match_id = '2391739' WHERE id = 13;
+UPDATE match SET external_match_id = '2391736' WHERE id = 14;
+UPDATE match SET external_match_id = '2391738' WHERE id = 15;
+UPDATE match SET external_match_id = '2391737' WHERE id = 16;
+UPDATE match SET external_match_id = '2391742' WHERE id = 17;
+UPDATE match SET external_match_id = '2461107' WHERE id = 18;
+UPDATE match SET external_match_id = '2391740' WHERE id = 19;
+UPDATE match SET external_match_id = '2391741' WHERE id = 20;
+UPDATE match SET external_match_id = '2461108' WHERE id = 21;
+UPDATE match SET external_match_id = '2391743' WHERE id = 22;
+UPDATE match SET external_match_id = '2391744' WHERE id = 23;
+UPDATE match SET external_match_id = '2391745' WHERE id = 24;
+UPDATE match SET external_match_id = '2461109' WHERE id = 25;
+UPDATE match SET external_match_id = '2461110' WHERE id = 26;
+UPDATE match SET external_match_id = '2391746' WHERE id = 27;
+UPDATE match SET external_match_id = '2391747' WHERE id = 28;
+UPDATE match SET external_match_id = '2391750' WHERE id = 29;
+UPDATE match SET external_match_id = '2391749' WHERE id = 30;
+UPDATE match SET external_match_id = '2391748' WHERE id = 31;
+UPDATE match SET external_match_id = '2461111' WHERE id = 32;
+UPDATE match SET external_match_id = '2461112' WHERE id = 33;
+UPDATE match SET external_match_id = '2391752' WHERE id = 34;
+UPDATE match SET external_match_id = '2391751' WHERE id = 35;
+UPDATE match SET external_match_id = '2391753' WHERE id = 36;
+UPDATE match SET external_match_id = '2391756' WHERE id = 37;
+UPDATE match SET external_match_id = '2391754' WHERE id = 38;
+UPDATE match SET external_match_id = '2391757' WHERE id = 39;
+UPDATE match SET external_match_id = '2391755' WHERE id = 40;
+UPDATE match SET external_match_id = '2391758' WHERE id = 41;
+UPDATE match SET external_match_id = '2461113' WHERE id = 42;
+UPDATE match SET external_match_id = '2391760' WHERE id = 43;
+UPDATE match SET external_match_id = '2391759' WHERE id = 44;
+UPDATE match SET external_match_id = '2391763' WHERE id = 45;
+UPDATE match SET external_match_id = '2391761' WHERE id = 46;
+UPDATE match SET external_match_id = '2391762' WHERE id = 47;
+UPDATE match SET external_match_id = '2461114' WHERE id = 48;
+UPDATE match SET external_match_id = '2391767' WHERE id = 49;
+UPDATE match SET external_match_id = '2461115' WHERE id = 50;
+UPDATE match SET external_match_id = '2391765' WHERE id = 51;
+UPDATE match SET external_match_id = '2391764' WHERE id = 52;
+UPDATE match SET external_match_id = '2461116' WHERE id = 53;
+UPDATE match SET external_match_id = '2391766' WHERE id = 54;
+UPDATE match SET external_match_id = '2391769' WHERE id = 55;
+UPDATE match SET external_match_id = '2391768' WHERE id = 56;
+UPDATE match SET external_match_id = '2391771' WHERE id = 57;
+UPDATE match SET external_match_id = '2461117' WHERE id = 58;
+UPDATE match SET external_match_id = '2461118' WHERE id = 59;
+UPDATE match SET external_match_id = '2391770' WHERE id = 60;
+UPDATE match SET external_match_id = '2391775' WHERE id = 61;
+UPDATE match SET external_match_id = '2461119' WHERE id = 62;
+UPDATE match SET external_match_id = '2391776' WHERE id = 63;
+UPDATE match SET external_match_id = '2391772' WHERE id = 64;
+UPDATE match SET external_match_id = '2391774' WHERE id = 65;
+UPDATE match SET external_match_id = '2391773' WHERE id = 66;
+UPDATE match SET external_match_id = '2391781' WHERE id = 67;
+UPDATE match SET external_match_id = '2391779' WHERE id = 68;
+UPDATE match SET external_match_id = '2391778' WHERE id = 69;
+UPDATE match SET external_match_id = '2461120' WHERE id = 70;
+UPDATE match SET external_match_id = '2391780' WHERE id = 71;
+UPDATE match SET external_match_id = '2391777' WHERE id = 72;

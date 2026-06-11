@@ -23,41 +23,32 @@ import scorcerer.utils.LeaderboardService
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
 
-// football-data's per-match endpoint. The competition-wide endpoint is served
-// from a stale cache (lastUpdated stays hours behind kickoff), so we hit each
-// tracked match individually for fresh data. Costs 1 request per live match
-// per minute — well within the 10/min free-tier budget for ~3 concurrent games.
+// TheSportsDB returns scores as strings ("2") and statuses as short codes
+// (NS / 1H / HT / 2H / FT / etc). Unknown fields are ignored — they ship many.
 @JsonIgnoreProperties(ignoreUnknown = true)
-private data class FdScore(val home: Int?, val away: Int?)
-
-@JsonIgnoreProperties(ignoreUnknown = true)
-private data class FdScoreBlock(val fullTime: FdScore)
-
-@JsonIgnoreProperties(ignoreUnknown = true)
-private data class FdMatch(
-    val id: Int,
-    val status: String,
-    val score: FdScoreBlock,
+private data class SdbEvent(
+    val idEvent: String,
+    val strStatus: String?,
+    val intHomeScore: String?,
+    val intAwayScore: String?,
 )
 
-private val LIVE_STATUSES = setOf("IN_PLAY", "PAUSED", "EXTRA_TIME", "PENALTY_SHOOTOUT")
+@JsonIgnoreProperties(ignoreUnknown = true)
+private data class SdbResponse(val events: List<SdbEvent>?)
+
+private val LIVE_STATUSES = setOf("1H", "HT", "2H", "ET", "PT", "INT", "BT")
+private val FINISHED_STATUSES = setOf("FT", "AET", "AP", "PEN")
 
 class ScoreUpdater(
     private val leaderboardService: LeaderboardService,
     private val tournamentStateService: TournamentStateService,
 ) {
     private val client = JavaHttpClient()
-    private val apiKey = System.getenv("FOOTBALL_DATA_API_KEY")
-    private val perMatchEndpoint = "https://api.football-data.org/v4/matches/"
+
+    // Public free key `3` — no auth header required, 30 req/min.
+    private val perMatchEndpoint = "https://www.thesportsdb.com/api/v1/json/3/lookupevent.php?id="
 
     fun run() {
-        if (apiKey.isNullOrBlank()) {
-            log.warn("FOOTBALL_DATA_API_KEY not set, skipping score update")
-            return
-        }
-
-        // Only poll matches we're actively tracking — anything currently LIVE,
-        // or UPCOMING within 4h of kickoff (covers the kickoff-detection window).
         val now = OffsetDateTime.now(ZoneOffset.UTC)
         val imminentCutoff = now.plusHours(4)
         val matches = transaction {
@@ -82,22 +73,27 @@ class ScoreUpdater(
         var transitions = 0
         matches.forEach { (matchId, externalId, currentState) ->
             val started = System.currentTimeMillis()
-            val response = client(Request(Method.GET, perMatchEndpoint + externalId).header("X-Auth-Token", apiKey))
+            val response = client(Request(Method.GET, perMatchEndpoint + externalId))
             val httpMs = System.currentTimeMillis() - started
-            val available = response.header("X-Requests-Available-Minute")
 
             if (!response.status.successful) {
-                log.warn("Match $matchId: football-data returned ${response.status.code} (http=${httpMs}ms, available=$available)")
+                log.warn("Match $matchId: TheSportsDB returned ${response.status.code} (http=${httpMs}ms)")
                 return@forEach
             }
 
-            val api = response.bodyString().fromJson<FdMatch>()
-            val home = api.score.fullTime.home ?: 0
-            val away = api.score.fullTime.away ?: 0
-            log.info("Match $matchId poll: http=${httpMs}ms api.status=${api.status} api.score=$home-$away available=$available")
+            val event = response.bodyString().fromJson<SdbResponse>().events?.firstOrNull()
+            if (event == null) {
+                log.warn("Match $matchId: TheSportsDB returned no event for id=$externalId")
+                return@forEach
+            }
+
+            val status = event.strStatus ?: ""
+            val home = event.intHomeScore?.toIntOrNull() ?: 0
+            val away = event.intAwayScore?.toIntOrNull() ?: 0
+            log.info("Match $matchId poll: http=${httpMs}ms api.status=$status api.score=$home-$away")
 
             when {
-                api.status == "FINISHED" -> {
+                status in FINISHED_STATUSES -> {
                     if (currentState == Match.State.UPCOMING) {
                         val matchDay = getMatchDay(matchId) ?: return@forEach
                         setScore(matchId, matchDay, home, away, leaderboardService, tournamentStateService)
@@ -106,15 +102,16 @@ class ScoreUpdater(
                     log.info("Match $matchId: $currentState -> COMPLETED ($home-$away)")
                     transitions++
                 }
-                api.status in LIVE_STATUSES -> {
+                status in LIVE_STATUSES -> {
                     val matchDay = getMatchDay(matchId) ?: return@forEach
                     setScore(matchId, matchDay, home, away, leaderboardService, tournamentStateService)
-                    log.info("Match $matchId: $currentState -> LIVE ($home-$away, api=${api.status})")
+                    log.info("Match $matchId: $currentState -> LIVE ($home-$away, api=$status)")
                     transitions++
                 }
-                api.status !in setOf("SCHEDULED", "TIMED") -> {
-                    log.warn("Match $matchId: api status=${api.status}, no-op")
+                status.isNotBlank() && status != "NS" && status != "TBD" -> {
+                    log.warn("Match $matchId: api status=$status, no-op")
                 }
+                // NS / TBD / "" — match hasn't started yet, do nothing.
             }
         }
         log.info("ScoreUpdater done: tracked=${matches.size} transitions=$transitions")
