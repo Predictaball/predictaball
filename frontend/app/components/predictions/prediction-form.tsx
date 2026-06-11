@@ -38,6 +38,7 @@ export default function PredictionForm({match, onPredictionSaved, userChips, onC
     const [awayScore, setAwayScore] = useState<number>(match.prediction?.awayScore ?? 0)
     const [chip, setChip] = useState<Chip>(match.prediction?.chip ?? Chip.None)
     const [isSending, setIsSending] = useState(false)
+    const [justSaved, setJustSaved] = useState(false)
     const [hasTouchedScore, setHasTouchedScore] = useState(false)
     const {isOpen: isConfirmOpen, onOpen: openConfirm, onClose: closeConfirm} = useDisclosure()
     const [savedPrediction, setSavedPrediction] = useState(
@@ -66,11 +67,14 @@ export default function PredictionForm({match, onPredictionSaved, userChips, onC
                 })
             }
             vibrate([20, 40, 20])
-            toast.success("Prediction saved")
-            setTimeout(onPredictionSaved, ADVANCE_DELAY_MS)
+            setIsSending(false)
+            setJustSaved(true)
+            setTimeout(() => {
+                setJustSaved(false)
+                onPredictionSaved()
+            }, ADVANCE_DELAY_MS)
         } catch {
             toast.error("Couldn't save prediction — try again")
-        } finally {
             setIsSending(false)
         }
     }
@@ -141,10 +145,16 @@ export default function PredictionForm({match, onPredictionSaved, userChips, onC
                 <Button
                     onPress={handleSubmitClick}
                     isLoading={isSending}
-                    isDisabled={!hasChanges}
-                    className={`mt-4 w-full h-11 rounded-xl ${ACTION_BUTTON_CLASS}`}
+                    isDisabled={!hasChanges || justSaved}
+                    className={`mt-4 w-full h-11 rounded-xl transition-colors ${
+                        justSaved
+                            ? "bg-gradient-to-r from-cyan-400 to-teal-400 text-gray-950 font-bold shadow-lg shadow-cyan-500/25 !opacity-100"
+                            : ACTION_BUTTON_CLASS
+                    }`}
                 >
-                    {savedPrediction ? "Update prediction" : "Submit prediction"}
+                    {justSaved
+                        ? "Saved ✓"
+                        : savedPrediction ? "Update prediction" : "Submit prediction"}
                 </Button>
             )}
 
