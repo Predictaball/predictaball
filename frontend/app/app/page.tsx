@@ -6,7 +6,6 @@ import SignOutButton from "@/app/components/sign-out-button";
 import Dashboard from "@/app/components/leaderboard/dashboard";
 import HeadlineSuspense from "@/app/components/points/headline-suspense";
 import { Toaster } from "react-hot-toast";
-import LinkToHistory from "@/app/components/link-to-history"
 import AdminButton from "@/app/components/admin-button";
 import ThemeToggle from "@/app/components/theme-toggle";
 import SectionHeading from "@/app/components/section-heading";
@@ -21,6 +20,7 @@ import PredictionPanel from "@/app/components/predictions/prediction-panel";
 import PredictNowBanner from "@/app/components/predictions/predict-now-banner";
 import {MatchSelectionProvider} from "@/app/components/predictions/match-selection";
 import {getUserChips} from "@/app/components/predictions/get-user-chips";
+import {getUserId} from "@/app/auth/jwt-handler";
 
 const Home = async ({searchParams}: {searchParams: Promise<Record<string, string | string[] | undefined>>}) => {
     const resolvedSearchParams = await searchParams
@@ -37,13 +37,21 @@ const Home = async ({searchParams}: {searchParams: Promise<Record<string, string
         redirect("/app/onboarding")
     }
 
-    const [liveMatches, upcomingMatches, userChips, leagues, tournamentState] = await Promise.all([
+    const [liveMatches, upcomingMatches, completedMatches, userChips, leagues, tournamentState, userId] = await Promise.all([
         matchApi.listMatches({filterType: ListMatchesFilterTypeEnum.Live}).catch(() => []),
         matchApi.listMatches({filterType: ListMatchesFilterTypeEnum.Upcoming}).catch(() => []),
+        matchApi.listMatches({filterType: ListMatchesFilterTypeEnum.Completed}).catch(() => []),
         getUserChips(),
         userApi.getUserLeagues().catch((): League[] => []),
         tournamentApi.getTournamentState().catch(() => null),
+        getUserId(),
     ])
+    // Show only the few most-recent completed matches in the strip; "View all"
+    // links to the full history.
+    const recentCompleted = [...completedMatches]
+        .sort((a, b) => b.datetime.valueOf() - a.datetime.valueOf())
+        .slice(0, 3)
+    const historyHref = userId ? `/app/user/${userId}/history` : "/app"
     const tournamentStarted = tournamentState ? tournamentState.state !== GetTournamentState200ResponseStateEnum.PreTournament : false
 
     const initials = profile ? `${profile.firstName.charAt(0)}${profile.familyName.charAt(0)}`.toUpperCase() : "?"
@@ -90,11 +98,7 @@ const Home = async ({searchParams}: {searchParams: Promise<Record<string, string
 
                     <section id="matches" className="space-y-4">
                         <SectionHeading title="Matches" count={liveMatches.length + upcomingMatches.length} action={<MatchesHelp/>}/>
-                    <PredictionPanel liveMatches={liveMatches} upcomingMatches={upcomingMatches} userChips={userChips} />
-                </section>
-
-                <section className="flex justify-center">
-                    <LinkToHistory />
+                    <PredictionPanel liveMatches={liveMatches} upcomingMatches={upcomingMatches} completedMatches={recentCompleted} historyHref={historyHref} userChips={userChips} />
                 </section>
 
                 <section className="space-y-4">

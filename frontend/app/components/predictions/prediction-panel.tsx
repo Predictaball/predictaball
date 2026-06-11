@@ -21,10 +21,12 @@ const ROUND_LABEL: Record<MatchRoundEnum, string> = {
 interface PredictionPanelProps {
     liveMatches: Match[]
     upcomingMatches: Match[]
+    completedMatches: Match[]
+    historyHref: string
     userChips: UserChips
 }
 
-export default function PredictionPanel({liveMatches, upcomingMatches, userChips}: PredictionPanelProps): React.JSX.Element {
+export default function PredictionPanel({liveMatches, upcomingMatches, completedMatches, historyHref, userChips}: PredictionPanelProps): React.JSX.Element {
     const allMatches = useMemo(() => [...liveMatches, ...upcomingMatches], [liveMatches, upcomingMatches])
     const {selectedId, setSelectedId} = useMatchSelection()
     const [chips, setChips] = useState<UserChips>(userChips)
@@ -101,6 +103,8 @@ export default function PredictionPanel({liveMatches, upcomingMatches, userChips
             <MatchStrip
                 liveMatches={liveMatches}
                 upcomingMatches={upcomingMatches}
+                completedMatches={completedMatches}
+                historyHref={historyHref}
                 selectedId={selected.matchId}
                 onSelect={setSelectedId}
             />
