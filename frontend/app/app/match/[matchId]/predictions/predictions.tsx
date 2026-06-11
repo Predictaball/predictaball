@@ -165,6 +165,7 @@ export default function Predictions(
                             <PredictionData
                                 key={predictionWithUser.user.userId}
                                 predictionWithUser={predictionWithUser}
+                                match={props.match}
                                 position={currentPage * itemsPerPage + index + 1}
                                 isUser={predictionWithUser.user.userId === props.currentUserId}
                             />
