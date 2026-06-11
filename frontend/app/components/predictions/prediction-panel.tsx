@@ -6,6 +6,7 @@ import FocusedGlobeClient from "@/app/components/flags/focused-globe-client"
 import PredictionForm from "@/app/components/predictions/prediction-form"
 import MatchStrip from "@/app/components/predictions/match-strip"
 import {MatchCountdown} from "@/app/components/predictions/match-countdown"
+import {MatchScoreOverlay} from "@/app/components/predictions/match-score-overlay"
 import {useMatchSelection} from "@/app/components/predictions/match-selection"
 import type {UserChips} from "@/app/components/predictions/get-user-chips"
 
@@ -75,10 +76,14 @@ export default function PredictionPanel({liveMatches, upcomingMatches, userChips
                                         <StatusBadge saved={status.saved} hasChanges={status.hasChanges}/>
                                     )}
                                 </div>
-                                <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between pointer-events-none">
-                                    <span className="rounded-full bg-white/80 border border-slate-200 text-slate-600 dark:bg-black/50 dark:border-white/10 dark:text-gray-300 px-3 py-1 text-xs backdrop-blur">
-                                        <MatchCountdown match={selected}/>
-                                    </span>
+                                <div className={`absolute bottom-4 left-4 right-4 flex items-center pointer-events-none ${selected.state === MatchStateEnum.Live ? "justify-center" : "justify-between"}`}>
+                                    {selected.state === MatchStateEnum.Live ? (
+                                        <MatchScoreOverlay match={selected}/>
+                                    ) : (
+                                        <span className="rounded-full bg-white/80 border border-slate-200 text-slate-600 dark:bg-black/50 dark:border-white/10 dark:text-gray-300 px-3 py-1 text-xs backdrop-blur">
+                                            <MatchCountdown match={selected}/>
+                                        </span>
+                                    )}
                                 </div>
                             </div>
                             <PredictionForm

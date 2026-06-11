@@ -11,9 +11,8 @@ import BackButton from "@/app/components/back-button"
 import useWindowDimensions from "@/app/hooks/use-window-dimension";
 import {SECTION_EYEBROW} from "@/app/util/css-classes";
 import FocusedGlobeClient from "@/app/components/flags/focused-globe-client";
-import {FlagImage} from "@/app/components/predictions/flag-image";
 import {LocalTime} from "@/app/components/predictions/local-time";
-import {COUNTRY_CODES} from "@/app/util/teams";
+import {MatchScoreOverlay} from "@/app/components/predictions/match-score-overlay";
 
 const ROUND_LABEL: Record<MatchRoundEnum, string> = {
     GROUP_STAGE: "Group Stage",
@@ -21,10 +20,6 @@ const ROUND_LABEL: Record<MatchRoundEnum, string> = {
     QUARTER_FINAL: "Quarter-Final",
     SEMI_FINAL: "Semi-Final",
     FINAL: "Final",
-}
-
-function teamLabel(team: string): string {
-    return COUNTRY_CODES[team.toLowerCase()] ?? team
 }
 
 function GlobeIcon(): React.JSX.Element {
@@ -40,7 +35,6 @@ function MatchGlobeHeader({match}: {match: Match}): React.JSX.Element {
     const live = match.state === MatchStateEnum.Live
     const homeCode = match.homeTeamFlagCode.toLowerCase()
     const awayCode = match.awayTeamFlagCode.toLowerCase()
-    const hasScore = match.homeScore !== undefined && match.awayScore !== undefined
 
     return (
         <div className="relative rounded-3xl bg-gradient-to-br from-slate-900/15 to-slate-900/5 dark:from-white/15 dark:to-white/5 p-[1px] shadow-2xl shadow-cyan-500/10">
@@ -59,15 +53,7 @@ function MatchGlobeHeader({match}: {match: Match}): React.JSX.Element {
                         </span>
                     </div>
                     <div className="absolute bottom-4 left-4 right-4 flex justify-center pointer-events-none">
-                        <div className="flex items-center gap-2.5 rounded-full bg-white/80 border border-slate-200 dark:bg-black/50 dark:border-white/10 px-3.5 py-1.5 backdrop-blur">
-                            <FlagImage code={homeCode} name={match.homeTeam} size={24}/>
-                            <span className="text-sm font-bold text-slate-700 dark:text-gray-200">{teamLabel(match.homeTeam)}</span>
-                            <span className="px-1 text-lg font-black tabular-nums text-slate-900 dark:text-white">
-                                {hasScore ? `${match.homeScore} - ${match.awayScore}` : "vs"}
-                            </span>
-                            <span className="text-sm font-bold text-slate-700 dark:text-gray-200">{teamLabel(match.awayTeam)}</span>
-                            <FlagImage code={awayCode} name={match.awayTeam} size={24}/>
-                        </div>
+                        <MatchScoreOverlay match={match}/>
                     </div>
                 </div>
             </div>

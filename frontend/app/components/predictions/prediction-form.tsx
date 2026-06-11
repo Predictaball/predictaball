@@ -6,13 +6,20 @@ import type { UserChips } from "@/app/components/predictions/get-user-chips"
 import { handlePrediction } from "@/app/components/predictions/submit-prediction"
 import { ACTION_BUTTON_CLASS } from "@/app/util/css-classes"
 import { SHORT_COUNTRY_NAMES } from "@/app/util/teams"
-import { Chip, Match, MatchStateEnum } from "@/client"
+import { ChipBadge, chipDisplay, computeChipImpact, NudgeScore, PointsPill } from "@/app/components/predictions/chip-impact"
+import { Chip, Match, MatchStateEnum, Prediction } from "@/client"
 import { Button, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, useDisclosure } from "@nextui-org/react"
 import React, { useEffect, useRef, useState } from "react"
 import toast from "react-hot-toast"
 
 const ADVANCE_DELAY_MS = 800
 const SWIPE_STEP_PX = 34
+
+const CHIP_META: Partial<Record<Chip, {glyph: string; label: string}>> = {
+    [Chip.DoublePoints]: {glyph: "2×", label: "Double Points"},
+    [Chip.OneGoalOut]: {glyph: "±1", label: "Off by One"},
+    [Chip.Crowd]: {glyph: "%", label: "Follow the Crowd"},
+}
 
 function vibrate(pattern: number | number[]) {
     if (typeof navigator !== "undefined" && typeof navigator.vibrate === "function") {
@@ -50,6 +57,10 @@ export default function PredictionForm({match, onPredictionSaved, userChips, onC
     const homeCode = match.homeTeamFlagCode.toLowerCase()
     const awayCode = match.awayTeamFlagCode.toLowerCase()
     const distribution = match.predictionDistribution
+    const isLive = match.state === MatchStateEnum.Live
+    // Live/completed matches with no prediction should read as "no pick" (–),
+    // not a misleading 0–0 in the score boxes.
+    const predictionMissing = !isUpcoming && match.prediction === undefined
 
     async function submit() {
         const h = homeScore
@@ -115,12 +126,16 @@ export default function PredictionForm({match, onPredictionSaved, userChips, onC
             <div className="flex items-center justify-between gap-2">
                 <TeamSide code={homeCode} name={match.homeTeam} ranking={match.homeTeamRanking}/>
                 <div className="flex items-center gap-2">
-                    <ScoreInput value={homeScore} onChange={handleHomeChange} disabled={!isUpcoming || chip === Chip.Crowd} displayOverride={chip === Chip.Crowd ? "?" : undefined}/>
+                    <ScoreInput value={homeScore} onChange={handleHomeChange} disabled={!isUpcoming || chip === Chip.Crowd} readOnly={!isUpcoming} displayOverride={predictionMissing ? "–" : chip === Chip.Crowd ? "?" : undefined}/>
                     <span className="text-3xl font-black text-slate-400 dark:text-gray-500">:</span>
-                    <ScoreInput value={awayScore} onChange={handleAwayChange} disabled={!isUpcoming || chip === Chip.Crowd} displayOverride={chip === Chip.Crowd ? "?" : undefined}/>
+                    <ScoreInput value={awayScore} onChange={handleAwayChange} disabled={!isUpcoming || chip === Chip.Crowd} readOnly={!isUpcoming} displayOverride={predictionMissing ? "–" : chip === Chip.Crowd ? "?" : undefined}/>
                 </div>
                 <TeamSide code={awayCode} name={match.awayTeam} ranking={match.awayTeamRanking} reverse/>
             </div>
+
+            {isLive && (
+                <LivePredictionStatus prediction={match.prediction} match={match}/>
+            )}
 
             {isUpcoming && (
                 <div className="mt-1">
@@ -187,16 +202,56 @@ export default function PredictionForm({match, onPredictionSaved, userChips, onC
                 </ModalContent>
             </Modal>
 
-            {!isUpcoming && (
+            {match.state === MatchStateEnum.Completed && (
                 <div className="mt-4 text-center text-sm text-slate-500 dark:text-gray-400">
-                    {match.state === MatchStateEnum.Live
-                        ? `Live Score: ${match.homeScore ?? 0} - ${match.awayScore ?? 0}`
-                        : `Result: ${match.homeScore ?? 0} - ${match.awayScore ?? 0}`}
+                    {`Result: ${match.homeScore ?? 0} - ${match.awayScore ?? 0}`}
                 </div>
             )}
 
             {!isUpcoming && distribution && (
                 <DistributionBar distribution={distribution} homeName={match.homeTeam} awayName={match.awayTeam}/>
+            )}
+        </div>
+    )
+}
+
+// Below the prediction boxes on a live match: the chip the user played (if any)
+// and how many points their prediction is worth right now. The live points come
+// straight from the API (the backend re-scores predictions on every score poll).
+function LivePredictionStatus({prediction, match}: {prediction?: Prediction; match: Match}): React.JSX.Element {
+    if (!prediction) {
+        return (
+            <div className="mt-4 text-center text-xs font-semibold uppercase tracking-[0.15em] text-slate-400 dark:text-gray-500">
+                No prediction
+            </div>
+        )
+    }
+
+    const impact = computeChipImpact(prediction, match)
+    const display = chipDisplay(prediction, match)
+    const meta = CHIP_META[prediction.chip]
+
+    return (
+        <div className="mt-4 flex flex-wrap items-center justify-center gap-x-3 gap-y-2">
+            {display.nudge ? (
+                // ±1 paid off: show the same original ⟶ adjusted transformation as
+                // the history card, so the nudge is visible without a hover tooltip.
+                <span className="inline-flex items-center gap-1.5">
+                    <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400 dark:text-gray-500">Scored as</span>
+                    <NudgeScore original={display.nudge.original} adjusted={display.nudge.adjusted} className="text-sm font-bold"/>
+                </span>
+            ) : meta && (
+                <span title={impact?.detail} className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-gray-300">
+                    <ChipBadge glyph={meta.glyph} muted={impact ? !impact.helped : false}/>
+                    {meta.label}
+                </span>
+            )}
+            {prediction.points !== undefined && (
+                <span className="inline-flex items-baseline gap-2 text-sm text-slate-500 dark:text-gray-400">
+                    Worth
+                    <PointsPill points={prediction.points}/>
+                    right now
+                </span>
             )}
         </div>
     )
@@ -221,11 +276,13 @@ function TeamSide({code, name, reverse, ranking}: {code: string; name: string; r
     )
 }
 
-function ScoreInput({value, onChange, disabled, displayOverride}: {
+function ScoreInput({value, onChange, disabled, displayOverride, readOnly}: {
     value: number
     onChange: (v: number) => void
     disabled: boolean
     displayOverride?: string
+    // Live/finished matches: show only the score box, no +/- steppers.
+    readOnly?: boolean
 }) {
     const btnClass = "w-full h-8 rounded-lg bg-slate-900/5 border border-slate-900/10 text-cyan-600 hover:bg-slate-900/10 hover:border-cyan-500/40 dark:bg-white/5 dark:border-white/10 dark:text-cyan-300 dark:hover:bg-white/10 dark:hover:border-cyan-400/40 font-bold text-base flex items-center justify-center active:scale-95 transition-all disabled:opacity-20 disabled:pointer-events-none select-none"
     const dragRef = useRef<{startY: number; startValue: number; lastValue: number} | null>(null)
@@ -265,9 +322,11 @@ function ScoreInput({value, onChange, disabled, displayOverride}: {
 
     return (
         <div className="flex flex-col items-center gap-1.5 w-14 sm:w-16">
-            <button type="button" disabled={disabled || value >= 9} onClick={() => onChange(value + 1)} className={btnClass}>
-                +
-            </button>
+            {!readOnly && (
+                <button type="button" disabled={disabled || value >= 9} onClick={() => onChange(value + 1)} className={btnClass}>
+                    +
+                </button>
+            )}
             <div
                 onPointerDown={onPointerDown}
                 onPointerMove={onPointerMove}
@@ -280,9 +339,11 @@ function ScoreInput({value, onChange, disabled, displayOverride}: {
                     {displayOverride ?? value}
                 </div>
             </div>
-            <button type="button" disabled={disabled || value <= 0} onClick={() => onChange(value - 1)} className={btnClass}>
-                −
-            </button>
+            {!readOnly && (
+                <button type="button" disabled={disabled || value <= 0} onClick={() => onChange(value - 1)} className={btnClass}>
+                    −
+                </button>
+            )}
         </div>
     )
 }

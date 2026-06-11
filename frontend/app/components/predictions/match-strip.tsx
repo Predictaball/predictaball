@@ -5,6 +5,7 @@ import {Chip, Match, MatchStateEnum} from "@/client"
 import {LocalTime} from "@/app/components/predictions/local-time"
 import {FlagImage} from "@/app/components/predictions/flag-image"
 import {ACTION_PILL_BORDER} from "@/app/util/css-classes"
+import {PointsPill} from "@/app/components/predictions/chip-impact"
 
 // Power-ups worth surfacing on the pill. Crowd has its own "? - ?" treatment.
 const CHIP_GLYPH: Partial<Record<Chip, string>> = {
@@ -80,6 +81,7 @@ const MatchPill = React.forwardRef<HTMLButtonElement, {match: Match; selected: b
     const homeCode = match.homeTeamFlagCode.toLowerCase()
     const awayCode = match.awayTeamFlagCode.toLowerCase()
     const predicted = match.prediction
+    const isLive = match.state === MatchStateEnum.Live
     // Follow-the-Crowd predictions are only locked in at kickoff, so the user's
     // stored score is a placeholder until the match starts — show ?-? until then.
     const crowdPending = predicted?.chip === Chip.Crowd && match.state === MatchStateEnum.Upcoming
@@ -117,7 +119,9 @@ const MatchPill = React.forwardRef<HTMLButtonElement, {match: Match; selected: b
                                 </span>
                             )}
                             {crowdPending ? "? - ?" : `${predicted.homeScore} - ${predicted.awayScore}`}
-                            <CheckIcon/>
+                            {isLive && predicted.points !== undefined
+                                ? <PointsPill points={predicted.points} className="h-5 px-2 text-[10px]"/>
+                                : <CheckIcon/>}
                         </span>
                     ) : needsPrediction ? (
                         <span className="inline-flex items-center gap-1.5 font-semibold text-amber-600 dark:text-amber-300">

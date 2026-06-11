@@ -172,6 +172,27 @@ export function ChipBadge({glyph, muted = false, title, className = ""}: {
     )
 }
 
+// Points-pill colours, consistent with the recent-form dots on the profile:
+// gold for an exact score, cyan for the right outcome, muted otherwise.
+function pointsTone(points: number): string {
+    if (points === 5) return "bg-gradient-to-br from-blue-500 via-cyan-400 to-teal-300 text-gray-900"
+    if (points === 2) return "bg-cyan-500/20 border border-cyan-500/40 text-cyan-700 dark:text-cyan-300"
+    return "bg-slate-900/10 dark:bg-white/10 text-slate-500 dark:text-gray-400"
+}
+
+// Points a prediction has earned (final) or is currently worth (live), shown as
+// a rounded pill. Sizing is overridable via `className` for tighter contexts.
+export function PointsPill({points, className = "h-6 px-2.5 text-xs"}: {
+    points: number
+    className?: string
+}): React.JSX.Element {
+    return (
+        <span className={`inline-flex items-center justify-center rounded-full font-black tabular-nums ${pointsTone(points)} ${className}`}>
+            {points} pts
+        </span>
+    )
+}
+
 // Renders a ±1 nudge inline with the prediction: original struck through, the
 // adjusted score highlighted. Sizing/weight is inherited from `className`.
 export function NudgeScore({original, adjusted, className = ""}: {

@@ -3,7 +3,7 @@ import Link from "next/link"
 import {Match, MatchRoundEnum, MatchStateEnum} from "@/client"
 import {FlagImage} from "@/app/components/predictions/flag-image"
 import {LocalTime} from "@/app/components/predictions/local-time"
-import {ChipBadge, chipDisplay, NudgeScore} from "@/app/components/predictions/chip-impact"
+import {ChipBadge, chipDisplay, NudgeScore, PointsPill} from "@/app/components/predictions/chip-impact"
 
 const ROUND_LABEL: Record<MatchRoundEnum, string> = {
     GROUP_STAGE: "Group Stage",
@@ -11,13 +11,6 @@ const ROUND_LABEL: Record<MatchRoundEnum, string> = {
     QUARTER_FINAL: "Quarter-Final",
     SEMI_FINAL: "Semi-Final",
     FINAL: "Final",
-}
-
-// Points badge colours, consistent with the recent-form dots on the profile.
-function pointsBadge(points: number): string {
-    if (points === 5) return "bg-gradient-to-br from-blue-500 via-cyan-400 to-teal-300 text-gray-900"
-    if (points === 2) return "bg-cyan-500/20 border border-cyan-500/40 text-cyan-700 dark:text-cyan-300"
-    return "bg-slate-900/10 dark:bg-white/10 text-slate-500 dark:text-gray-400"
 }
 
 export default function HistoryMatchCard({match}: {match: Match}): React.JSX.Element {
@@ -93,11 +86,7 @@ export default function HistoryMatchCard({match}: {match: Match}): React.JSX.Ele
                     </div>
                     <div className="flex items-center justify-end gap-1.5">
                         {display.pointsBadge && <ChipBadge {...display.pointsBadge}/>}
-                        {points !== undefined && (
-                            <span className={`inline-flex items-center justify-center rounded-full h-6 px-2.5 text-xs font-black tabular-nums ${pointsBadge(points)}`}>
-                                {points} pts
-                            </span>
-                        )}
+                        {points !== undefined && <PointsPill points={points}/>}
                     </div>
                 </div>
             </div>
