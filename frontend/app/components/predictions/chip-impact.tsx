@@ -182,10 +182,9 @@ export function NudgeScore({original, adjusted, className = ""}: {
     return (
         <span title={`Off by One nudged ${original.home}–${original.away} to ${adjusted.home}–${adjusted.away}`} className={`inline-flex items-center tabular-nums ${className}`}>
             <span className="line-through decoration-1 opacity-40">{original.home}–{original.away}</span>
-            <span className="mx-1 inline-flex items-center text-cyan-500 dark:text-cyan-400" aria-label="off by one">
-                <span className="opacity-60">—</span>
-                <span className="px-0.5 text-[0.7em] font-black leading-none">±1</span>
-                <span className="opacity-60">→</span>
+            <span className="mx-1.5 inline-flex flex-col items-center leading-none text-cyan-500 dark:text-cyan-400" aria-label="off by one">
+                <span className="text-[0.62em] font-black text-cyan-600 dark:text-cyan-300">±1</span>
+                <span className="-mt-px text-[1.1em] leading-none">⟶</span>
             </span>
             <span className="text-cyan-600 dark:text-cyan-300">{adjusted.home}–{adjusted.away}</span>
         </span>
