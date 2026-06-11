@@ -24,7 +24,6 @@ import scorcerer.server.resources.predictionRoutes
 import scorcerer.server.resources.teamRoutes
 import scorcerer.server.resources.tournamentRoutes
 import scorcerer.server.resources.userRoutes
-import scorcerer.server.schedule.MatchStarter
 import scorcerer.server.schedule.ScoreUpdater
 import scorcerer.server.services.TournamentStateService
 import scorcerer.utils.LeaderboardS3Service
@@ -99,8 +98,7 @@ fun main() {
     if (schedulerMode == SchedulerMode.IN_PROCESS) {
         log.info("Starting scheduled tasks")
         val scheduler = Executors.newScheduledThreadPool(1)
-        scheduler.scheduleAtFixedRate({ runCatching { MatchStarter(leaderboardService, tournamentStateService).run() }.onFailure { log.error(it.stackTraceToString()) } }, 0, 15, TimeUnit.MINUTES)
-        scheduler.scheduleAtFixedRate({ runCatching { ScoreUpdater(leaderboardService, tournamentStateService).run() }.onFailure { log.error(it.stackTraceToString()) } }, 0, 2, TimeUnit.MINUTES)
+        scheduler.scheduleAtFixedRate({ runCatching { ScoreUpdater(leaderboardService, tournamentStateService).run() }.onFailure { log.error(it.stackTraceToString()) } }, 0, 1, TimeUnit.MINUTES)
     }
 
     log.info("Starting server on port 8080 (leaderboard: $leaderboardMode, scheduler: $schedulerMode)")

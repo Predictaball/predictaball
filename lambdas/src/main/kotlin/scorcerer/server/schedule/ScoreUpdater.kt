@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import org.http4k.client.JavaHttpClient
 import org.http4k.core.Method
 import org.http4k.core.Request
-import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.notInList
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.openapitools.server.models.Match
@@ -17,86 +17,108 @@ import scorcerer.server.services.getMatchDay
 import scorcerer.server.services.setScore
 import scorcerer.utils.LeaderboardService
 
+// football-data.org returns null scores for matches that haven't kicked off
+// and a string status that we collapse into LIVE / FINISHED / OTHER below.
 @JsonIgnoreProperties(ignoreUnknown = true)
-data class Team(
-    val name: String,
-    val score: Int,
+private data class FdScore(val home: Int?, val away: Int?)
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+private data class FdScoreBlock(val fullTime: FdScore)
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+private data class FdMatch(
+    val id: Int,
+    val status: String,
+    val score: FdScoreBlock,
 )
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-data class FotMobResponse(
-    val header: FotMobHeader,
-    val general: FotMobGeneral,
-)
+private data class FdMatchesResponse(val matches: List<FdMatch>)
 
-@JsonIgnoreProperties(ignoreUnknown = true)
-data class FotMobHeader(
-    val teams: List<Team>,
-)
-
-@JsonIgnoreProperties(ignoreUnknown = true)
-data class FotMobGeneral(
-    val started: Boolean,
-    val finished: Boolean,
-    val matchName: String,
-)
-
-data class LiveMatch(
-    val matchId: String,
-    val externalMatchId: String,
-)
+private val LIVE_STATUSES = setOf("IN_PLAY", "PAUSED", "EXTRA_TIME", "PENALTY_SHOOTOUT")
 
 class ScoreUpdater(
     private val leaderboardService: LeaderboardService,
     private val tournamentStateService: TournamentStateService,
 ) {
     private val client = JavaHttpClient()
-    private val endpoint = "https://www.fotmob.com/api/matchDetails?matchId="
+    private val apiKey = System.getenv("FOOTBALL_DATA_API_KEY")
+
+    // Pull every match in any state we care about — it's a single request and
+    // the response is small. Filtering by date would save a few KB but adds a
+    // round-trip when matches roll over UTC midnight.
+    private val endpoint = "https://api.football-data.org/v4/competitions/2000/matches"
 
     fun run() {
-        val liveMatches = transaction {
-            MatchTable.selectAll()
-                .where { MatchTable.state eq Match.State.LIVE }
-                .filter { it.getOrNull(MatchTable.externalMatchId) != null }
-                .map { LiveMatch(it[MatchTable.id].toString(), it[MatchTable.externalMatchId]!!) }
-        }
-
-        if (liveMatches.isEmpty()) {
-            log.info("No live matches")
+        if (apiKey.isNullOrBlank()) {
+            log.warn("FOOTBALL_DATA_API_KEY not set, skipping score update")
             return
         }
 
-        liveMatches.forEach {
-            log.info("Fetching for $it")
-            val response = client(Request(Method.GET, endpoint + it.externalMatchId))
+        val started = System.currentTimeMillis()
+        val response = client(Request(Method.GET, endpoint).header("X-Auth-Token", apiKey))
+        val httpMs = System.currentTimeMillis() - started
+        // Lets us spot throttling before we hit the limit. football-data returns
+        // these on every successful response.
+        val available = response.header("X-Requests-Available-Minute")
+        val resetIn = response.header("X-RequestCounter-Reset")
 
-            log.info("Response status - ${response.status}")
+        if (!response.status.successful) {
+            log.warn("football-data.org returned ${response.status.code} after ${httpMs}ms (available=$available, resetIn=${resetIn}s), skipping")
+            return
+        }
 
-            if (!response.status.successful) {
-                log.info("Response status not good, skipping")
+        val parsed = response.bodyString().fromJson<FdMatchesResponse>()
+        val byExternalId = parsed.matches.associateBy { it.id.toString() }
+        val statusBreakdown = parsed.matches.groupingBy { it.status }.eachCount()
+        log.info("ScoreUpdater poll: http=${httpMs}ms apiMatches=${parsed.matches.size} statuses=$statusBreakdown available=$available")
+
+        // Look up our matches that are still in play or scheduled — completed
+        // ones don't need to be touched again.
+        val ourMatches = transaction {
+            MatchTable.selectAll()
+                .where { MatchTable.state notInList listOf(Match.State.COMPLETED) }
+                .filter { it.getOrNull(MatchTable.externalMatchId) != null }
+                .map { Triple(it[MatchTable.id].toString(), it[MatchTable.externalMatchId]!!, it[MatchTable.state]) }
+        }
+
+        var transitions = 0
+        ourMatches.forEach { (matchId, externalId, currentState) ->
+            val api = byExternalId[externalId]
+            if (api == null) {
+                log.warn("Match $matchId: external $externalId not in API response, skipping")
                 return@forEach
             }
+            // Treat any null scores as 0-0 — happens between kickoff and first goal.
+            val home = api.score.fullTime.home ?: 0
+            val away = api.score.fullTime.away ?: 0
 
-            val fotmobResponse = response.body.toString().fromJson<FotMobResponse>()
-            log.info(fotmobResponse.general.matchName)
-
-            if (!fotmobResponse.general.started) {
-                log.info("Match has not started yet")
-                return@forEach
-            }
-
-            val homeScore = fotmobResponse.header.teams.first().score
-            val awayScore = fotmobResponse.header.teams.last().score
-            log.info("Home score ($homeScore) Away score ($awayScore) for matchId (${it.matchId})")
-
-            if (fotmobResponse.general.finished) {
-                endMatch(it.matchId, homeScore, awayScore, leaderboardService, tournamentStateService)
-                log.info("Match ended")
-            } else {
-                val matchDay = getMatchDay(it.matchId) ?: return@forEach
-                setScore(it.matchId, matchDay, homeScore, awayScore, leaderboardService, tournamentStateService)
-                log.info("Score updated")
+            when {
+                api.status == "FINISHED" -> {
+                    if (currentState == Match.State.UPCOMING) {
+                        // Missed the live window entirely (e.g. server was down).
+                        // Flip to LIVE first so endMatch's invariant holds.
+                        val matchDay = getMatchDay(matchId) ?: return@forEach
+                        setScore(matchId, matchDay, home, away, leaderboardService, tournamentStateService)
+                    }
+                    endMatch(matchId, home, away, leaderboardService, tournamentStateService)
+                    log.info("Match $matchId: $currentState -> COMPLETED ($home-$away, api=${api.status})")
+                    transitions++
+                }
+                api.status in LIVE_STATUSES -> {
+                    val matchDay = getMatchDay(matchId) ?: return@forEach
+                    setScore(matchId, matchDay, home, away, leaderboardService, tournamentStateService)
+                    log.info("Match $matchId: $currentState -> LIVE ($home-$away, api=${api.status})")
+                    transitions++
+                }
+                // SCHEDULED/TIMED/POSTPONED/SUSPENDED/CANCELLED/AWARDED: do nothing.
+                api.status !in setOf("SCHEDULED", "TIMED") -> {
+                    // Surface anomalies (POSTPONED, SUSPENDED, CANCELLED, AWARDED) so we
+                    // notice quickly if a match needs manual handling.
+                    log.warn("Match $matchId: api status=${api.status}, no-op")
+                }
             }
         }
+        log.info("ScoreUpdater done: ourTrackedMatches=${ourMatches.size} transitions=$transitions")
     }
 }

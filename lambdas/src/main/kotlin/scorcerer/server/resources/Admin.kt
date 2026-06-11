@@ -8,7 +8,6 @@ import org.http4k.core.then
 import org.http4k.routing.bind
 import org.http4k.routing.routes
 import scorcerer.server.log
-import scorcerer.server.schedule.MatchStarter
 import scorcerer.server.schedule.ScoreUpdater
 import scorcerer.server.services.ReminderService
 import scorcerer.server.services.TournamentStateService
@@ -32,12 +31,6 @@ fun adminRoutes(
     tournamentStateService: TournamentStateService,
 ) = requireApiKey.then(
     routes(
-        "/admin/start-matches" bind Method.POST to {
-            log.info("Admin: start-matches triggered")
-            runCatching { MatchStarter(leaderboardService, tournamentStateService).run() }
-                .onFailure { log.error(it.stackTraceToString()) }
-            Response(Status.OK)
-        },
         "/admin/update-scores" bind Method.POST to {
             log.info("Admin: update-scores triggered")
             runCatching { ScoreUpdater(leaderboardService, tournamentStateService).run() }

@@ -101,6 +101,7 @@ export class Predictaball extends Stack {
           DB_PORT: db.dbInstanceEndpointPort,
           NEXTAUTH_SECRET: process.env["CDK_NEXTAUTH_SECRET"] || "",
           RESEND_API_KEY: process.env["CDK_RESEND_API_KEY"] || "",
+          FOOTBALL_DATA_API_KEY: process.env["CDK_FOOTBALL_DATA_API_KEY"] || "",
           LEADERBOARD_BUCKET_NAME: leaderboardBucket.bucketName,
           SCHEDULER_MODE: adminApiKey ? "off" : "in_process",
           ADMIN_API_KEY: adminApiKey || "",
@@ -178,25 +179,14 @@ export class Predictaball extends Stack {
           authorization: Authorization.apiKey("X-Api-Key", SecretValue.unsafePlainText(adminApiKey)),
         })
 
-        const startMatchesDest = new ApiDestination(this, "startMatchesDest", {
-          connection,
-          endpoint: `https://${apiDomain}/admin/start-matches`,
-          httpMethod: HttpMethod.POST,
-        })
-
         const updateScoresDest = new ApiDestination(this, "updateScoresDest", {
           connection,
           endpoint: `https://${apiDomain}/admin/update-scores`,
           httpMethod: HttpMethod.POST,
         })
 
-        new Rule(this, "startMatchesRule", {
-          schedule: Schedule.cron({ minute: "*/15" }),
-          targets: [new ApiDestinationTarget(startMatchesDest)],
-        })
-
         new Rule(this, "updateScoresRule", {
-          schedule: Schedule.rate(Duration.minutes(2)),
+          schedule: Schedule.rate(Duration.minutes(1)),
           targets: [new ApiDestinationTarget(updateScoresDest)],
         })
 
