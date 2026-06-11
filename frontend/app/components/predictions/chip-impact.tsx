@@ -4,7 +4,7 @@ import {Chip, Match, Prediction} from "@/client"
 const GLYPH: Partial<Record<Chip, string>> = {
     [Chip.DoublePoints]: "2×",
     [Chip.OneGoalOut]: "±1",
-    [Chip.Crowd]: "Crowd",
+    [Chip.Crowd]: "%",
 }
 
 // Mirrors PointsCalculator.calculateDefaultPoints on the backend
@@ -180,9 +180,13 @@ export function NudgeScore({original, adjusted, className = ""}: {
     className?: string
 }): React.JSX.Element {
     return (
-        <span title={`Off by One nudged ${original.home}–${original.away} to ${adjusted.home}–${adjusted.away}`} className={`tabular-nums ${className}`}>
+        <span title={`Off by One nudged ${original.home}–${original.away} to ${adjusted.home}–${adjusted.away}`} className={`inline-flex items-center tabular-nums ${className}`}>
             <span className="line-through decoration-1 opacity-40">{original.home}–{original.away}</span>
-            <span className="px-1 text-cyan-500 dark:text-cyan-400">→</span>
+            <span className="mx-1 inline-flex items-center text-cyan-500 dark:text-cyan-400" aria-label="off by one">
+                <span className="opacity-60">—</span>
+                <span className="px-0.5 text-[0.7em] font-black leading-none">±1</span>
+                <span className="opacity-60">→</span>
+            </span>
             <span className="text-cyan-600 dark:text-cyan-300">{adjusted.home}–{adjusted.away}</span>
         </span>
     )
