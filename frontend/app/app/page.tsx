@@ -55,10 +55,10 @@ const Home = async ({searchParams}: {searchParams: Promise<Record<string, string
     const tournamentStarted = tournamentState ? tournamentState.state !== GetTournamentState200ResponseStateEnum.PreTournament : false
 
     const initials = profile ? `${profile.firstName.charAt(0)}${profile.familyName.charAt(0)}`.toUpperCase() : "?"
-    // Start on the soonest upcoming match still needing a prediction; fall back
-    // to any live match, then the soonest upcoming, when everything's predicted.
+    // Start on a live match if one's in play; otherwise the soonest upcoming
+    // match still needing a prediction, then the soonest upcoming.
     const firstUnpredictedUpcoming = upcomingMatches.find(m => !m.prediction)
-    const firstMatchId = (firstUnpredictedUpcoming ?? liveMatches[0] ?? upcomingMatches[0])?.matchId
+    const firstMatchId = (liveMatches[0] ?? firstUnpredictedUpcoming ?? upcomingMatches[0])?.matchId
 
     return (
         <main className="relative min-h-screen bg-slate-50 text-slate-900 dark:bg-gray-900 dark:text-white overflow-x-hidden">
