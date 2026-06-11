@@ -1,14 +1,15 @@
 'use client'
 
-import React, {useState} from "react";
+import React, {useRef, useState} from "react";
 import Link from "next/link";
 import {useRouter} from "next/navigation";
 import {League, Match, MatchRoundEnum, MatchStateEnum, PredictionWithUser} from "@/client";
 import PredictionData from "@/app/app/match/[matchId]/predictions/prediction";
-import {Pagination, Select, SelectItem} from "@nextui-org/react"
+import {Select, SelectItem} from "@nextui-org/react"
+import Pagination from "@/app/components/pagination"
 import BackButton from "@/app/components/back-button"
 import useWindowDimensions from "@/app/hooks/use-window-dimension";
-import {BUTTON_CLASS, SECTION_EYEBROW} from "@/app/util/css-classes";
+import {SECTION_EYEBROW} from "@/app/util/css-classes";
 import FocusedGlobeClient from "@/app/components/flags/focused-globe-client";
 import {FlagImage} from "@/app/components/predictions/flag-image";
 import {LocalTime} from "@/app/components/predictions/local-time";
@@ -88,6 +89,7 @@ export default function Predictions(
     const [currentPage, setCurrentPage] = useState(0)
     const windowsSize = useWindowDimensions()
     const itemsPerPage = windowsSize.height !== undefined ? Math.max((Math.round(windowsSize.height / 80)) - 5, 1) : 5
+    const topRef = useRef<HTMLDivElement>(null)
 
     const getPaginatedPredictions = (leaderboard: PredictionWithUser[]) => {
         const startIndex = currentPage * itemsPerPage;
@@ -96,6 +98,8 @@ export default function Predictions(
 
     const handlePageChange = (page: number) => {
         setCurrentPage(page - 1);
+        // Bring the reader back to the first prediction on the new page.
+        topRef.current?.scrollIntoView({behavior: "smooth", block: "start"})
     };
 
     const totalPages = Math.ceil(props.predictions.length / itemsPerPage);
@@ -159,7 +163,7 @@ export default function Predictions(
                             </Select>
                         )}
                     </div>
-                    <div className="flex flex-col items-center">
+                    <div ref={topRef} className="flex flex-col items-center scroll-mt-6">
                         {getPaginatedPredictions(props.predictions).map((predictionWithUser, index) => (
                             <PredictionData
                                 key={predictionWithUser.user.userId}
@@ -171,13 +175,7 @@ export default function Predictions(
                     </div>
                     {totalPages > 1 &&
                         <div className="flex justify-center pt-2">
-                            <Pagination showControls radius="full" total={totalPages} initialPage={1}
-                                        onChange={handlePageChange}
-                                        classNames={{
-                                            cursor: BUTTON_CLASS,
-                                            item: "bg-transparent text-slate-700 dark:text-gray-200 hover:bg-slate-900/10 dark:hover:bg-white/10 transition-colors"
-                                        }}
-                            />
+                            <Pagination page={currentPage + 1} total={totalPages} onChange={handlePageChange}/>
                         </div>}
                 </section>
             </div>
