@@ -15,6 +15,7 @@ private val ROUTE_PATTERNS = listOf(
     "/auth/reset-confirm",
     "/auth/check-email",
     "/admin/update-scores",
+    "/tracking/event",
     "/admin/recalculate-points",
     "/admin/send-reminders",
     "/tournament/state",

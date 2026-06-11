@@ -9,6 +9,7 @@ import { API_GATEWAY } from "@/app/api/constants"
 import { getConfigWithAuthHeader } from "@/app/api/client-config"
 import { BUTTON_CLASS, GHOST_BUTTON_CLASS } from "@/app/util/css-classes"
 import JoinButton from "./join-button"
+import TrackPresented from "./track-presented"
 
 const PUBLIC_API = new LeagueApi(new Configuration({ basePath: API_GATEWAY }))
 
@@ -111,7 +112,10 @@ export default async function JoinLeagueInvite(
                                     : `${preview.memberCount} predictors are already in. Pick a score, climb the leaderboard.`}
                             </p>
                             {isLoggedIn ? (
-                                <JoinButton leagueId={leagueId} fromSignup={fromSignup}/>
+                                <>
+                                    <TrackPresented fromSignup={fromSignup}/>
+                                    <JoinButton leagueId={leagueId} fromSignup={fromSignup}/>
+                                </>
                             ) : (
                                 <>
                                     <Button

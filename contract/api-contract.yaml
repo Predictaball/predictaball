@@ -268,6 +268,20 @@ components:
           $ref: '#/components/schemas/prediction'
         user:
           $ref: '#/components/schemas/user'
+    trackingEvent:
+      type: object
+      required:
+        - event
+        - fromSignup
+      properties:
+        event:
+          type: string
+          enum:
+            - JoinPagePresented
+            - JoinClicked
+            - MaybeLaterClicked
+        fromSignup:
+          type: boolean
 security:
   - CognitoAuthorizer: []
 x-amazon-apigateway-gateway-responses:
@@ -1391,6 +1405,28 @@ paths:
                     type: string
                     format: date-time
 
+  /tracking/event:
+    post:
+      tags:
+        - misc
+      operationId: trackEvent
+      description: Fire-and-forget client behaviour event for funnel analytics.
+      security: [ ]
+      x-amazon-apigateway-integration:
+        type: "aws_proxy"
+        httpMethod: "POST"
+        uri: "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${apiHandlerArn}/invocations"
+        credentials: "${apiGatewayRoleArn}"
+        payloadFormatVersion: "1.0"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/trackingEvent'
+      responses:
+        '200':
+          description: Event recorded
   /ping:
     get:
       tags:

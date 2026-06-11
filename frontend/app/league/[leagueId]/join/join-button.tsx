@@ -5,9 +5,10 @@ import { Button } from "@nextui-org/react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import toast, { Toaster } from "react-hot-toast"
-import { LeagueApi } from "@/client"
+import { LeagueApi, TrackingEventEventEnum } from "@/client"
 import { getConfigWithAuthHeaderClient } from "@/app/api/client-config-client-side"
 import { BUTTON_CLASS, GHOST_BUTTON_CLASS } from "@/app/util/css-classes"
+import { track } from "@/app/util/track"
 
 interface JoinButtonProps {
     leagueId: string
@@ -20,6 +21,7 @@ export default function JoinButton({ leagueId, fromSignup }: JoinButtonProps): R
 
     async function join() {
         setIsLoading(true)
+        track(TrackingEventEventEnum.JoinClicked, fromSignup ?? false)
         try {
             const leagueApi = new LeagueApi(await getConfigWithAuthHeaderClient())
             await leagueApi.joinLeague({ leagueId })
@@ -48,6 +50,7 @@ export default function JoinButton({ leagueId, fromSignup }: JoinButtonProps): R
             <Button
                 as={Link}
                 href="/app"
+                onPress={() => track(TrackingEventEventEnum.MaybeLaterClicked, fromSignup ?? false)}
                 radius="full"
                 className={"mt-3 w-full " + GHOST_BUTTON_CLASS}
             >
