@@ -10,6 +10,9 @@ interface LeaderboardPaginationProps {
     leaderboardInners: LeaderboardInner[]
     userId: string | undefined
     shouldPaginate: boolean
+    // The limited view (main /app page) pins the leader then a window around the
+    // user; only there do we mark the ranking gap with a divider.
+    limit: boolean
     formByUserId: Record<string, (number | null)[]>
 }
 
@@ -42,6 +45,12 @@ export default function LeaderboardPagination(props: LeaderboardPaginationProps)
 
     const paginated = props.shouldPaginate && totalPages > 1
     const pageEntries = getPaginatedLeaderboard(props.leaderboardInners)
+    // On the limited view the leader is pinned, then a window around the user.
+    // When that window doesn't start at 2nd place, mark the gap with a divider.
+    const showLeaderBreak = props.limit
+        && pageEntries.length > 1
+        && pageEntries[0].position === 1
+        && pageEntries[1].position > 2
     // Pad short pages (i.e. the last one) up to a full page of rows so the
     // document height never changes between pages. A changing height makes the
     // browser clamp the scroll position, which reads as the list "jumping".
@@ -49,13 +58,21 @@ export default function LeaderboardPagination(props: LeaderboardPaginationProps)
 
     return <>
         {pageEntries.map((entry, index) => (
-            <LeaderboardEntry
-                key={index}
-                entry={entry}
-                isUser={entry.user.userId === props.userId}
-                disablePulse={false}
-                form={props.formByUserId[entry.user.userId] ?? []}
-            />
+            <React.Fragment key={index}>
+                {showLeaderBreak && index === 1 && (
+                    <div aria-hidden className="w-full max-w-2xl mb-2.5 flex items-center gap-2 px-4 text-slate-300 dark:text-gray-600">
+                        <span className="h-px flex-1 bg-slate-200 dark:bg-white/10"/>
+                        <span className="text-lg font-black leading-none tracking-widest">⋯</span>
+                        <span className="h-px flex-1 bg-slate-200 dark:bg-white/10"/>
+                    </div>
+                )}
+                <LeaderboardEntry
+                    entry={entry}
+                    isUser={entry.user.userId === props.userId}
+                    disablePulse={false}
+                    form={props.formByUserId[entry.user.userId] ?? []}
+                />
+            </React.Fragment>
         ))}
         {Array.from({length: fillerCount}).map((_, i) => (
             // Invisible row that matches an entry's height exactly, keeping every

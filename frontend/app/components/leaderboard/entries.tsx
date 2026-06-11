@@ -90,6 +90,7 @@ export default async function Entries(props: EntriesProps): Promise<React.JSX.El
             )}
             <LeaderboardPagination
                 shouldPaginate={props.shouldPaginate}
+                limit={props.limit}
                 leaderboardInners={entries}
                 userId={userId}
                 formByUserId={formByUserId}
