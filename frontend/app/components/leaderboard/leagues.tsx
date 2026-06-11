@@ -1,5 +1,4 @@
 import React from "react";
-import JoinLeague from "@/app/app/league/join";
 import CreateLeague from "@/app/app/league/create";
 import YourLeaguesFetch from "@/app/components/leaderboard/your-leagues-fetch";
 import {League} from "@/client";
@@ -12,9 +11,8 @@ export default function Leagues({initialLeagues}: {initialLeagues: League[]}): R
                 <span>Position</span>
             </div>
             <YourLeaguesFetch initialLeagues={initialLeagues}/>
-            <div className="grid grid-cols-2 gap-3 pt-2">
+            <div className="pt-2">
                 <CreateLeague/>
-                <JoinLeague/>
             </div>
         </div>
     )
