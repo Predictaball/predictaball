@@ -50,7 +50,8 @@ export default function Entry(props: EntryProps): React.JSX.Element {
                 <div className="flex-1 min-w-0 text-left font-semibold text-slate-900 dark:text-white truncate">
                     {props.entry.user.firstName} {props.entry.user.familyName}
                 </div>
-                {props.form.length > 0 && <FormBadge form={props.form}/>}
+                {/* Leaderboard rows show only the most recent game (form is most-recent-first). */}
+                {props.form.length > 0 && <FormBadge form={props.form.slice(0, 1)}/>}
                 <div className="flex items-center gap-1.5 shrink-0">
                     <div className="flex w-[22px] justify-center shrink-0">
                         {props.entry.user.supportedTeamFlagCode && (
