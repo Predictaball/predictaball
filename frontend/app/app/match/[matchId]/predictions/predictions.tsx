@@ -44,10 +44,13 @@ function MatchGlobeHeader({match}: {match: Match}): React.JSX.Element {
                         <FocusedGlobeClient homeCode={homeCode} awayCode={awayCode} venue={match.venue}/>
                     </div>
                     <div className="absolute top-4 left-4 right-4 flex items-center justify-between pointer-events-none">
-                        <span className="inline-flex items-center gap-2 rounded-full bg-white/80 border border-slate-200 text-slate-700 dark:bg-black/50 dark:border-white/10 dark:text-gray-200 px-3 py-1 text-xs font-semibold backdrop-blur">
-                            {live && <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse"/>}
-                            {live ? "Live" : ROUND_LABEL[match.round]}
-                        </span>
+                        {live ? (
+                            <span aria-hidden/>
+                        ) : (
+                            <span className="inline-flex items-center gap-2 rounded-full bg-white/80 border border-slate-200 text-slate-700 dark:bg-black/50 dark:border-white/10 dark:text-gray-200 px-3 py-1 text-xs font-semibold backdrop-blur">
+                                {ROUND_LABEL[match.round]}
+                            </span>
+                        )}
                         <span className="rounded-full bg-white/80 border border-slate-200 text-slate-600 dark:bg-black/50 dark:border-white/10 dark:text-gray-300 px-3 py-1 text-xs backdrop-blur">
                             <LocalTime date={match.datetime}/>
                         </span>

@@ -6,7 +6,7 @@ import type { UserChips } from "@/app/components/predictions/get-user-chips"
 import { handlePrediction } from "@/app/components/predictions/submit-prediction"
 import { ACTION_BUTTON_CLASS } from "@/app/util/css-classes"
 import { SHORT_COUNTRY_NAMES } from "@/app/util/teams"
-import { ChipBadge, chipDisplay, computeChipImpact, PointsPill } from "@/app/components/predictions/chip-impact"
+import { ChipBadge, chipDisplay, computeChipImpact } from "@/app/components/predictions/chip-impact"
 import { Chip, Match, MatchStateEnum, Prediction } from "@/client"
 import { Button, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, useDisclosure } from "@nextui-org/react"
 import React, { useEffect, useRef, useState } from "react"
@@ -144,7 +144,7 @@ export default function PredictionForm({match, onPredictionSaved, userChips, onC
             </div>
 
             {isLive && (
-                <LivePredictionStatus prediction={match.prediction} match={match}/>
+                <LiveChipStatus prediction={match.prediction} match={match}/>
             )}
 
             {isUpcoming && (
@@ -225,10 +225,10 @@ export default function PredictionForm({match, onPredictionSaved, userChips, onC
     )
 }
 
-// Below the prediction boxes on a live match: the chip the user played (if any)
-// and how many points their prediction is worth right now. The live points come
-// straight from the API (the backend re-scores predictions on every score poll).
-function LivePredictionStatus({prediction, match}: {prediction?: Prediction; match: Match}): React.JSX.Element {
+// Below the prediction boxes on a live match: the power-up the user played, if
+// any. The live points are surfaced as a pill on the globe overlay (see
+// PredictionPanel), straight from the API which re-scores on every score poll.
+function LiveChipStatus({prediction, match}: {prediction?: Prediction; match: Match}): React.JSX.Element | null {
     if (!prediction) {
         return (
             <div className="mt-4 text-center text-xs font-semibold uppercase tracking-[0.15em] text-slate-400 dark:text-gray-500">
@@ -237,20 +237,16 @@ function LivePredictionStatus({prediction, match}: {prediction?: Prediction; mat
         )
     }
 
-    const impact = computeChipImpact(prediction, match)
     const meta = CHIP_META[prediction.chip]
+    if (!meta) return null
 
+    const impact = computeChipImpact(prediction, match)
     return (
-        <div className="mt-4 flex flex-wrap items-center justify-center gap-x-3 gap-y-2">
-            {meta && (
-                <span title={impact?.detail} className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-gray-300">
-                    <ChipBadge glyph={meta.glyph} muted={impact ? !impact.helped : false}/>
-                    {meta.label}
-                </span>
-            )}
-            {prediction.points !== undefined && (
-                <PointsPill points={prediction.points}/>
-            )}
+        <div className="mt-4 flex items-center justify-center">
+            <span title={impact?.detail} className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-gray-300">
+                <ChipBadge glyph={meta.glyph} muted={impact ? !impact.helped : false}/>
+                {meta.label}
+            </span>
         </div>
     )
 }
