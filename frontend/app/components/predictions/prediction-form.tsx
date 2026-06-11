@@ -6,7 +6,7 @@ import type { UserChips } from "@/app/components/predictions/get-user-chips"
 import { handlePrediction } from "@/app/components/predictions/submit-prediction"
 import { ACTION_BUTTON_CLASS } from "@/app/util/css-classes"
 import { SHORT_COUNTRY_NAMES } from "@/app/util/teams"
-import { ChipBadge, chipDisplay, computeChipImpact, NudgeScore, PointsPill } from "@/app/components/predictions/chip-impact"
+import { ChipBadge, chipDisplay, computeChipImpact, PointsPill } from "@/app/components/predictions/chip-impact"
 import { Chip, Match, MatchStateEnum, Prediction } from "@/client"
 import { Button, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, useDisclosure } from "@nextui-org/react"
 import React, { useEffect, useRef, useState } from "react"
@@ -15,9 +15,10 @@ import toast from "react-hot-toast"
 const ADVANCE_DELAY_MS = 800
 const SWIPE_STEP_PX = 34
 
+// ±1 (Off by One) is intentionally omitted: its effect is shown directly in the
+// score boxes (new number + struck-through original), so it needs no row badge.
 const CHIP_META: Partial<Record<Chip, {glyph: string; label: string}>> = {
     [Chip.DoublePoints]: {glyph: "2×", label: "Double Points"},
-    [Chip.OneGoalOut]: {glyph: "±1", label: "Off by One"},
     [Chip.Crowd]: {glyph: "%", label: "Follow the Crowd"},
 }
 
@@ -61,6 +62,15 @@ export default function PredictionForm({match, onPredictionSaved, userChips, onC
     // Live/completed matches with no prediction should read as "no pick" (–),
     // not a misleading 0–0 in the score boxes.
     const predictionMissing = !isUpcoming && match.prediction === undefined
+    // ±1 chip that paid off: surface the nudge inside the score boxes — the
+    // changed side shows the new number, a ±1 marker, and the original struck out.
+    const nudge = !isUpcoming ? chipDisplay(match.prediction, match).nudge : undefined
+    const homeNudge = nudge && nudge.original.home !== nudge.adjusted.home
+        ? {original: nudge.original.home, adjusted: nudge.adjusted.home}
+        : undefined
+    const awayNudge = nudge && nudge.original.away !== nudge.adjusted.away
+        ? {original: nudge.original.away, adjusted: nudge.adjusted.away}
+        : undefined
 
     async function submit() {
         const h = homeScore
@@ -126,9 +136,9 @@ export default function PredictionForm({match, onPredictionSaved, userChips, onC
             <div className="flex items-center justify-between gap-2">
                 <TeamSide code={homeCode} name={match.homeTeam} ranking={match.homeTeamRanking}/>
                 <div className="flex items-center gap-2">
-                    <ScoreInput value={homeScore} onChange={handleHomeChange} disabled={!isUpcoming || chip === Chip.Crowd} readOnly={!isUpcoming} displayOverride={predictionMissing ? "–" : chip === Chip.Crowd ? "?" : undefined}/>
+                    <ScoreInput value={homeScore} onChange={handleHomeChange} disabled={!isUpcoming || chip === Chip.Crowd} readOnly={!isUpcoming} displayOverride={predictionMissing ? "–" : chip === Chip.Crowd ? "?" : undefined} nudge={homeNudge}/>
                     <span className="text-3xl font-black text-slate-400 dark:text-gray-500">:</span>
-                    <ScoreInput value={awayScore} onChange={handleAwayChange} disabled={!isUpcoming || chip === Chip.Crowd} readOnly={!isUpcoming} displayOverride={predictionMissing ? "–" : chip === Chip.Crowd ? "?" : undefined}/>
+                    <ScoreInput value={awayScore} onChange={handleAwayChange} disabled={!isUpcoming || chip === Chip.Crowd} readOnly={!isUpcoming} displayOverride={predictionMissing ? "–" : chip === Chip.Crowd ? "?" : undefined} nudge={awayNudge}/>
                 </div>
                 <TeamSide code={awayCode} name={match.awayTeam} ranking={match.awayTeamRanking} reverse/>
             </div>
@@ -228,30 +238,18 @@ function LivePredictionStatus({prediction, match}: {prediction?: Prediction; mat
     }
 
     const impact = computeChipImpact(prediction, match)
-    const display = chipDisplay(prediction, match)
     const meta = CHIP_META[prediction.chip]
 
     return (
         <div className="mt-4 flex flex-wrap items-center justify-center gap-x-3 gap-y-2">
-            {display.nudge ? (
-                // ±1 paid off: show the same original ⟶ adjusted transformation as
-                // the history card, so the nudge is visible without a hover tooltip.
-                <span className="inline-flex items-center gap-1.5">
-                    <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400 dark:text-gray-500">Scored as</span>
-                    <NudgeScore original={display.nudge.original} adjusted={display.nudge.adjusted} className="text-sm font-bold"/>
-                </span>
-            ) : meta && (
+            {meta && (
                 <span title={impact?.detail} className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-gray-300">
                     <ChipBadge glyph={meta.glyph} muted={impact ? !impact.helped : false}/>
                     {meta.label}
                 </span>
             )}
             {prediction.points !== undefined && (
-                <span className="inline-flex items-baseline gap-2 text-sm text-slate-500 dark:text-gray-400">
-                    Worth
-                    <PointsPill points={prediction.points}/>
-                    right now
-                </span>
+                <PointsPill points={prediction.points}/>
             )}
         </div>
     )
@@ -276,13 +274,15 @@ function TeamSide({code, name, reverse, ranking}: {code: string; name: string; r
     )
 }
 
-function ScoreInput({value, onChange, disabled, displayOverride, readOnly}: {
+function ScoreInput({value, onChange, disabled, displayOverride, readOnly, nudge}: {
     value: number
     onChange: (v: number) => void
     disabled: boolean
     displayOverride?: string
     // Live/finished matches: show only the score box, no +/- steppers.
     readOnly?: boolean
+    // ±1 chip on this side: show the new number, a ±1 marker, and the original struck out.
+    nudge?: {original: number; adjusted: number}
 }) {
     const btnClass = "w-full h-8 rounded-lg bg-slate-900/5 border border-slate-900/10 text-cyan-600 hover:bg-slate-900/10 hover:border-cyan-500/40 dark:bg-white/5 dark:border-white/10 dark:text-cyan-300 dark:hover:bg-white/10 dark:hover:border-cyan-400/40 font-bold text-base flex items-center justify-center active:scale-95 transition-all disabled:opacity-20 disabled:pointer-events-none select-none"
     const dragRef = useRef<{startY: number; startValue: number; lastValue: number} | null>(null)
@@ -321,7 +321,7 @@ function ScoreInput({value, onChange, disabled, displayOverride, readOnly}: {
     }
 
     return (
-        <div className="flex flex-col items-center gap-1.5 w-14 sm:w-16">
+        <div className="relative flex flex-col items-center gap-1.5 w-14 sm:w-16">
             {!readOnly && (
                 <button type="button" disabled={disabled || value >= 9} onClick={() => onChange(value + 1)} className={btnClass}>
                     +
@@ -336,13 +336,25 @@ function ScoreInput({value, onChange, disabled, displayOverride, readOnly}: {
                 className={`w-full rounded-2xl bg-gradient-to-tr from-blue-500 via-cyan-400 to-teal-300 p-[2px] transition-transform ${isDragging ? "scale-105" : ""} ${disabled ? "" : "cursor-ns-resize"}`}
             >
                 <div className="w-full aspect-square rounded-2xl bg-white dark:bg-gray-900 flex items-center justify-center text-3xl font-black text-slate-900 dark:text-white select-none">
-                    {displayOverride ?? value}
+                    {nudge ? (
+                        <span className="text-cyan-600 dark:text-cyan-300">{nudge.adjusted}</span>
+                    ) : (
+                        displayOverride ?? value
+                    )}
                 </div>
             </div>
             {!readOnly && (
                 <button type="button" disabled={disabled || value <= 0} onClick={() => onChange(value - 1)} className={btnClass}>
                     −
                 </button>
+            )}
+            {nudge && (
+                // Float beneath the box (in the space the steppers vacate) so the
+                // boxes stay aligned: ±1 marker and the original score struck out.
+                <span className="absolute top-full mt-1.5 left-1/2 -translate-x-1/2 inline-flex items-center gap-1 whitespace-nowrap leading-none">
+                    <span className="text-[9px] font-black text-cyan-600 dark:text-cyan-300">±1</span>
+                    <span className="text-sm font-bold line-through text-slate-400 dark:text-gray-500">{nudge.original}</span>
+                </span>
             )}
         </div>
     )

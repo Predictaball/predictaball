@@ -26,9 +26,6 @@ export default function DistributionBar({distribution, homeName, awayName}: {
                 <div className="bg-slate-400 dark:bg-gray-500" style={{width: `${drawPct}%`}}/>
                 <div className="bg-fuchsia-500" style={{width: `${awayPct}%`}}/>
             </div>
-            <div className="text-[10px] text-slate-400 dark:text-gray-500 mt-1 text-center">
-                Based on {total} prediction{total === 1 ? "" : "s"}
-            </div>
         </div>
     )
 }
