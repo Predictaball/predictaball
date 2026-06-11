@@ -2,9 +2,10 @@
 
 import React from "react";
 import Link from "next/link";
-import {Chip, PredictionWithUser} from "@/client";
+import {Chip, Match, PredictionWithUser} from "@/client";
 import {FlagImage} from "@/app/components/predictions/flag-image";
 import {generateHistoryPageLinkForUser} from "@/app/app/user/[userId]/history/user-link-generator";
+import {ChipImpactNote, computeChipImpact} from "@/app/components/predictions/chip-impact";
 
 // Power-up glyphs, mirroring the home-page match pills.
 const CHIP_GLYPH: Partial<Record<Chip, string>> = {
@@ -15,6 +16,7 @@ const CHIP_GLYPH: Partial<Record<Chip, string>> = {
 
 export default function PredictionWithLink(props: {
     predictionWithUser: PredictionWithUser
+    match: Match
     position: number
     isUser?: boolean
 }): React.JSX.Element {
@@ -22,6 +24,7 @@ export default function PredictionWithLink(props: {
     const isUser = props.isUser ?? false
     const isPodium = props.position <= 3
     const chipGlyph = prediction.chip !== Chip.None ? CHIP_GLYPH[prediction.chip] : undefined
+    const chipImpact = computeChipImpact(prediction, props.match)
 
     return (
         <Link className="block max-w-2xl w-full" href={generateHistoryPageLinkForUser(user)}>
@@ -34,7 +37,8 @@ export default function PredictionWithLink(props: {
                             : "bg-slate-900/10 dark:bg-white/10"
                 }`}
             >
-                <div className="flex items-center gap-3 rounded-2xl bg-white dark:bg-gray-900/85 backdrop-blur-sm px-4 py-3">
+                <div className="rounded-2xl bg-white dark:bg-gray-900/85 backdrop-blur-sm px-4 py-3">
+                    <div className="flex items-center gap-3">
                     <div className="flex items-center justify-center w-7 text-lg font-black tabular-nums text-slate-900 dark:text-white">
                         {props.position}
                     </div>
@@ -57,6 +61,12 @@ export default function PredictionWithLink(props: {
                     {prediction.points !== undefined && (
                         <div className="w-7 text-right text-lg font-black tabular-nums bg-gradient-to-r from-blue-500 via-cyan-500 to-teal-500 dark:from-blue-400 dark:via-cyan-300 dark:to-teal-300 bg-clip-text text-transparent">
                             {prediction.points}
+                        </div>
+                    )}
+                    </div>
+                    {chipImpact && (
+                        <div className="mt-2 pl-[2.875rem]">
+                            <ChipImpactNote impact={chipImpact}/>
                         </div>
                     )}
                 </div>

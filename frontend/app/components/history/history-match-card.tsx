@@ -3,6 +3,7 @@ import Link from "next/link"
 import {Chip, Match, MatchRoundEnum, MatchStateEnum} from "@/client"
 import {FlagImage} from "@/app/components/predictions/flag-image"
 import {LocalTime} from "@/app/components/predictions/local-time"
+import {ChipImpactNote, computeChipImpact} from "@/app/components/predictions/chip-impact"
 
 const ROUND_LABEL: Record<MatchRoundEnum, string> = {
     GROUP_STAGE: "Group Stage",
@@ -31,6 +32,7 @@ export default function HistoryMatchCard({match}: {match: Match}): React.JSX.Ele
     const prediction = match.prediction
     const points = prediction?.points
     const chipGlyph = prediction && prediction.chip !== Chip.None ? CHIP_GLYPH[prediction.chip] : undefined
+    const chipImpact = computeChipImpact(prediction, match)
 
     return (
         <Link
@@ -101,6 +103,12 @@ export default function HistoryMatchCard({match}: {match: Match}): React.JSX.Ele
                         )}
                     </div>
                 </div>
+
+                {chipImpact && (
+                    <div className="mt-2 flex justify-center">
+                        <ChipImpactNote impact={chipImpact}/>
+                    </div>
+                )}
             </div>
         </Link>
     )
