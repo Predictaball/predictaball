@@ -1,6 +1,6 @@
 'use client'
 
-import React, {useRef, useState} from "react";
+import React, {useState} from "react";
 import Link from "next/link";
 import {useRouter} from "next/navigation";
 import {League, Match, MatchRoundEnum, MatchStateEnum, PredictionWithUser} from "@/client";
@@ -89,7 +89,6 @@ export default function Predictions(
     const [currentPage, setCurrentPage] = useState(0)
     const windowsSize = useWindowDimensions()
     const itemsPerPage = windowsSize.height !== undefined ? Math.max((Math.round(windowsSize.height / 80)) - 5, 1) : 5
-    const topRef = useRef<HTMLDivElement>(null)
 
     const getPaginatedPredictions = (leaderboard: PredictionWithUser[]) => {
         const startIndex = currentPage * itemsPerPage;
@@ -98,8 +97,6 @@ export default function Predictions(
 
     const handlePageChange = (page: number) => {
         setCurrentPage(page - 1);
-        // Bring the reader back to the first prediction on the new page.
-        topRef.current?.scrollIntoView({behavior: "smooth", block: "start"})
     };
 
     const totalPages = Math.ceil(props.predictions.length / itemsPerPage);
@@ -163,7 +160,7 @@ export default function Predictions(
                             </Select>
                         )}
                     </div>
-                    <div ref={topRef} className="flex flex-col items-center scroll-mt-6">
+                    <div className="flex flex-col items-center">
                         {getPaginatedPredictions(props.predictions).map((predictionWithUser, index) => (
                             <PredictionData
                                 key={predictionWithUser.user.userId}
