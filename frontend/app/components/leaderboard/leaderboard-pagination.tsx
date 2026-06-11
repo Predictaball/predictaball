@@ -2,7 +2,7 @@
 
 import {LeaderboardInner} from "@/client"
 import LeaderboardEntry from "./leaderboard-entry"
-import React, {useEffect, useRef, useState} from "react"
+import React, {useEffect, useState} from "react"
 import Pagination from "@/app/components/pagination"
 import useWindowDimensions from "@/app/hooks/use-window-dimension";
 
@@ -18,7 +18,6 @@ export default function LeaderboardPagination(props: LeaderboardPaginationProps)
     const [currentPage, setCurrentPage] = useState(0)
     const windowsSize = useWindowDimensions()
     const itemsPerPage = windowsSize.height !== undefined ? Math.max((Math.round(windowsSize.height / 100)) - 1, 1) : 10
-    const topRef = useRef<HTMLDivElement>(null)
 
     const getPaginatedLeaderboard = (leaderboard: any[]) => {
         if (!props.shouldPaginate) {
@@ -39,13 +38,11 @@ export default function LeaderboardPagination(props: LeaderboardPaginationProps)
 
     const handlePageChange = (page: number) => {
         setCurrentPage(page - 1);
-        // Return the reader to the top of the list rather than leaving them
-        // stranded at the bottom where the controls live.
-        topRef.current?.scrollIntoView({behavior: "smooth", block: "start"})
     };
 
+    const paginated = props.shouldPaginate && totalPages > 1
+
     return <>
-        <div ref={topRef} className="scroll-mt-6"/>
         {getPaginatedLeaderboard(props.leaderboardInners).map((entry, index) => (
             <LeaderboardEntry
                 key={index}
@@ -55,14 +52,17 @@ export default function LeaderboardPagination(props: LeaderboardPaginationProps)
                 form={props.formByUserId[entry.user.userId] ?? []}
             />
         ))}
-        {props.shouldPaginate && totalPages > 1 &&
-            <div className="sticky bottom-4 mt-4 flex justify-center pointer-events-none">
+        {paginated && <>
+            {/* Reserve room so the last row is never hidden behind the fixed control. */}
+            <div className="h-20"/>
+            <div className="fixed inset-x-0 bottom-4 z-30 flex justify-center pointer-events-none">
                 <Pagination
                     page={currentPage + 1}
                     total={totalPages}
                     onChange={handlePageChange}
                     className="pointer-events-auto"
                 />
-            </div>}
+            </div>
+        </>}
     </>
 }
