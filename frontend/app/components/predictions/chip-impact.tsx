@@ -1,6 +1,12 @@
 import React from "react"
 import {Chip, Match, Prediction} from "@/client"
 
+const GLYPH: Partial<Record<Chip, string>> = {
+    [Chip.DoublePoints]: "2×",
+    [Chip.OneGoalOut]: "±1",
+    [Chip.Crowd]: "Crowd",
+}
+
 // Mirrors PointsCalculator.calculateDefaultPoints on the backend
 // (lambdas/src/main/kotlin/scorcerer/utils/PointsCalculator.kt): 5 for an
 // exact score, 2 for the right outcome, 0 otherwise.
@@ -15,8 +21,7 @@ function defaultPoints(home: number, away: number, resultHome: number, resultAwa
 export interface ChipImpact {
     chip: Chip
     glyph: string
-    label: string
-    // True when the chip earned the user points they would not otherwise have had.
+    // True when the chip earned points the user would not otherwise have had.
     helped: boolean
     // Plain-language explanation, suitable for a tooltip.
     detail: string
@@ -71,7 +76,6 @@ export function computeChipImpact(
                 return {
                     chip: Chip.OneGoalOut,
                     glyph: "±1",
-                    label: "Off by One",
                     helped: true,
                     original: {home, away},
                     adjusted: {home: best.home, away: best.away},
@@ -82,7 +86,6 @@ export function computeChipImpact(
             return {
                 chip: Chip.OneGoalOut,
                 glyph: "±1",
-                label: "Off by One",
                 helped: false,
                 detail: base === 5 ? "Exact score — no nudge needed" : "No nudge could rescue points",
             }
@@ -92,19 +95,12 @@ export function computeChipImpact(
                 return {
                     chip: Chip.DoublePoints,
                     glyph: "2×",
-                    label: "Double Points",
                     helped: true,
                     delta: base,
                     detail: `Doubled ${base} pts to ${base * 2}`,
                 }
             }
-            return {
-                chip: Chip.DoublePoints,
-                glyph: "2×",
-                label: "Double Points",
-                helped: false,
-                detail: "No points to double",
-            }
+            return {chip: Chip.DoublePoints, glyph: "2×", helped: false, detail: "No points to double"}
         }
         case Chip.Crowd: {
             // The crowd pick has already been substituted into the stored score
@@ -112,7 +108,6 @@ export function computeChipImpact(
             return {
                 chip: Chip.Crowd,
                 glyph: "Crowd",
-                label: "Follow the Crowd",
                 helped: base > 0,
                 detail: `Locked in the crowd's ${home}–${away}`,
             }
@@ -122,34 +117,73 @@ export function computeChipImpact(
     }
 }
 
-// Compact pill explaining what a played chip did to the score. For the ±1 chip
-// it shows the original → adjusted nudge; otherwise a short summary line.
-export function ChipImpactNote({impact, className = ""}: {
-    impact: ChipImpact
+// Where a chip's effect should be surfaced. Effects that change the *prediction*
+// (the ±1 nudge, the crowd lock-in) attach to the prediction; effects that change
+// the *points* (double points) attach to the points.
+export interface ChipDisplay {
+    // ±1 that paid off: render in place of the prediction score (original → adjusted).
+    nudge?: {original: {home: number; away: number}; adjusted: {home: number; away: number}}
+    // Small badge to sit beside the prediction score.
+    predictionBadge?: {glyph: string; muted: boolean; title?: string}
+    // Small badge to sit beside the points.
+    pointsBadge?: {glyph: string; muted: boolean; title?: string}
+}
+
+export function chipDisplay(
+    prediction: Prediction | undefined,
+    match: Pick<Match, "homeScore" | "awayScore">,
+): ChipDisplay {
+    if (!prediction || prediction.chip === Chip.None) return {}
+    const glyph = GLYPH[prediction.chip] ?? ""
+
+    const impact = computeChipImpact(prediction, match)
+    // No result yet — just mark which chip was played, beside the prediction.
+    if (!impact) return {predictionBadge: {glyph, muted: false}}
+
+    switch (prediction.chip) {
+        case Chip.OneGoalOut:
+            if (impact.adjusted && impact.original) {
+                return {nudge: {original: impact.original, adjusted: impact.adjusted}}
+            }
+            return {predictionBadge: {glyph, muted: true, title: impact.detail}}
+        case Chip.Crowd:
+            return {predictionBadge: {glyph, muted: !impact.helped, title: impact.detail}}
+        case Chip.DoublePoints:
+            return {pointsBadge: {glyph, muted: !impact.helped, title: impact.detail}}
+        default:
+            return {}
+    }
+}
+
+// Small bordered chip badge, consistent with the glyph badges used across the app.
+export function ChipBadge({glyph, muted = false, title, className = ""}: {
+    glyph: string
+    muted?: boolean
+    title?: string
     className?: string
 }): React.JSX.Element {
-    const accent = impact.helped
-        ? "border-cyan-500/30 bg-cyan-500/10 text-cyan-700 dark:border-cyan-400/30 dark:bg-cyan-400/10 dark:text-cyan-300"
-        : "border-slate-200 bg-slate-900/[0.03] text-slate-500 dark:border-white/10 dark:bg-white/5 dark:text-gray-400"
-
+    const tone = muted
+        ? "border-slate-200 bg-slate-900/[0.04] text-slate-400 dark:border-white/10 dark:bg-white/5 dark:text-gray-500"
+        : "border-cyan-500/30 bg-cyan-500/15 text-cyan-700 dark:border-cyan-400/30 dark:bg-cyan-400/15 dark:text-cyan-300"
     return (
-        <span
-            title={impact.detail}
-            className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[10px] font-semibold leading-none ${accent} ${className}`}
-        >
-            <span className="font-black tabular-nums">{impact.glyph}</span>
-            {impact.adjusted && impact.original ? (
-                <span className="tabular-nums">
-                    {impact.original.home}–{impact.original.away}
-                    <span className="px-1 opacity-60">→</span>
-                    {impact.adjusted.home}–{impact.adjusted.away}
-                </span>
-            ) : (
-                <span>{impact.detail}</span>
-            )}
-            {impact.delta !== undefined && impact.delta > 0 && (
-                <span className="font-black tabular-nums">+{impact.delta}</span>
-            )}
+        <span title={title} className={`rounded border px-1.5 py-0.5 text-[9px] font-black leading-none ${tone} ${className}`}>
+            {glyph}
+        </span>
+    )
+}
+
+// Renders a ±1 nudge inline with the prediction: original struck through, the
+// adjusted score highlighted. Sizing/weight is inherited from `className`.
+export function NudgeScore({original, adjusted, className = ""}: {
+    original: {home: number; away: number}
+    adjusted: {home: number; away: number}
+    className?: string
+}): React.JSX.Element {
+    return (
+        <span title={`Off by One nudged ${original.home}–${original.away} to ${adjusted.home}–${adjusted.away}`} className={`tabular-nums ${className}`}>
+            <span className="line-through decoration-1 opacity-40">{original.home}–{original.away}</span>
+            <span className="px-1 text-cyan-500 dark:text-cyan-400">→</span>
+            <span className="text-cyan-600 dark:text-cyan-300">{adjusted.home}–{adjusted.away}</span>
         </span>
     )
 }

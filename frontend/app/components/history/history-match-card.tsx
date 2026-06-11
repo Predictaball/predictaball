@@ -1,9 +1,9 @@
 import React from "react"
 import Link from "next/link"
-import {Chip, Match, MatchRoundEnum, MatchStateEnum} from "@/client"
+import {Match, MatchRoundEnum, MatchStateEnum} from "@/client"
 import {FlagImage} from "@/app/components/predictions/flag-image"
 import {LocalTime} from "@/app/components/predictions/local-time"
-import {ChipImpactNote, computeChipImpact} from "@/app/components/predictions/chip-impact"
+import {ChipBadge, chipDisplay, NudgeScore} from "@/app/components/predictions/chip-impact"
 
 const ROUND_LABEL: Record<MatchRoundEnum, string> = {
     GROUP_STAGE: "Group Stage",
@@ -11,13 +11,6 @@ const ROUND_LABEL: Record<MatchRoundEnum, string> = {
     QUARTER_FINAL: "Quarter-Final",
     SEMI_FINAL: "Semi-Final",
     FINAL: "Final",
-}
-
-// Power-ups worth surfacing. Mirrors the glyphs used on the home-page match pills.
-const CHIP_GLYPH: Partial<Record<Chip, string>> = {
-    [Chip.DoublePoints]: "2×",
-    [Chip.OneGoalOut]: "±1",
-    [Chip.Crowd]: "Crowd",
 }
 
 // Points badge colours, consistent with the recent-form dots on the profile.
@@ -31,8 +24,7 @@ export default function HistoryMatchCard({match}: {match: Match}): React.JSX.Ele
     const live = match.state === MatchStateEnum.Live
     const prediction = match.prediction
     const points = prediction?.points
-    const chipGlyph = prediction && prediction.chip !== Chip.None ? CHIP_GLYPH[prediction.chip] : undefined
-    const chipImpact = computeChipImpact(prediction, match)
+    const display = chipDisplay(prediction, match)
 
     return (
         <Link
@@ -81,12 +73,16 @@ export default function HistoryMatchCard({match}: {match: Match}): React.JSX.Ele
                             <>
                                 <span className="text-[9px] font-bold uppercase tracking-[0.15em] text-slate-400 dark:text-gray-500">Prediction</span>
                                 <div className="relative leading-tight">
-                                    <span className="text-base font-bold tabular-nums text-slate-700 dark:text-gray-200">
-                                        {prediction.homeScore}<span className="px-1 text-slate-300 dark:text-gray-600">-</span>{prediction.awayScore}
-                                    </span>
-                                    {chipGlyph && (
-                                        <span className="absolute left-full top-1/2 -translate-y-1/2 ml-1.5 rounded border border-cyan-500/30 bg-cyan-500/15 px-1.5 py-0.5 text-[9px] font-black leading-none text-cyan-700 dark:border-cyan-400/30 dark:bg-cyan-400/15 dark:text-cyan-300">
-                                            {chipGlyph}
+                                    {display.nudge ? (
+                                        <NudgeScore original={display.nudge.original} adjusted={display.nudge.adjusted} className="text-base font-bold"/>
+                                    ) : (
+                                        <span className="text-base font-bold tabular-nums text-slate-700 dark:text-gray-200">
+                                            {prediction.homeScore}<span className="px-1 text-slate-300 dark:text-gray-600">-</span>{prediction.awayScore}
+                                        </span>
+                                    )}
+                                    {display.predictionBadge && (
+                                        <span className="absolute left-full top-1/2 -translate-y-1/2 ml-1.5">
+                                            <ChipBadge {...display.predictionBadge}/>
                                         </span>
                                     )}
                                 </div>
@@ -95,7 +91,8 @@ export default function HistoryMatchCard({match}: {match: Match}): React.JSX.Ele
                             <span className="text-[11px] text-slate-400 dark:text-gray-500">No prediction</span>
                         )}
                     </div>
-                    <div className="flex justify-end">
+                    <div className="flex items-center justify-end gap-1.5">
+                        {display.pointsBadge && <ChipBadge {...display.pointsBadge}/>}
                         {points !== undefined && (
                             <span className={`inline-flex items-center justify-center rounded-full h-6 px-2.5 text-xs font-black tabular-nums ${pointsBadge(points)}`}>
                                 {points} pts
@@ -103,12 +100,6 @@ export default function HistoryMatchCard({match}: {match: Match}): React.JSX.Ele
                         )}
                     </div>
                 </div>
-
-                {chipImpact && (
-                    <div className="mt-2 flex justify-center">
-                        <ChipImpactNote impact={chipImpact}/>
-                    </div>
-                )}
             </div>
         </Link>
     )
