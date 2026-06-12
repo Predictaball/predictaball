@@ -37,8 +37,60 @@ class CountryRankingsTest : DatabaseTest() {
     }
 
     @Test
-    fun emptyWhenNoScoredPredictions() {
+    fun emptyWhenNoCountriesRepresented() {
         getRankings().rankings.size shouldBe 0
+    }
+
+    @Test
+    fun includesRepresentedCountriesWithoutScoredPredictions() {
+        val england = givenTeamExists("england")
+        val france = givenTeamExists("france")
+        val homeTeam = givenTeamExists("brazil")
+        val awayTeam = givenTeamExists("spain")
+
+        val match = givenMatchExists(homeTeam, awayTeam)
+
+        // England has a supporter who scored a prediction.
+        givenUserExists("eng-1", "Eng", supportedTeamId = england)
+        givenPredictionExists(match, "eng-1", 1, 0, points = 6)
+
+        // France is represented (has a supporter) but no scored predictions yet.
+        givenUserExists("fra-1", "Fra", supportedTeamId = france)
+
+        val rankings = getRankings().rankings
+        rankings.size shouldBe 2
+
+        val first = rankings[0]
+        first.position shouldBe 1
+        first.teamName shouldBe "England"
+        first.score shouldBe 6.0
+        first.predictedMatches shouldBe 1
+        first.predictorCount shouldBe 1
+
+        val second = rankings[1]
+        second.position shouldBe 2
+        second.teamName shouldBe "France"
+        second.leagueId shouldBe "france"
+        second.score shouldBe 0.0
+        second.predictedMatches shouldBe 0
+        second.predictorCount shouldBe 0
+    }
+
+    @Test
+    fun unsupportedTeamsAreNotRepresented() {
+        // brazil and spain only appear as match participants — nobody supports
+        // them — so they must not show up in the country rankings.
+        val england = givenTeamExists("england")
+        val homeTeam = givenTeamExists("brazil")
+        val awayTeam = givenTeamExists("spain")
+        val match = givenMatchExists(homeTeam, awayTeam)
+
+        givenUserExists("eng-1", "Eng", supportedTeamId = england)
+        givenPredictionExists(match, "eng-1", 1, 0, points = 4)
+
+        val rankings = getRankings().rankings
+        rankings.size shouldBe 1
+        rankings.single().teamName shouldBe "England"
     }
 
     @Test
