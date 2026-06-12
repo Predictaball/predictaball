@@ -54,6 +54,7 @@ fun calculateCountryRankings(): List<CountryLeaderboardInner> {
     data class CountryAggregate(
         val teamId: Int,
         val teamName: String,
+        val leagueId: String,
         val flagCode: String,
         val score: Double,
         val predictedMatches: Int,
@@ -67,9 +68,11 @@ fun calculateCountryRankings(): List<CountryLeaderboardInner> {
             val score = perMatch.values.sumOf { matchPredictions ->
                 matchPredictions.map { it.points }.average()
             }
+            val rawTeamName = predictions.first().teamName
             CountryAggregate(
                 teamId = predictions.first().teamId,
-                teamName = predictions.first().teamName.toTitleCase(),
+                teamName = rawTeamName.toTitleCase(),
+                leagueId = rawTeamName.toCountryLeagueId(),
                 flagCode = predictions.first().flagCode,
                 score = score,
                 predictedMatches = perMatch.size,
@@ -90,14 +93,15 @@ fun calculateCountryRankings(): List<CountryLeaderboardInner> {
         }
         previousScore = aggregate.score
         CountryLeaderboardInner(
-            currentPosition,
-            aggregate.teamId.toString(),
-            aggregate.teamName,
-            aggregate.flagCode,
-            aggregate.score,
-            aggregate.predictedMatches,
-            aggregate.predictorCount,
-            CountryLeaderboardInner.Movement.UNCHANGED,
+            position = currentPosition,
+            teamId = aggregate.teamId.toString(),
+            teamName = aggregate.teamName,
+            leagueId = aggregate.leagueId,
+            flagCode = aggregate.flagCode,
+            score = aggregate.score,
+            predictedMatches = aggregate.predictedMatches,
+            predictorCount = aggregate.predictorCount,
+            movement = CountryLeaderboardInner.Movement.UNCHANGED,
         )
     }
 }

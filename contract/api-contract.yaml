@@ -222,6 +222,7 @@ components:
           - movement
           - teamId
           - teamName
+          - leagueId
           - flagCode
           - score
           - predictedMatches
@@ -236,6 +237,9 @@ components:
             type: string
           teamName:
             description: Country (team) name
+            type: string
+          leagueId:
+            description: Id of this country's league
             type: string
           flagCode:
             description: Country flag uri

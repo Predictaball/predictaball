@@ -68,6 +68,7 @@ class CountryRankingsTest : DatabaseTest() {
         val first = rankings[0]
         first.position shouldBe 1
         first.teamName shouldBe "England"
+        first.leagueId shouldBe "england"
         first.score shouldBe 5.0
         first.predictedMatches shouldBe 1
         first.predictorCount shouldBe 2
@@ -75,6 +76,7 @@ class CountryRankingsTest : DatabaseTest() {
         val second = rankings[1]
         second.position shouldBe 2
         second.teamName shouldBe "France"
+        second.leagueId shouldBe "france"
         second.score shouldBe 3.0
         second.predictorCount shouldBe 1
     }
