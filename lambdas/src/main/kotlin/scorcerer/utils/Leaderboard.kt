@@ -110,16 +110,24 @@ fun calculateGlobalLeaderboard(previousGlobalLeaderboard: List<LeaderboardInner>
 }
 
 class LeaderboardS3Service(val s3Client: S3Client, val s3BucketName: String) : LeaderboardService {
-    private var cachedLeaderboard: List<LeaderboardInner>? = null
-    private var cachedMatchDay: Int? = null
-    private var cacheTimestamp: Long = 0
+    // Two separate caches:
+    //  - latestMatchDay: the answer to "what's the latest matchDay we have?"
+    //    Only updated by getLatestLeaderboardMatchDay (list-objects) and
+    //    writeLeaderboard (we know matchDay N now exists, so latest >= N).
+    //  - boardByMatchDay: map of matchDay -> leaderboard for getLeaderboard(N).
+    //    Storing multiple days at once means getPreviousLeaderboard doesn't
+    //    evict the current day's entry, which previously caused a stale
+    //    matchDay-0 baseline to be served as the "latest" forever.
+    private var latestMatchDay: Int? = null
+    private var latestMatchDayTimestamp: Long = 0
+    private val boardByMatchDay = mutableMapOf<Int, Pair<List<LeaderboardInner>, Long>>()
     private var cachedCountryRankings: List<CountryLeaderboardInner>? = null
     private var countryRankingsCacheTimestamp: Long = 0
     private val cacheTtlMs = System.getenv("CACHE_TTL_SECONDS")?.toLongOrNull()?.let { it * 1000 } ?: Long.MAX_VALUE
 
     override fun invalidateCache() {
-        cachedLeaderboard = null
-        cachedMatchDay = null
+        latestMatchDay = null
+        boardByMatchDay.clear()
         cachedCountryRankings = null
     }
 
@@ -130,32 +138,35 @@ class LeaderboardS3Service(val s3Client: S3Client, val s3BucketName: String) : L
             body = ByteStream.fromString(leaderboard.toJson())
         }
         s3Client.putObject(request)
-        cachedLeaderboard = leaderboard
-        cachedMatchDay = matchDay
-        cacheTimestamp = System.currentTimeMillis()
+        val now = System.currentTimeMillis()
+        boardByMatchDay[matchDay] = leaderboard to now
+        if (latestMatchDay == null || matchDay > latestMatchDay!!) {
+            latestMatchDay = matchDay
+            latestMatchDayTimestamp = now
+        }
     }
 
     override suspend fun getLatestLeaderboardMatchDay(): Int {
-        if (cachedMatchDay != null && System.currentTimeMillis() - cacheTimestamp < cacheTtlMs) {
-            return cachedMatchDay!!
+        if (latestMatchDay != null && System.currentTimeMillis() - latestMatchDayTimestamp < cacheTtlMs) {
+            return latestMatchDay!!
         }
         val listRequest = ListObjectsV2Request {
             bucket = s3BucketName
         }
         val listResponse = s3Client.listObjectsV2(listRequest)
 
-        val latestMatchDay = listResponse.contents
+        val computed = listResponse.contents
             ?.mapNotNull { it.key?.substringAfter("matchDay")?.substringBefore(".json")?.toIntOrNull() }
             ?.maxOrNull()
             ?: 0
-        cachedMatchDay = latestMatchDay
-        cacheTimestamp = System.currentTimeMillis()
-        return latestMatchDay
+        latestMatchDay = computed
+        latestMatchDayTimestamp = System.currentTimeMillis()
+        return computed
     }
 
     override suspend fun getLeaderboard(matchDay: Int): List<LeaderboardInner>? {
-        if (matchDay == cachedMatchDay && cachedLeaderboard != null && System.currentTimeMillis() - cacheTimestamp < cacheTtlMs) {
-            return cachedLeaderboard
+        boardByMatchDay[matchDay]?.let { (board, ts) ->
+            if (System.currentTimeMillis() - ts < cacheTtlMs) return board
         }
         val request = GetObjectRequest {
             bucket = s3BucketName
@@ -167,9 +178,7 @@ class LeaderboardS3Service(val s3Client: S3Client, val s3BucketName: String) : L
                 val json = resp.body?.decodeToString()
                 requireNotNull(json) { "Leaderboard is empty" }
                 val leaderboard: List<LeaderboardInner> = json.fromJson()
-                cachedLeaderboard = leaderboard
-                cachedMatchDay = matchDay
-                cacheTimestamp = System.currentTimeMillis()
+                boardByMatchDay[matchDay] = leaderboard to System.currentTimeMillis()
                 return@getObject leaderboard
             }
         } catch (e: Exception) {

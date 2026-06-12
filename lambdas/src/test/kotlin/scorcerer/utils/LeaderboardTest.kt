@@ -105,6 +105,50 @@ class TestLeaderboardS3Service {
         result shouldBe null
         coVerify { s3Client.getObject(any<GetObjectRequest>(), any()) }
     }
+
+    // Regression: getLeaderboard(N-1) for movement calculation used to evict
+    // the latest-matchDay cache, so the next call to getLatestLeaderboardMatchDay
+    // returned N-1 forever (until process restart).
+    @Test
+    fun getLeaderboardForPreviousDayDoesNotCorruptLatestMatchDayCache(): Unit = runBlocking {
+        val s3Objects = listOf(
+            Object { key = "matchDay0.json" },
+            Object { key = "matchDay1.json" },
+        )
+        coEvery { s3Client.listObjectsV2(any<ListObjectsV2Request>()) } returns ListObjectsV2Response { contents = s3Objects }
+        // Invoke the captured lambda so the side effects of the production
+        // code (which write to the cache fields) actually run.
+        val mockResp = mockk<GetObjectResponse> {
+            every { body } returns aws.smithy.kotlin.runtime.content.ByteStream.fromString(emptyList<LeaderboardInner>().toJson())
+        }
+        coEvery {
+            s3Client.getObject(any<GetObjectRequest>(), any<suspend (GetObjectResponse) -> List<LeaderboardInner>?>())
+        } coAnswers {
+            val block = secondArg<suspend (GetObjectResponse) -> List<LeaderboardInner>?>()
+            block(mockResp)
+        }
+
+        leaderboardS3Service.getLatestLeaderboardMatchDay() shouldBe 1
+        leaderboardS3Service.getLeaderboard(0)
+        // Old buggy code wrote cachedMatchDay=0 inside getLeaderboard's success
+        // path, so this returned 0. New code keeps the two caches separate.
+        leaderboardS3Service.getLatestLeaderboardMatchDay() shouldBe 1
+    }
+
+    @Test
+    fun writeLeaderboardAdvancesLatestMatchDay(): Unit = runBlocking {
+        coEvery { s3Client.putObject(any<PutObjectRequest>()) } returns mockk()
+        coEvery { s3Client.listObjectsV2(any<ListObjectsV2Request>()) } returns ListObjectsV2Response {
+            contents = emptyList()
+        }
+
+        // Cache the (empty) latest first.
+        leaderboardS3Service.getLatestLeaderboardMatchDay() shouldBe 0
+        // Writing matchDay 1 should bump the cached latest forward without
+        // re-listing S3.
+        leaderboardS3Service.writeLeaderboard(emptyList(), 1)
+        leaderboardS3Service.getLatestLeaderboardMatchDay() shouldBe 1
+    }
 }
 
 class LeaderboardTest {
