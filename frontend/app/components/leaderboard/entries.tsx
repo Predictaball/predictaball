@@ -51,7 +51,7 @@ export default async function Entries(props: EntriesProps): Promise<React.JSX.El
         const elementsForLeaderboard = filterWithContext(
             wholeLeaderboard,
             (element) => element.user.userId === userId,
-            4
+            2
         )
         return elementsForLeaderboard.find(x => x === leader) !== undefined
             ? elementsForLeaderboard
