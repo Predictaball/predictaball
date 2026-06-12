@@ -18,7 +18,7 @@ export default function CountryRankingEntry(props: CountryRankingEntryProps): Re
 
     return (
         <Link
-            href={`/league/${entry.leagueId}/leaderboard`}
+            href={`app/league/${entry.leagueId}/leaderboard`}
             className={`group relative block w-full max-w-2xl rounded-2xl p-[1px] mb-2.5 transition-transform hover:scale-[1.01] ${
                 isPodium
                     ? "bg-gradient-to-r from-slate-900/20 to-slate-900/10 dark:from-white/25 dark:to-white/10"
