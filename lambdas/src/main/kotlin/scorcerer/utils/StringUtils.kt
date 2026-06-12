@@ -17,3 +17,12 @@ fun String.capitaliseName(): String {
         word.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
     }
 }
+
+/**
+ * The country-league ID for a team name: the slugified name (e.g. "South Africa"
+ * -> "south-africa"). This is the canonical place this rule lives — country
+ * leagues are auto-created with this ID, and the rankings reference them by it.
+ */
+fun String.toCountryLeagueId(): String {
+    return this.lowercase().replace(Regex("\\s+"), "-")
+}

@@ -43,6 +43,7 @@ import scorcerer.utils.LeaderboardService
 import scorcerer.utils.capitaliseName
 import scorcerer.utils.filterLeaderboardToLeague
 import scorcerer.utils.livePointsForUser
+import scorcerer.utils.toCountryLeagueId
 import scorcerer.utils.toTitleCase
 import scorcerer.utils.toUser
 
@@ -79,7 +80,7 @@ private fun addToCountryLeague(userId: String, teamId: Int) {
         transaction {
             val rawTeamName = TeamTable.select(TeamTable.name).where { TeamTable.id eq teamId }
                 .single()[TeamTable.name]
-            val leagueId = rawTeamName.lowercase().replace(Regex("\\s+"), "-")
+            val leagueId = rawTeamName.toCountryLeagueId()
             val leagueName = rawTeamName.toTitleCase()
             val leagueExists = LeagueTable.selectAll().where { LeagueTable.id eq leagueId }.count() > 0
             if (!leagueExists) {
@@ -324,7 +325,7 @@ fun userRoutes(contexts: RequestContexts, leaderboardService: LeaderboardService
             // When the team changes, swap the country-league membership.
             if (newTeamId != null && previousTeamId != null && previousTeamId != newTeamId) {
                 val previousLeagueId = TeamTable.select(TeamTable.name).where { TeamTable.id eq previousTeamId }
-                    .single()[TeamTable.name].lowercase().replace(Regex("\\s+"), "-")
+                    .single()[TeamTable.name].toCountryLeagueId()
                 LeagueMembershipTable.deleteWhere {
                     (LeagueMembershipTable.memberId eq userId).and(LeagueMembershipTable.leagueId eq previousLeagueId)
                 }
