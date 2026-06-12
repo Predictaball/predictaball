@@ -12,6 +12,10 @@ import scorcerer.server.db.tables.TeamTable
 /**
  * Rank every country (supported team) against one another.
  *
+ * Every country represented in the game — i.e. supported by at least one
+ * member — is included, even if none of its supporters have a scored
+ * prediction yet (such countries score 0.0).
+ *
  * A country's score for a single match is the average of the points scored by
  * that country's supporters who predicted that match — members who did not
  * predict are ignored. The country's overall score is the sum of those
@@ -20,20 +24,35 @@ import scorcerer.server.db.tables.TeamTable
 fun calculateCountryRankings(): List<CountryLeaderboardInner> {
     data class ScoredPrediction(
         val teamId: Int,
-        val teamName: String,
-        val flagCode: String,
         val matchId: Int,
         val memberId: String,
         val points: Int,
     )
 
-    val scoredPredictions = transaction {
-        (PredictionTable innerJoin MemberTable)
+    data class RepresentedCountry(
+        val teamId: Int,
+        val teamName: String,
+        val flagCode: String,
+    )
+
+    val (representedCountries, scoredPredictions) = transaction {
+        // Every country with at least one supporter is represented in the game.
+        val countries = MemberTable
+            .join(TeamTable, JoinType.INNER, MemberTable.supportedTeamId, TeamTable.id)
+            .select(TeamTable.id, TeamTable.name, TeamTable.flagCode)
+            .map {
+                RepresentedCountry(
+                    it[TeamTable.id],
+                    it[TeamTable.name],
+                    it[TeamTable.flagCode],
+                )
+            }
+            .distinctBy { it.teamId }
+
+        val predictions = (PredictionTable innerJoin MemberTable)
             .join(TeamTable, JoinType.INNER, MemberTable.supportedTeamId, TeamTable.id)
             .select(
                 TeamTable.id,
-                TeamTable.name,
-                TeamTable.flagCode,
                 PredictionTable.matchId,
                 PredictionTable.memberId,
                 PredictionTable.points,
@@ -42,13 +61,13 @@ fun calculateCountryRankings(): List<CountryLeaderboardInner> {
             .map {
                 ScoredPrediction(
                     it[TeamTable.id],
-                    it[TeamTable.name],
-                    it[TeamTable.flagCode],
                     it[PredictionTable.matchId],
                     it[PredictionTable.memberId],
                     it[PredictionTable.points]!!,
                 )
             }
+
+        countries to predictions
     }
 
     data class CountryAggregate(
@@ -61,19 +80,21 @@ fun calculateCountryRankings(): List<CountryLeaderboardInner> {
         val predictorCount: Int,
     )
 
-    val aggregates = scoredPredictions
-        .groupBy { it.teamId }
-        .map { (_, predictions) ->
+    val predictionsByTeam = scoredPredictions.groupBy { it.teamId }
+
+    val aggregates = representedCountries
+        .map { country ->
+            val predictions = predictionsByTeam[country.teamId].orEmpty()
             val perMatch = predictions.groupBy { it.matchId }
+            // Countries whose supporters haven't scored a prediction yet score 0.0.
             val score = perMatch.values.sumOf { matchPredictions ->
                 matchPredictions.map { it.points }.average()
             }
-            val rawTeamName = predictions.first().teamName
             CountryAggregate(
-                teamId = predictions.first().teamId,
-                teamName = rawTeamName.toTitleCase(),
-                leagueId = rawTeamName.toCountryLeagueId(),
-                flagCode = predictions.first().flagCode,
+                teamId = country.teamId,
+                teamName = country.teamName.toTitleCase(),
+                leagueId = country.teamName.toCountryLeagueId(),
+                flagCode = country.flagCode,
                 score = score,
                 predictedMatches = perMatch.size,
                 predictorCount = predictions.map { it.memberId }.distinct().size,
