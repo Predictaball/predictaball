@@ -28,6 +28,7 @@ import scorcerer.utils.livePointsForUser
 class MatchLifecycleTest : PostgresTest() {
     private val leaderboardService = mockk<LeaderboardS3Service> {
         coEvery { updateGlobalLeaderboard(any()) } returns Unit
+        coEvery { updateCountryRankings() } returns Unit
     }
 
     @Test

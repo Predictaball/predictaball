@@ -1,10 +1,12 @@
 package scorcerer.utils
 
+import org.openapitools.server.models.CountryLeaderboardInner
 import org.openapitools.server.models.LeaderboardInner
 import scorcerer.server.log
 
 class LocalLeaderboardService : LeaderboardService {
     private val store = mutableMapOf<Int, List<LeaderboardInner>>()
+    private var countryRankings: List<CountryLeaderboardInner>? = null
 
     override fun invalidateCache() {}
 
@@ -28,5 +30,18 @@ class LocalLeaderboardService : LeaderboardService {
     override suspend fun updateGlobalLeaderboard(matchDay: Int) {
         val leaderboard = calculateGlobalLeaderboard(store[matchDay])
         writeLeaderboard(leaderboard, matchDay)
+    }
+
+    override suspend fun writeCountryRankings(rankings: List<CountryLeaderboardInner>) {
+        countryRankings = rankings
+        log.info("Local country rankings written (${rankings.size} entries)")
+    }
+
+    override suspend fun getCountryRankings(): List<CountryLeaderboardInner>? {
+        return countryRankings
+    }
+
+    override suspend fun updateCountryRankings() {
+        writeCountryRankings(calculateCountryRankings())
     }
 }

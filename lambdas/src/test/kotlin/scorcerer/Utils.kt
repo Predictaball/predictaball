@@ -13,6 +13,7 @@ fun givenUserExists(
     familyName: String = "Name",
     fixedPoints: Int = 0,
     emailReminders: Boolean = false,
+    supportedTeamId: String? = null,
 ) {
     transaction {
         MemberTable.insert {
@@ -24,6 +25,7 @@ fun givenUserExists(
             it[this.oneOutChips] = 3
             it[this.email] = "$id@test.com"
             it[this.emailReminders] = emailReminders
+            if (supportedTeamId != null) it[this.supportedTeamId] = supportedTeamId.toInt()
         }
     }
 }

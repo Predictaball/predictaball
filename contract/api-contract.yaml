@@ -212,6 +212,52 @@ components:
               - IMPROVED
               - WORSENED
               - UNCHANGED
+    countryLeaderboard:
+      description: Ranking of countries against one another. Each country's score is the sum, across every match, of the average points scored by that country's supporters who predicted that match.
+      type: array
+      items:
+        type: object
+        required:
+          - position
+          - movement
+          - teamId
+          - teamName
+          - flagCode
+          - score
+          - predictedMatches
+          - predictorCount
+        properties:
+          position:
+            type: integer
+            format: int32
+            minimum: 1
+          teamId:
+            description: Team Id of the country
+            type: string
+          teamName:
+            description: Country (team) name
+            type: string
+          flagCode:
+            description: Country flag uri
+            type: string
+          score:
+            description: Sum of per-match average points for this country's supporters
+            type: number
+            format: double
+          predictedMatches:
+            description: Number of distinct matches this country's supporters have scored predictions for
+            type: integer
+            format: int32
+          predictorCount:
+            description: Number of supporters of this country who have at least one scored prediction
+            type: integer
+            format: int32
+          movement:
+            type: string
+            enum:
+              - IMPROVED
+              - WORSENED
+              - UNCHANGED
     user:
       type: object
       required:
@@ -1371,6 +1417,31 @@ paths:
       responses:
         '200':
           description: Successful response
+  /leaderboard/countries:
+    get:
+      tags:
+        - league
+      operationId: getCountryRankings
+      description: Returns the leaderboard of countries ranked against one another.
+      security: [ ]
+      x-amazon-apigateway-integration:
+        type: "aws_proxy"
+        httpMethod: "POST"
+        uri: "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${apiHandlerArn}/invocations"
+        credentials: "${apiGatewayRoleArn}"
+        payloadFormatVersion: "1.0"
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - rankings
+                properties:
+                  rankings:
+                    $ref: '#/components/schemas/countryLeaderboard'
   /tournament/state:
     get:
       tags:

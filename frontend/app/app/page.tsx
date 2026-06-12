@@ -4,6 +4,8 @@ import Link from "next/link";
 import Leaderboard from "@/app/components/leaderboard/leaderboard";
 import SignOutButton from "@/app/components/sign-out-button";
 import Dashboard from "@/app/components/leaderboard/dashboard";
+import CountryRankingsPreview from "@/app/components/leaderboard/country-rankings-preview";
+import LeaderboardSkeleton from "@/app/components/leaderboard/leaderboard-skeleton";
 import HeadlineSuspense from "@/app/components/points/headline-suspense";
 import { Toaster } from "react-hot-toast";
 import AdminButton from "@/app/components/admin-button";
@@ -110,7 +112,7 @@ const Home = async ({searchParams}: {searchParams: Promise<Record<string, string
                     </div>
                 </section>
 
-                <section className="space-y-4 pb-10">
+                <section className="space-y-4">
                     <SectionHeading
                         title="Global standing"
                         action={
@@ -122,6 +124,24 @@ const Home = async ({searchParams}: {searchParams: Promise<Record<string, string
                     <div className="relative rounded-3xl bg-gradient-to-br from-slate-900/15 to-slate-900/5 dark:from-white/15 dark:to-white/5 p-[1px] shadow-xl shadow-slate-900/5 dark:shadow-cyan-500/5">
                         <div className="rounded-3xl bg-white/60 dark:bg-white/[0.03] backdrop-blur-sm p-5 sm:p-6">
                             <Leaderboard shouldPaginate={false} leagueId={"global"} limit={true} />
+                        </div>
+                    </div>
+                </section>
+
+                <section className="space-y-4 pb-10">
+                    <SectionHeading
+                        title="Country rankings"
+                        action={
+                            <Link href="/app/leaderboard/countries" className="text-xs font-semibold text-cyan-600 dark:text-cyan-300 hover:text-cyan-700 dark:hover:text-cyan-200 transition-colors">
+                                View all →
+                            </Link>
+                        }
+                    />
+                    <div className="relative rounded-3xl bg-gradient-to-br from-slate-900/15 to-slate-900/5 dark:from-white/15 dark:to-white/5 p-[1px] shadow-xl shadow-slate-900/5 dark:shadow-cyan-500/5">
+                        <div className="rounded-3xl bg-white/60 dark:bg-white/[0.03] backdrop-blur-sm p-5 sm:p-6">
+                            <Suspense fallback={<LeaderboardSkeleton/>}>
+                                <CountryRankingsPreview limit={5}/>
+                            </Suspense>
                         </div>
                     </div>
                 </section>
