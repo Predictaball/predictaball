@@ -6,10 +6,9 @@ interface CountryRankingEntryProps {
     entry: CountryLeaderboardInner
 }
 
-// Show the score with at most two decimals, trimming any trailing zeros so whole
-// numbers read cleanly (e.g. "5" rather than "5.00").
+// Show the score rounded to a single decimal place (e.g. "5.0").
 function formatScore(score: number): string {
-    return Number(score.toFixed(2)).toString()
+    return score.toFixed(1)
 }
 
 export default function CountryRankingEntry(props: CountryRankingEntryProps): React.JSX.Element {
