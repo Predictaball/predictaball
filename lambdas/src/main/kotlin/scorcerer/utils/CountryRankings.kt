@@ -16,6 +16,10 @@ import scorcerer.server.db.tables.TeamTable
  * that country's supporters who predicted that match — members who did not
  * predict are ignored. The country's overall score is the sum of those
  * per-match averages across every match that has been scored.
+ *
+ * Every country is included in the ranking. Countries whose supporters have no
+ * scored predictions (or that have no supporters at all) score 0 and sit at the
+ * bottom of the table.
  */
 fun calculateCountryRankings(): List<CountryLeaderboardInner> {
     data class ScoredPrediction(
@@ -27,8 +31,24 @@ fun calculateCountryRankings(): List<CountryLeaderboardInner> {
         val points: Int,
     )
 
-    val scoredPredictions = transaction {
-        (PredictionTable innerJoin MemberTable)
+    data class Team(
+        val teamId: Int,
+        val teamName: String,
+        val flagCode: String,
+    )
+
+    val (allTeams, scoredPredictions) = transaction {
+        val teams = TeamTable
+            .select(TeamTable.id, TeamTable.name, TeamTable.flagCode)
+            .map {
+                Team(
+                    it[TeamTable.id],
+                    it[TeamTable.name],
+                    it[TeamTable.flagCode],
+                )
+            }
+
+        val predictions = (PredictionTable innerJoin MemberTable)
             .join(TeamTable, JoinType.INNER, MemberTable.supportedTeamId, TeamTable.id)
             .select(
                 TeamTable.id,
@@ -49,6 +69,8 @@ fun calculateCountryRankings(): List<CountryLeaderboardInner> {
                     it[PredictionTable.points]!!,
                 )
             }
+
+        teams to predictions
     }
 
     data class CountryAggregate(
@@ -60,9 +82,9 @@ fun calculateCountryRankings(): List<CountryLeaderboardInner> {
         val predictorCount: Int,
     )
 
-    val aggregates = scoredPredictions
+    val aggregatesByTeam = scoredPredictions
         .groupBy { it.teamId }
-        .map { (_, predictions) ->
+        .mapValues { (_, predictions) ->
             val perMatch = predictions.groupBy { it.matchId }
             val score = perMatch.values.sumOf { matchPredictions ->
                 matchPredictions.map { it.points }.average()
@@ -76,6 +98,17 @@ fun calculateCountryRankings(): List<CountryLeaderboardInner> {
                 predictorCount = predictions.map { it.memberId }.distinct().size,
             )
         }
+
+    val aggregates = allTeams.map { team ->
+        aggregatesByTeam[team.teamId] ?: CountryAggregate(
+            teamId = team.teamId,
+            teamName = team.teamName.toTitleCase(),
+            flagCode = team.flagCode,
+            score = 0.0,
+            predictedMatches = 0,
+            predictorCount = 0,
+        )
+    }
 
     val sorted = aggregates.sortedWith(
         compareByDescending<CountryAggregate> { it.score }.thenBy { it.teamName },

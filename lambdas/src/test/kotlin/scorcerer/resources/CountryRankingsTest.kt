@@ -37,8 +37,40 @@ class CountryRankingsTest : DatabaseTest() {
     }
 
     @Test
-    fun emptyWhenNoScoredPredictions() {
+    fun emptyWhenNoTeamsExist() {
         getRankings().rankings.size shouldBe 0
+    }
+
+    @Test
+    fun includesCountriesWithNoPredictionsScoringZeroAtBottom() {
+        val england = givenTeamExists("england")
+        // Brazil has no supporters / predictions at all.
+        givenTeamExists("brazil")
+        val homeTeam = givenTeamExists("argentina")
+        val awayTeam = givenTeamExists("spain")
+        val match = givenMatchExists(homeTeam, awayTeam)
+
+        givenUserExists("eng-1", "Eng", supportedTeamId = england)
+        givenPredictionExists(match, "eng-1", 1, 0, points = 4)
+
+        val rankings = getRankings().rankings
+        // England (scored) plus the three teams that scored nothing.
+        rankings.size shouldBe 4
+
+        val first = rankings[0]
+        first.position shouldBe 1
+        first.teamName shouldBe "England"
+        first.score shouldBe 4.0
+
+        // Everyone else has zero points and shares the next position, ordered by name.
+        val zeroScorers = rankings.drop(1)
+        zeroScorers.map { it.teamName } shouldBe listOf("Argentina", "Brazil", "Spain")
+        zeroScorers.forEach {
+            it.position shouldBe 2
+            it.score shouldBe 0.0
+            it.predictedMatches shouldBe 0
+            it.predictorCount shouldBe 0
+        }
     }
 
     @Test
@@ -63,7 +95,6 @@ class CountryRankingsTest : DatabaseTest() {
         givenPredictionExists(match, "fra-1", 1, 0, points = 3)
 
         val rankings = getRankings().rankings
-        rankings.size shouldBe 2
 
         val first = rankings[0]
         first.position shouldBe 1
@@ -77,6 +108,10 @@ class CountryRankingsTest : DatabaseTest() {
         second.teamName shouldBe "France"
         second.score shouldBe 3.0
         second.predictorCount shouldBe 1
+
+        // Brazil and Spain have no supporters and sit at the bottom on zero points.
+        rankings.drop(2).map { it.teamName } shouldBe listOf("Brazil", "Spain")
+        rankings.drop(2).forEach { it.score shouldBe 0.0 }
     }
 
     @Test
@@ -96,9 +131,9 @@ class CountryRankingsTest : DatabaseTest() {
         givenPredictionExists(matchTwo, "eng-1", 1, 0, points = 4)
 
         val rankings = getRankings().rankings
-        rankings.size shouldBe 1
-        rankings[0].score shouldBe 7.0
-        rankings[0].predictedMatches shouldBe 2
+        val englandRanking = rankings.single { it.teamName == "England" }
+        englandRanking.score shouldBe 7.0
+        englandRanking.predictedMatches shouldBe 2
     }
 
     @Test
@@ -111,17 +146,19 @@ class CountryRankingsTest : DatabaseTest() {
         givenUserExists("eng-1", "Eng", supportedTeamId = england)
         givenPredictionExists(match, "eng-1", 1, 0, points = 4)
 
+        fun englandScore() = getRankings().rankings.single { it.teamName == "England" }.score
+
         // First request populates the cache.
-        getRankings().rankings.single().score shouldBe 4.0
+        englandScore() shouldBe 4.0
 
         // Underlying data changes, but without a score-update trigger the cached
         // snapshot is served unchanged (i.e. we are not recomputing per request).
         givenUserExists("eng-2", "Eng", supportedTeamId = england)
         givenPredictionExists(match, "eng-2", 1, 0, points = 8)
-        getRankings().rankings.single().score shouldBe 4.0
+        englandScore() shouldBe 4.0
 
         // Refreshing the snapshot (as a score update would) picks up the new data.
         runBlocking { leaderboardService.updateCountryRankings() }
-        getRankings().rankings.single().score shouldBe 6.0
+        englandScore() shouldBe 6.0
     }
 }
