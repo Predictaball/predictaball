@@ -1,6 +1,8 @@
 import React from "react"
+import Link from "next/link"
 import {CountryLeaderboardInner} from "@/client"
 import {FlagImage} from "@/app/components/predictions/flag-image"
+import {countryLeagueId} from "@/app/util/leagues"
 
 interface CountryRankingEntryProps {
     entry: CountryLeaderboardInner
@@ -16,8 +18,9 @@ export default function CountryRankingEntry(props: CountryRankingEntryProps): Re
     const isPodium = entry.position <= 3
 
     return (
-        <div
-            className={`group relative w-full max-w-2xl rounded-2xl p-[1px] mb-2.5 transition-transform hover:scale-[1.01] ${
+        <Link
+            href={`/league/${countryLeagueId(entry.teamName)}/leaderboard`}
+            className={`group relative block w-full max-w-2xl rounded-2xl p-[1px] mb-2.5 transition-transform hover:scale-[1.01] ${
                 isPodium
                     ? "bg-gradient-to-r from-slate-900/20 to-slate-900/10 dark:from-white/25 dark:to-white/10"
                     : "bg-slate-900/10 dark:bg-white/10"
@@ -42,6 +45,6 @@ export default function CountryRankingEntry(props: CountryRankingEntryProps): Re
                     {formatScore(entry.score)}
                 </div>
             </div>
-        </div>
+        </Link>
     )
 }

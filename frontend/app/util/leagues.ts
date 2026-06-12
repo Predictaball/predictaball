@@ -11,3 +11,10 @@ export function isManagedLeague(kind: LeagueKindEnum): boolean {
 export function inviteUrl(leagueId: string): string {
     return `https://www.predictaball.live/league/${leagueId}/join`
 }
+
+// The country league ID is the slugified team name (e.g. "South Africa" ->
+// "south-africa"), matching how the backend derives it when auto-creating the
+// per-country leagues. Used to link a country ranking entry to its league.
+export function countryLeagueId(teamName: string): string {
+    return teamName.toLowerCase().replace(/\s+/g, "-")
+}
