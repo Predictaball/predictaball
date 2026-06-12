@@ -5,7 +5,11 @@ import { getConfigWithAuthHeader } from "@/app/api/client-config";
 import { getUserId } from "@/app/auth/jwt-handler";
 import { getPositionForLeague } from "@/app/app/league/get-position-for-league";
 
-export default async function Headline(): Promise<React.JSX.Element> {
+interface HeadlineProps {
+    hasLiveMatch: boolean
+}
+
+export default async function Headline({ hasLiveMatch }: HeadlineProps): Promise<React.JSX.Element> {
 
     const userId = await getUserId()
     const config = await getConfigWithAuthHeader()
@@ -43,11 +47,13 @@ export default async function Headline(): Promise<React.JSX.Element> {
                         <span className="font-bold text-slate-900 dark:text-white tabular-nums">#{position ?? "—"}</span>
                         <span className="text-slate-500 dark:text-gray-400 text-[11px] uppercase tracking-[0.15em]">global</span>
                     </span>
-                    <span className="inline-flex items-center gap-2 rounded-full bg-slate-900/5 dark:bg-white/5 border border-slate-900/10 dark:border-white/10 px-3.5 py-1.5">
-                        <span className={`h-1.5 w-1.5 rounded-full bg-red-500 ${live > 0 ? "animate-pulse" : ""}`}/>
-                        <span className="font-bold text-slate-900 dark:text-white tabular-nums">{live}</span>
-                        <span className="text-slate-500 dark:text-gray-400 text-[11px] uppercase tracking-[0.15em]">live</span>
-                    </span>
+                    {hasLiveMatch && (
+                        <span className="inline-flex items-center gap-2 rounded-full bg-slate-900/5 dark:bg-white/5 border border-slate-900/10 dark:border-white/10 px-3.5 py-1.5">
+                            <span className="h-1.5 w-1.5 rounded-full bg-red-500 animate-pulse"/>
+                            <span className="font-bold text-slate-900 dark:text-white tabular-nums">{live}</span>
+                            <span className="text-slate-500 dark:text-gray-400 text-[11px] uppercase tracking-[0.15em]">live</span>
+                        </span>
+                    )}
                 </div>
             </div>
         </div>
