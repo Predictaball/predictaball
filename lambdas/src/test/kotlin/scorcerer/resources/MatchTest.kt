@@ -179,7 +179,9 @@ class MatchTest : DatabaseTest() {
         getPredictionPoints(predictionId) shouldBe 5
         coVerifySequence {
             mockLeaderboardService.updateGlobalLeaderboard(5)
+            mockLeaderboardService.updateCountryRankings()
             mockLeaderboardService.updateGlobalLeaderboard(5)
+            mockLeaderboardService.updateCountryRankings()
         }
     }
 

@@ -10,6 +10,7 @@ import org.jetbrains.exposed.v1.core.JoinType
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
+import org.openapitools.server.models.CountryLeaderboardInner
 import org.openapitools.server.models.LeaderboardInner
 import scorcerer.server.db.tables.LeagueMembershipTable
 import scorcerer.server.db.tables.MemberTable
@@ -112,11 +113,14 @@ class LeaderboardS3Service(val s3Client: S3Client, val s3BucketName: String) : L
     private var cachedLeaderboard: List<LeaderboardInner>? = null
     private var cachedMatchDay: Int? = null
     private var cacheTimestamp: Long = 0
+    private var cachedCountryRankings: List<CountryLeaderboardInner>? = null
+    private var countryRankingsCacheTimestamp: Long = 0
     private val cacheTtlMs = System.getenv("CACHE_TTL_SECONDS")?.toLongOrNull()?.let { it * 1000 } ?: Long.MAX_VALUE
 
     override fun invalidateCache() {
         cachedLeaderboard = null
         cachedMatchDay = null
+        cachedCountryRankings = null
     }
 
     override suspend fun writeLeaderboard(leaderboard: List<LeaderboardInner>, matchDay: Int) {
@@ -186,5 +190,48 @@ class LeaderboardS3Service(val s3Client: S3Client, val s3BucketName: String) : L
         val previousDayLeaderboard = getPreviousLeaderboard(matchDay)
         val updatedGlobalLeaderboard = calculateGlobalLeaderboard(previousDayLeaderboard)
         writeLeaderboard(updatedGlobalLeaderboard, matchDay)
+    }
+
+    override suspend fun writeCountryRankings(rankings: List<CountryLeaderboardInner>) {
+        val request = PutObjectRequest {
+            bucket = s3BucketName
+            key = COUNTRY_RANKINGS_KEY
+            body = ByteStream.fromString(rankings.toJson())
+        }
+        s3Client.putObject(request)
+        cachedCountryRankings = rankings
+        countryRankingsCacheTimestamp = System.currentTimeMillis()
+    }
+
+    override suspend fun getCountryRankings(): List<CountryLeaderboardInner>? {
+        if (cachedCountryRankings != null && System.currentTimeMillis() - countryRankingsCacheTimestamp < cacheTtlMs) {
+            return cachedCountryRankings
+        }
+        val request = GetObjectRequest {
+            bucket = s3BucketName
+            key = COUNTRY_RANKINGS_KEY
+        }
+
+        return try {
+            s3Client.getObject(request) { resp ->
+                val json = resp.body?.decodeToString()
+                requireNotNull(json) { "Country rankings are empty" }
+                val rankings: List<CountryLeaderboardInner> = json.fromJson()
+                cachedCountryRankings = rankings
+                countryRankingsCacheTimestamp = System.currentTimeMillis()
+                return@getObject rankings
+            }
+        } catch (e: Exception) {
+            log.info("Error fetching country rankings: $e")
+            null
+        }
+    }
+
+    override suspend fun updateCountryRankings() {
+        writeCountryRankings(calculateCountryRankings())
+    }
+
+    companion object {
+        private const val COUNTRY_RANKINGS_KEY = "countryRankings.json"
     }
 }

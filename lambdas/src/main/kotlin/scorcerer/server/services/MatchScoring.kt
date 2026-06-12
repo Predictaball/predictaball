@@ -50,6 +50,7 @@ fun endMatch(
 
     runBlocking {
         leaderboardService.updateGlobalLeaderboard(matchDay)
+        leaderboardService.updateCountryRankings()
     }
     tournamentStateService.invalidateCache()
 }
@@ -83,6 +84,7 @@ fun setScore(
 
     runBlocking {
         leaderboardService.updateGlobalLeaderboard(matchDay)
+        leaderboardService.updateCountryRankings()
     }
     tournamentStateService.invalidateCache()
 }

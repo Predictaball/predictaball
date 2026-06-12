@@ -54,7 +54,7 @@ private val allRoutes = routes(
     authRoutes(authProvider),
     miscRoutes,
     adminRoutes(leaderboardService, tournamentStateService),
-    countryRankingsRoutes(),
+    countryRankingsRoutes(leaderboardService),
     leagueRoutes(requestContext, leaderboardService),
     matchRoutes(requestContext, leaderboardService, tournamentStateService),
     predictionRoutes(requestContext),

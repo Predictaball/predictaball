@@ -1,10 +1,12 @@
 package scorcerer.resources
 
 import io.kotest.matchers.shouldBe
+import kotlinx.coroutines.runBlocking
 import org.http4k.core.Method
 import org.http4k.core.Request
 import org.http4k.core.RequestContexts
 import org.http4k.core.Status
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.openapitools.server.models.GetCountryRankings200Response
 import scorcerer.DatabaseTest
@@ -14,17 +16,29 @@ import scorcerer.givenTeamExists
 import scorcerer.givenUserExists
 import scorcerer.server.fromJson
 import scorcerer.server.resources.countryRankingsRoutes
+import scorcerer.utils.LocalLeaderboardService
 
 class CountryRankingsTest : DatabaseTest() {
     private val contexts = RequestContexts()
-    private val handler = testHandler(contexts, countryRankingsRoutes())
+    private lateinit var leaderboardService: LocalLeaderboardService
+    private lateinit var handler: org.http4k.core.HttpHandler
+
+    @BeforeEach
+    fun setup() {
+        // Fresh service per test so cached snapshots don't leak between tests.
+        leaderboardService = LocalLeaderboardService()
+        handler = testHandler(contexts, countryRankingsRoutes(leaderboardService))
+    }
+
+    private fun getRankings(): GetCountryRankings200Response {
+        val response = handler(Request(Method.GET, "/leaderboard/countries"))
+        response.status shouldBe Status.OK
+        return response.bodyString().fromJson()
+    }
 
     @Test
     fun emptyWhenNoScoredPredictions() {
-        val response = handler(Request(Method.GET, "/leaderboard/countries"))
-        response.status shouldBe Status.OK
-        val body: GetCountryRankings200Response = response.bodyString().fromJson()
-        body.rankings.size shouldBe 0
+        getRankings().rankings.size shouldBe 0
     }
 
     @Test
@@ -48,20 +62,17 @@ class CountryRankingsTest : DatabaseTest() {
         givenUserExists("fra-1", "Fra", supportedTeamId = france)
         givenPredictionExists(match, "fra-1", 1, 0, points = 3)
 
-        val response = handler(Request(Method.GET, "/leaderboard/countries"))
-        response.status shouldBe Status.OK
-        val body: GetCountryRankings200Response = response.bodyString().fromJson()
+        val rankings = getRankings().rankings
+        rankings.size shouldBe 2
 
-        body.rankings.size shouldBe 2
-
-        val first = body.rankings[0]
+        val first = rankings[0]
         first.position shouldBe 1
         first.teamName shouldBe "England"
         first.score shouldBe 5.0
         first.predictedMatches shouldBe 1
         first.predictorCount shouldBe 2
 
-        val second = body.rankings[1]
+        val second = rankings[1]
         second.position shouldBe 2
         second.teamName shouldBe "France"
         second.score shouldBe 3.0
@@ -84,12 +95,33 @@ class CountryRankingsTest : DatabaseTest() {
         givenPredictionExists(matchOne, "eng-2", 1, 0, points = 1)
         givenPredictionExists(matchTwo, "eng-1", 1, 0, points = 4)
 
-        val response = handler(Request(Method.GET, "/leaderboard/countries"))
-        response.status shouldBe Status.OK
-        val body: GetCountryRankings200Response = response.bodyString().fromJson()
+        val rankings = getRankings().rankings
+        rankings.size shouldBe 1
+        rankings[0].score shouldBe 7.0
+        rankings[0].predictedMatches shouldBe 2
+    }
 
-        body.rankings.size shouldBe 1
-        body.rankings[0].score shouldBe 7.0
-        body.rankings[0].predictedMatches shouldBe 2
+    @Test
+    fun servesCachedSnapshotWithoutRecomputing() {
+        val england = givenTeamExists("england")
+        val homeTeam = givenTeamExists("brazil")
+        val awayTeam = givenTeamExists("spain")
+        val match = givenMatchExists(homeTeam, awayTeam)
+
+        givenUserExists("eng-1", "Eng", supportedTeamId = england)
+        givenPredictionExists(match, "eng-1", 1, 0, points = 4)
+
+        // First request populates the cache.
+        getRankings().rankings.single().score shouldBe 4.0
+
+        // Underlying data changes, but without a score-update trigger the cached
+        // snapshot is served unchanged (i.e. we are not recomputing per request).
+        givenUserExists("eng-2", "Eng", supportedTeamId = england)
+        givenPredictionExists(match, "eng-2", 1, 0, points = 8)
+        getRankings().rankings.single().score shouldBe 4.0
+
+        // Refreshing the snapshot (as a score update would) picks up the new data.
+        runBlocking { leaderboardService.updateCountryRankings() }
+        getRankings().rankings.single().score shouldBe 6.0
     }
 }
