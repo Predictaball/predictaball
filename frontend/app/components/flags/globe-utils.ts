@@ -4,6 +4,7 @@ import type {Topology, GeometryCollection} from "topojson-specification"
 import type {Feature, FeatureCollection, MultiPolygon, Polygon, Position} from "geojson"
 import landTopo from "world-atlas/land-110m.json"
 import countriesTopo from "world-atlas/countries-110m.json"
+import ukNations from "./uk-nations.json"
 
 export const GLOBE_RADIUS = 1.5
 
@@ -72,19 +73,25 @@ export function buildContinentGeometry(radius: number): THREE.BufferGeometry {
     return bufferGeom
 }
 
-// Maps the team country codes we use (ISO 3166-1 alpha-2, plus the GB home
-// nations) to the ISO 3166-1 numeric ids the world-atlas countries dataset is
-// keyed by. Codes not present in the low-res dataset (cw, cv) are intentionally
-// omitted and resolve to no fill.
+// Maps the team country codes we use (ISO 3166-1 alpha-2) to the ISO 3166-1
+// numeric ids the world-atlas countries dataset is keyed by. Codes not present
+// in the low-res dataset (cw, cv) are intentionally omitted and resolve to no
+// fill. The GB home nations (gb-eng, gb-sct) are not here on purpose: the
+// world-atlas dataset only has a single United Kingdom feature, so they are
+// served their own geometry from uk-nations.json (see UK_NATION_GEOMETRY).
 const ALPHA2_TO_ISO_NUM: Record<string, string> = {
     mx: "484", za: "710", kr: "410", cz: "203", ca: "124", ba: "070", qa: "634",
-    ch: "756", br: "076", ma: "504", ht: "332", "gb-sct": "826", us: "840",
+    ch: "756", br: "076", ma: "504", ht: "332", us: "840",
     py: "600", au: "036", tr: "792", de: "276", ci: "384", ec: "218", nl: "528",
     jp: "392", se: "752", tn: "788", be: "056", eg: "818", ir: "364", nz: "554",
     es: "724", sa: "682", uy: "858", fr: "250", sn: "686", iq: "368", no: "578",
     ar: "032", dz: "012", at: "040", jo: "400", pt: "620", cd: "180", uz: "860",
-    co: "170", "gb-eng": "826", hr: "191", gh: "288", pa: "591",
+    co: "170", hr: "191", gh: "288", pa: "591",
 }
+
+// Per-nation boundaries for the GB home nations, which the world-atlas dataset
+// lumps into one United Kingdom feature. Keyed by the codes used elsewhere.
+const UK_NATION_GEOMETRY = ukNations as Record<string, Polygon | MultiPolygon>
 
 let countryFeatures: Map<string, Feature<Polygon | MultiPolygon>> | null = null
 
@@ -143,14 +150,12 @@ function emitWallSegment(
 export function buildCountryFillGeometry(
     code: string, baseRadius: number, height: number,
 ): THREE.BufferGeometry | null {
-    const iso = ALPHA2_TO_ISO_NUM[code]
-    if (!iso) return null
-    const f = getCountryFeatures().get(iso)
-    if (!f || !f.geometry) return null
+    const geometry = UK_NATION_GEOMETRY[code] ?? getCountryFeatures().get(ALPHA2_TO_ISO_NUM[code])?.geometry
+    if (!geometry) return null
 
     const topRadius = baseRadius + height
     const polygons: Position[][][] =
-        f.geometry.type === "Polygon" ? [f.geometry.coordinates] : f.geometry.coordinates
+        geometry.type === "Polygon" ? [geometry.coordinates] : geometry.coordinates
 
     const positions: number[] = []
     for (const polygon of polygons) {
