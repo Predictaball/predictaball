@@ -187,3 +187,12 @@ export function buildCountryFillGeometry(
     geom.computeVertexNormals()
     return geom
 }
+
+// Whether buildCountryFillGeometry has data to extrude this country. Callers use
+// this to know if the country stands proud of the globe, so things resting on it
+// (arc endpoints, flag anchors, the stadium) can sit on the raised top instead.
+export function hasCountryFill(code: string): boolean {
+    if (code in UK_NATION_GEOMETRY) return true
+    const iso = ALPHA2_TO_ISO_NUM[code]
+    return iso !== undefined && getCountryFeatures().has(iso)
+}

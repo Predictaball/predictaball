@@ -6,7 +6,7 @@ import {Html, Line, OrbitControls, useTexture} from "@react-three/drei"
 import * as THREE from "three"
 import {COUNTRY_COORDS} from "./country-coords"
 import {resolveStadium, Stadium} from "./stadium-coords"
-import {GLOBE_RADIUS, latLngToVec3, buildContinentGeometry, buildCountryFillGeometry, cropSquare} from "./globe-utils"
+import {GLOBE_RADIUS, latLngToVec3, buildContinentGeometry, buildCountryFillGeometry, hasCountryFill, cropSquare} from "./globe-utils"
 
 const FLAG_DISC_RADIUS = 0.09
 const FLAG_BORDER_WIDTH = 0.012
@@ -17,6 +17,23 @@ const CAMERA_FOV = 42
 const CAMERA_FIT_MARGIN = 1.12
 const CAMERA_MIN_DISTANCE = 2.8
 const FLAG_OUTER_RADIUS = GLOBE_RADIUS + FLAG_LIFT + FLAG_DISC_RADIUS + FLAG_BORDER_WIDTH
+// Extruded country highlight: a base just off the globe up to a raised top.
+const COUNTRY_FILL_BASE = GLOBE_RADIUS + 0.005
+const COUNTRY_FILL_HEIGHT = 0.05
+const COUNTRY_FILL_TOP = COUNTRY_FILL_BASE + COUNTRY_FILL_HEIGHT
+const STADIUM_BASE_OFFSET = 0.01
+// Where surface-bound features (arc endpoints, flag anchors, the stadium) sit on
+// a bare globe; on an extruded country they rest on the raised top instead.
+const GROUND_OFFSET = 0.012
+// Maps a World Cup host nation to the team code we extrude it under.
+const HOST_NATION_CODE: Record<string, string> = {usa: "us", can: "ca", mex: "mx"}
+
+// Radius at which a country's own surface features (its flag pin, the arc
+// springing from it) sit: the raised land top when it is extruded.
+function countryGroundRadius(code: string): number {
+    return hasCountryFill(code) ? COUNTRY_FILL_TOP : GLOBE_RADIUS + GROUND_OFFSET
+}
+
 const TRAVEL_SECONDS = 0.7
 const ARC_DRAW_SECONDS = 0.9
 const TOUR_TRAVERSE_SECONDS = 3.0
@@ -34,7 +51,10 @@ interface AnimState {
     tourFrom: THREE.Vector3
 }
 
-function visibleArc(aDir: THREE.Vector3, bDir: THREE.Vector3, steps = 64): THREE.Vector3[] {
+function visibleArc(
+    aDir: THREE.Vector3, bDir: THREE.Vector3,
+    aRadius = GLOBE_RADIUS + 0.012, bRadius = GLOBE_RADIUS + 0.012, steps = 64,
+): THREE.Vector3[] {
     const aN = aDir.clone().normalize()
     const bN = bDir.clone().normalize()
 
@@ -47,10 +67,12 @@ function visibleArc(aDir: THREE.Vector3, bDir: THREE.Vector3, steps = 64): THREE
     mid.normalize()
 
     const angle = aN.angleTo(bN)
-    const bulge = 0.25 + angle * 0.55
+    // Bulge clears the raised country tops so the arc never dives into an
+    // extruded landmass, even on a short host-country-to-its-own-venue hop.
+    const bulge = Math.max(aRadius, bRadius) - GLOBE_RADIUS + 0.2 + angle * 0.55
     const control = mid.clone().multiplyScalar(GLOBE_RADIUS + bulge)
-    const aPos = aN.clone().multiplyScalar(GLOBE_RADIUS + 0.012)
-    const bPos = bN.clone().multiplyScalar(GLOBE_RADIUS + 0.012)
+    const aPos = aN.clone().multiplyScalar(aRadius)
+    const bPos = bN.clone().multiplyScalar(bRadius)
 
     const points: THREE.Vector3[] = []
     for (let i = 0; i <= steps; i++) {
@@ -271,14 +293,13 @@ function Continents() {
 
 const COUNTRY_FILL_OPACITY = 0.85
 const COUNTRY_FILL_FADE_SECONDS = 0.9
-const COUNTRY_FILL_HEIGHT = 0.05
 
 // Fills the landmass of a playing country with a highlight that is extruded
 // slightly off the globe and fades in, so both competing nations rise up and
 // light up on the globe.
 function CountryFill({code, color}: {code: string; color: string}) {
     const geometry = useMemo(
-        () => buildCountryFillGeometry(code, GLOBE_RADIUS + 0.005, COUNTRY_FILL_HEIGHT),
+        () => buildCountryFillGeometry(code, COUNTRY_FILL_BASE, COUNTRY_FILL_HEIGHT),
         [code],
     )
     const materialRef = useRef<THREE.MeshStandardMaterial>(null)
@@ -324,18 +345,18 @@ function mirrorHorizontally(source: THREE.Texture): THREE.Texture {
     return tex
 }
 
-function FocusFlag({code, position}: {code: string; position: THREE.Vector3}) {
+function FocusFlag({code, position, anchorRadius}: {code: string; position: THREE.Vector3; anchorRadius: number}) {
     const texture = useTexture(`https://flagcdn.com/w320/${code}.png`) as THREE.Texture
     const front = useMemo(() => cropSquare(texture), [texture])
     const back = useMemo(() => mirrorHorizontally(front), [front])
     const {anchorPos, flagPos, surfaceNormal} = useMemo(() => {
         const dir = position.clone().normalize()
         return {
-            anchorPos: dir.clone().multiplyScalar(GLOBE_RADIUS + FLAG_ANCHOR_OFFSET),
+            anchorPos: dir.clone().multiplyScalar(anchorRadius),
             flagPos: dir.clone().multiplyScalar(GLOBE_RADIUS + FLAG_LIFT),
             surfaceNormal: dir.clone(),
         }
-    }, [position])
+    }, [position, anchorRadius])
 
     const groupRef = useRef<THREE.Group>(null)
     const {camera} = useThree()
@@ -376,17 +397,100 @@ function FocusFlag({code, position}: {code: string; position: THREE.Vector3}) {
 // if the stadium is within ~25° of either flag's country centroid.
 const FLAG_CONFLICT_ANGLE = 25 * (Math.PI / 180)
 
-function StadiumMarker({position, name, labelLeft}: {position: THREE.Vector3; name: string; labelLeft: boolean}) {
+// Cross-section of the tiered seating bowl, revolved around the local Y axis:
+// an inner pitch-side wall rising through stepped tiers out to the rim.
+const STADIUM_BOWL_PROFILE = [
+    new THREE.Vector2(0.028, 0.000),
+    new THREE.Vector2(0.030, 0.011),
+    new THREE.Vector2(0.036, 0.013),
+    new THREE.Vector2(0.043, 0.020),
+    new THREE.Vector2(0.050, 0.023),
+    new THREE.Vector2(0.056, 0.032),
+]
+// The overhanging roof ring: it sits on the rim and reaches back in over the
+// stands, leaving the pitch open to the sky.
+const STADIUM_ROOF_PROFILE = [
+    new THREE.Vector2(0.056, 0.033),
+    new THREE.Vector2(0.058, 0.035),
+    new THREE.Vector2(0.041, 0.031),
+]
+// Overall size multiplier applied on top of the modelled dimensions.
+const STADIUM_SCALE = 0.85
+const STADIUM_LABEL_HEIGHT = 0.055 * STADIUM_SCALE
+// Oval footprint: stretch the revolved (circular) geometry along one axis, then
+// apply the overall size multiplier.
+const STADIUM_OVAL_SCALE: [number, number, number] = [1.35 * STADIUM_SCALE, STADIUM_SCALE, STADIUM_SCALE]
+const STADIUM_FLOODLIGHT_ANGLES = [Math.PI / 4, (3 * Math.PI) / 4, (5 * Math.PI) / 4, (7 * Math.PI) / 4]
+
+// A corner floodlight: a slim pylon topped by a tilted, glowing lamp bank.
+function Floodlight({angle}: {angle: number}) {
     return (
-        <mesh position={position}>
-            <sphereGeometry args={[0.024, 14, 14]}/>
-            <meshBasicMaterial color="#fbbf24"/>
-            <Html distanceFactor={4} style={{pointerEvents: "none", whiteSpace: "nowrap", transform: labelLeft ? "translate(-100%, -50%)" : "translateY(-50%)"}}>
+        <group rotation={[0, angle, 0]}>
+            <group position={[0.060, 0, 0]}>
+                <mesh position={[0, 0.024, 0]}>
+                    <cylinderGeometry args={[0.0016, 0.0024, 0.048, 8]}/>
+                    <meshStandardMaterial color="#64748b" roughness={0.6} metalness={0.3}/>
+                </mesh>
+                <group position={[0, 0.05, 0]} rotation={[0, 0, 0.4]}>
+                    <mesh>
+                        <boxGeometry args={[0.006, 0.005, 0.016]}/>
+                        <meshStandardMaterial color="#fff7cc" emissive="#fbbf24" emissiveIntensity={1.4} toneMapped={false}/>
+                    </mesh>
+                </group>
+            </group>
+        </group>
+    )
+}
+
+function StadiumMarker({position, name, labelLeft}: {position: THREE.Vector3; name: string; labelLeft: boolean}) {
+    // Orient the model so its local up axis follows the globe's surface normal,
+    // standing the stadium upright wherever it lands.
+    const quaternion = useMemo(() => {
+        const normal = position.clone().normalize()
+        return new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), normal)
+    }, [position])
+
+    return (
+        <group position={position} quaternion={quaternion}>
+            <group scale={STADIUM_OVAL_SCALE}>
+                {/* Pitch */}
+                <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.0015, 0]}>
+                    <circleGeometry args={[0.028, 48]}/>
+                    <meshStandardMaterial color="#15803d" roughness={0.95} side={THREE.DoubleSide}/>
+                </mesh>
+                {/* Centre circle */}
+                <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.0028, 0]}>
+                    <ringGeometry args={[0.008, 0.0094, 32]}/>
+                    <meshStandardMaterial color="#ecfdf5" emissive="#bbf7d0" emissiveIntensity={0.3} side={THREE.DoubleSide}/>
+                </mesh>
+                {/* Halfway line */}
+                <mesh position={[0, 0.0028, 0]}>
+                    <boxGeometry args={[0.0016, 0.0004, 0.052]}/>
+                    <meshStandardMaterial color="#ecfdf5" emissive="#bbf7d0" emissiveIntensity={0.3}/>
+                </mesh>
+                {/* Outer facade wall, from the ground up to the rim */}
+                <mesh position={[0, 0.016, 0]}>
+                    <cylinderGeometry args={[0.056, 0.056, 0.032, 48, 1, true]}/>
+                    <meshStandardMaterial color="#cbd5e1" roughness={0.7} metalness={0.08} side={THREE.DoubleSide}/>
+                </mesh>
+                {/* Tiered seating bowl */}
+                <mesh>
+                    <latheGeometry args={[STADIUM_BOWL_PROFILE, 48]}/>
+                    <meshStandardMaterial color="#94a3b8" roughness={0.75} metalness={0.05} side={THREE.DoubleSide}/>
+                </mesh>
+                {/* Overhanging roof */}
+                <mesh>
+                    <latheGeometry args={[STADIUM_ROOF_PROFILE, 48]}/>
+                    <meshStandardMaterial color="#f1f5f9" roughness={0.5} metalness={0.1} side={THREE.DoubleSide}/>
+                </mesh>
+                {STADIUM_FLOODLIGHT_ANGLES.map(a => <Floodlight key={a} angle={a}/>)}
+            </group>
+            <Html distanceFactor={4} position={[0, STADIUM_LABEL_HEIGHT, 0]} style={{pointerEvents: "none", whiteSpace: "nowrap", transform: labelLeft ? "translate(-100%, -50%)" : "translateY(-50%)"}}>
                 <span className={`inline-block rounded-full bg-white/80 border border-slate-200 text-amber-500 dark:bg-black/50 dark:border-white/10 dark:text-amber-400 px-3 py-1 text-xs font-semibold backdrop-blur${labelLeft ? " mr-2" : " ml-2"}`}>
                     {name}
                 </span>
             </Html>
-        </mesh>
+        </group>
     )
 }
 
@@ -405,23 +509,32 @@ function Scene({homeCode, awayCode, venue, enableControls, userStopped, onUserSt
         const ac = COUNTRY_COORDS[awayCode]
         const aDir = hc ? latLngToVec3(hc[0], hc[1], 1) : new THREE.Vector3(1, 0, 0)
         const bDir = ac ? latLngToVec3(ac[0], ac[1], 1) : new THREE.Vector3(-1, 0, 0)
+        // Each endpoint launches from the top of its country's extrusion (if any)
+        // so arcs and pins ride the raised land instead of sinking under it.
+        const aRadius = countryGroundRadius(homeCode)
+        const bRadius = countryGroundRadius(awayCode)
         if (stadium) {
             const sDir = latLngToVec3(stadium.lat, stadium.lng, 1)
-            const arcHome = visibleArc(aDir, sDir)
-            const arcAway = visibleArc(bDir, sDir)
+            // The venue always sits in a host nation; if that host is playing it
+            // is extruded, so rest the stadium on the raised top.
+            const hostCode = HOST_NATION_CODE[stadium.country]
+            const hostExtruded = hostCode === homeCode || hostCode === awayCode
+            const sRadius = hostExtruded ? COUNTRY_FILL_TOP : GLOBE_RADIUS + STADIUM_BASE_OFFSET
+            const arcHome = visibleArc(aDir, sDir, aRadius, sRadius)
+            const arcAway = visibleArc(bDir, sDir, bRadius, sRadius)
             return {
                 arcs: [arcHome, arcAway],
-                aPos: aDir.clone().multiplyScalar(GLOBE_RADIUS),
-                bPos: bDir.clone().multiplyScalar(GLOBE_RADIUS),
-                stadiumPos: sDir.clone().multiplyScalar(GLOBE_RADIUS + 0.01),
+                aPos: aDir.clone().multiplyScalar(aRadius),
+                bPos: bDir.clone().multiplyScalar(bRadius),
+                stadiumPos: sDir.clone().multiplyScalar(sRadius),
                 tourLegs: [arcHome, [...arcAway].reverse(), arcAway, [...arcHome].reverse()],
             }
         }
-        const arcHA = visibleArc(aDir, bDir)
+        const arcHA = visibleArc(aDir, bDir, aRadius, bRadius)
         return {
             arcs: [arcHA],
-            aPos: aDir.clone().multiplyScalar(GLOBE_RADIUS),
-            bPos: bDir.clone().multiplyScalar(GLOBE_RADIUS),
+            aPos: aDir.clone().multiplyScalar(aRadius),
+            bPos: bDir.clone().multiplyScalar(bRadius),
             stadiumPos: undefined,
             tourLegs: [arcHA, [...arcHA].reverse()],
         }
@@ -464,8 +577,8 @@ function Scene({homeCode, awayCode, venue, enableControls, userStopped, onUserSt
             ))}
             {stadiumPos && <StadiumMarker position={stadiumPos} name={stadium!.name} labelLeft={stadiumLabelLeft}/>}
             <React.Suspense fallback={null}>
-                {hasHome && <FocusFlag code={homeCode} position={aPos}/>}
-                {hasAway && <FocusFlag code={awayCode} position={bPos}/>}
+                {hasHome && <FocusFlag code={homeCode} position={aPos} anchorRadius={countryGroundRadius(homeCode)}/>}
+                {hasAway && <FocusFlag code={awayCode} position={bPos} anchorRadius={countryGroundRadius(awayCode)}/>}
             </React.Suspense>
             {enableControls && introDone && (
                 <OrbitControls
