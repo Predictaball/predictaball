@@ -57,7 +57,11 @@ export default async function Headline({ hasLiveMatch, supportedTeamId }: Headli
     ])
     const total = (fetchedData?.fixedPoints || 0) + (fetchedData?.livePoints || 0)
     const live = fetchedData?.livePoints ?? 0
-    const country = supportedTeamId ? countryRankings.find(entry => entry.teamId === supportedTeamId) : undefined
+    // Show the user's country flanked by the country just above and just below
+    // it in the rankings, so the pill reads as a country-vs-country ladder.
+    const countryIndex = supportedTeamId ? countryRankings.findIndex(entry => entry.teamId === supportedTeamId) : -1
+    const country = countryIndex >= 0 ? countryRankings[countryIndex] : undefined
+    const countryNeighbours = country ? countryRankings.slice(Math.max(0, countryIndex - 1), countryIndex + 2) : []
 
     return (
         <div className="relative rounded-3xl bg-gradient-to-br from-slate-900/15 to-slate-900/5 dark:from-white/15 dark:to-white/5 p-[1px] shadow-2xl shadow-cyan-500/10">
@@ -77,12 +81,20 @@ export default async function Headline({ hasLiveMatch, supportedTeamId }: Headli
                     {country && (
                         <Link
                             href="/app/leaderboard/countries"
-                            title={`${country.teamName} — ${ordinal(country.position)} of ${countryRankings.length} countries`}
-                            className="inline-flex items-center gap-2 rounded-full bg-slate-900/5 dark:bg-white/5 border border-slate-900/10 dark:border-white/10 px-3.5 py-1.5 transition-colors hover:border-cyan-500/40 dark:hover:border-cyan-400/40"
+                            title={`${country.teamName} is ${ordinal(country.position)} of ${countryRankings.length} countries`}
+                            className="inline-flex items-center gap-2.5 rounded-full bg-slate-900/5 dark:bg-white/5 border border-slate-900/10 dark:border-white/10 px-3.5 py-1.5 transition-colors hover:border-cyan-500/40 dark:hover:border-cyan-400/40"
                         >
-                            <FlagImage code={country.flagCode} name={country.teamName} size={16}/>
-                            <span className="font-bold text-slate-900 dark:text-white tabular-nums">#{country.position}</span>
-                            <span className="text-slate-500 dark:text-gray-400 text-[11px] uppercase tracking-[0.15em]">country</span>
+                            {countryNeighbours.map(entry => {
+                                const isUser = entry.teamId === supportedTeamId
+                                return (
+                                    <span key={entry.teamId} className={`inline-flex items-center gap-1.5 ${isUser ? "" : "opacity-50"}`}>
+                                        <FlagImage code={entry.flagCode} name={entry.teamName} size={isUser ? 20 : 16}/>
+                                        <span className={`tabular-nums ${isUser ? "font-black text-slate-900 dark:text-white" : "font-medium text-slate-500 dark:text-gray-400"}`}>
+                                            {entry.position}
+                                        </span>
+                                    </span>
+                                )
+                            })}
                         </Link>
                     )}
                     {hasLiveMatch && (
