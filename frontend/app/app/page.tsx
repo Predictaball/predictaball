@@ -96,7 +96,7 @@ const Home = async ({searchParams}: {searchParams: Promise<Record<string, string
                 <MatchSelectionProvider initialId={firstMatchId}>
                     <PredictNowBanner upcomingMatches={upcomingMatches} />
 
-                    <HeadlineSuspense tournamentStarted={tournamentStarted} nextKickoff={tournamentState?.nextKickoff} hasLiveMatch={liveMatches.length > 0} />
+                    <HeadlineSuspense tournamentStarted={tournamentStarted} nextKickoff={tournamentState?.nextKickoff} hasLiveMatch={liveMatches.length > 0} supportedTeamId={profile?.supportedTeamId} />
 
                     <section id="matches" className="space-y-4">
                         <SectionHeading title="Matches" count={liveMatches.length + upcomingMatches.length} action={<MatchesHelp/>}/>

@@ -7,6 +7,7 @@ interface HeadlineSuspenseProps {
     tournamentStarted: boolean
     nextKickoff?: Date
     hasLiveMatch: boolean
+    supportedTeamId?: string
 }
 
 function calendarDaysUntil(kickoff: Date): number {
@@ -17,14 +18,14 @@ function calendarDaysUntil(kickoff: Date): number {
     return Math.round((target.getTime() - today.getTime()) / 86_400_000)
 }
 
-export default function HeadlineSuspense({tournamentStarted, nextKickoff, hasLiveMatch}: HeadlineSuspenseProps): React.JSX.Element | null {
+export default function HeadlineSuspense({tournamentStarted, nextKickoff, hasLiveMatch, supportedTeamId}: HeadlineSuspenseProps): React.JSX.Element | null {
     if (!tournamentStarted && nextKickoff && nextKickoff.getTime() > Date.now()) {
         return <TournamentCountdown kickoff={nextKickoff} initialDays={calendarDaysUntil(nextKickoff)} />
     }
 
     return (
         <Suspense fallback={<DefaultCards />}>
-            <Headline hasLiveMatch={hasLiveMatch} />
+            <Headline hasLiveMatch={hasLiveMatch} supportedTeamId={supportedTeamId} />
         </Suspense>
     )
 }

@@ -1,15 +1,29 @@
 import React from "react";
+import Link from "next/link";
 import CountUpWrapped from "@/app/components/points/count-up-wrapper";
-import { GetUserPoints200Response, UserApi } from "@/client";
+import { CountryLeaderboardInner, GetUserPoints200Response, LeagueApi, UserApi } from "@/client";
 import { getConfigWithAuthHeader } from "@/app/api/client-config";
 import { getUserId } from "@/app/auth/jwt-handler";
 import { getPositionForLeague } from "@/app/app/league/get-position-for-league";
+import { FlagImage } from "@/app/components/predictions/flag-image";
 
 interface HeadlineProps {
     hasLiveMatch: boolean
+    supportedTeamId?: string
 }
 
-export default async function Headline({ hasLiveMatch }: HeadlineProps): Promise<React.JSX.Element> {
+function ordinal(n: number): string {
+    const mod100 = n % 100
+    if (mod100 >= 11 && mod100 <= 13) return `${n}th`
+    switch (n % 10) {
+        case 1: return `${n}st`
+        case 2: return `${n}nd`
+        case 3: return `${n}rd`
+        default: return `${n}th`
+    }
+}
+
+export default async function Headline({ hasLiveMatch, supportedTeamId }: HeadlineProps): Promise<React.JSX.Element> {
 
     const userId = await getUserId()
     const config = await getConfigWithAuthHeader()
@@ -27,10 +41,23 @@ export default async function Headline({ hasLiveMatch }: HeadlineProps): Promise
         }
     }
 
-    const fetchedData = await fetchUserData()
-    const position = await getPositionForLeague("global", config, userId)
+    async function fetchCountryRankings(): Promise<CountryLeaderboardInner[]> {
+        try {
+            return await new LeagueApi(config).getCountryRankings().then(response => response.rankings)
+        } catch (error) {
+            console.log(error)
+            return []
+        }
+    }
+
+    const [fetchedData, position, countryRankings] = await Promise.all([
+        fetchUserData(),
+        getPositionForLeague("global", config, userId),
+        fetchCountryRankings(),
+    ])
     const total = (fetchedData?.fixedPoints || 0) + (fetchedData?.livePoints || 0)
     const live = fetchedData?.livePoints ?? 0
+    const country = supportedTeamId ? countryRankings.find(entry => entry.teamId === supportedTeamId) : undefined
 
     return (
         <div className="relative rounded-3xl bg-gradient-to-br from-slate-900/15 to-slate-900/5 dark:from-white/15 dark:to-white/5 p-[1px] shadow-2xl shadow-cyan-500/10">
@@ -47,6 +74,17 @@ export default async function Headline({ hasLiveMatch }: HeadlineProps): Promise
                         <span className="font-bold text-slate-900 dark:text-white tabular-nums">#{position ?? "—"}</span>
                         <span className="text-slate-500 dark:text-gray-400 text-[11px] uppercase tracking-[0.15em]">global</span>
                     </span>
+                    {country && (
+                        <Link
+                            href="/app/leaderboard/countries"
+                            title={`${country.teamName} — ${ordinal(country.position)} of ${countryRankings.length} countries`}
+                            className="inline-flex items-center gap-2 rounded-full bg-slate-900/5 dark:bg-white/5 border border-slate-900/10 dark:border-white/10 px-3.5 py-1.5 transition-colors hover:border-cyan-500/40 dark:hover:border-cyan-400/40"
+                        >
+                            <FlagImage code={country.flagCode} name={country.teamName} size={16}/>
+                            <span className="font-bold text-slate-900 dark:text-white tabular-nums">#{country.position}</span>
+                            <span className="text-slate-500 dark:text-gray-400 text-[11px] uppercase tracking-[0.15em]">country</span>
+                        </Link>
+                    )}
                     {hasLiveMatch && (
                         <span className="inline-flex items-center gap-2 rounded-full bg-slate-900/5 dark:bg-white/5 border border-slate-900/10 dark:border-white/10 px-3.5 py-1.5">
                             <span className="h-1.5 w-1.5 rounded-full bg-red-500 animate-pulse"/>
