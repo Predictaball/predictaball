@@ -6,7 +6,7 @@ import {Html, Line, OrbitControls, useTexture} from "@react-three/drei"
 import * as THREE from "three"
 import {COUNTRY_COORDS} from "./country-coords"
 import {resolveStadium, Stadium} from "./stadium-coords"
-import {GLOBE_RADIUS, latLngToVec3, buildContinentGeometry, cropSquare} from "./globe-utils"
+import {GLOBE_RADIUS, latLngToVec3, buildContinentGeometry, buildCountryFillGeometry, cropSquare} from "./globe-utils"
 
 const FLAG_DISC_RADIUS = 0.09
 const FLAG_BORDER_WIDTH = 0.012
@@ -269,6 +269,51 @@ function Continents() {
     )
 }
 
+const COUNTRY_FILL_OPACITY = 0.85
+const COUNTRY_FILL_FADE_SECONDS = 0.9
+const COUNTRY_FILL_HEIGHT = 0.05
+
+// Fills the landmass of a playing country with a highlight that is extruded
+// slightly off the globe and fades in, so both competing nations rise up and
+// light up on the globe.
+function CountryFill({code, color}: {code: string; color: string}) {
+    const geometry = useMemo(
+        () => buildCountryFillGeometry(code, GLOBE_RADIUS + 0.005, COUNTRY_FILL_HEIGHT),
+        [code],
+    )
+    const materialRef = useRef<THREE.MeshStandardMaterial>(null)
+    const elapsed = useRef(0)
+
+    useEffect(() => {
+        elapsed.current = 0
+    }, [code])
+
+    useFrame((_, delta) => {
+        if (!materialRef.current) return
+        if (elapsed.current >= COUNTRY_FILL_FADE_SECONDS) return
+        elapsed.current = Math.min(COUNTRY_FILL_FADE_SECONDS, elapsed.current + delta)
+        const t = easeInOut(elapsed.current / COUNTRY_FILL_FADE_SECONDS)
+        materialRef.current.opacity = t * COUNTRY_FILL_OPACITY
+    })
+
+    if (!geometry) return null
+    return (
+        <mesh geometry={geometry}>
+            <meshStandardMaterial
+                ref={materialRef}
+                color={color}
+                emissive={color}
+                emissiveIntensity={0.25}
+                roughness={0.5}
+                metalness={0.1}
+                transparent
+                opacity={0}
+                side={THREE.DoubleSide}
+            />
+        </mesh>
+    )
+}
+
 function mirrorHorizontally(source: THREE.Texture): THREE.Texture {
     const tex = source.clone()
     tex.wrapS = THREE.ClampToEdgeWrapping
@@ -412,6 +457,8 @@ function Scene({homeCode, awayCode, venue, enableControls, userStopped, onUserSt
                 <meshBasicMaterial color="#22d3ee" wireframe transparent opacity={0.08}/>
             </mesh>
             <Continents/>
+            {hasHome && <CountryFill code={homeCode} color="#fbbf24"/>}
+            {hasAway && <CountryFill code={awayCode} color="#fbbf24"/>}
             {arcs.map((points, i) => (
                 <AnimatedArc key={i} points={points} anim={anim}/>
             ))}

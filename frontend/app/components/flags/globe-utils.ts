@@ -3,6 +3,7 @@ import {feature} from "topojson-client"
 import type {Topology, GeometryCollection} from "topojson-specification"
 import type {Feature, FeatureCollection, MultiPolygon, Polygon, Position} from "geojson"
 import landTopo from "world-atlas/land-110m.json"
+import countriesTopo from "world-atlas/countries-110m.json"
 
 export const GLOBE_RADIUS = 1.5
 
@@ -69,4 +70,115 @@ export function buildContinentGeometry(radius: number): THREE.BufferGeometry {
     const bufferGeom = new THREE.BufferGeometry()
     bufferGeom.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3))
     return bufferGeom
+}
+
+// Maps the team country codes we use (ISO 3166-1 alpha-2, plus the GB home
+// nations) to the ISO 3166-1 numeric ids the world-atlas countries dataset is
+// keyed by. Codes not present in the low-res dataset (cw, cv) are intentionally
+// omitted and resolve to no fill.
+const ALPHA2_TO_ISO_NUM: Record<string, string> = {
+    mx: "484", za: "710", kr: "410", cz: "203", ca: "124", ba: "070", qa: "634",
+    ch: "756", br: "076", ma: "504", ht: "332", "gb-sct": "826", us: "840",
+    py: "600", au: "036", tr: "792", de: "276", ci: "384", ec: "218", nl: "528",
+    jp: "392", se: "752", tn: "788", be: "056", eg: "818", ir: "364", nz: "554",
+    es: "724", sa: "682", uy: "858", fr: "250", sn: "686", iq: "368", no: "578",
+    ar: "032", dz: "012", at: "040", jo: "400", pt: "620", cd: "180", uz: "860",
+    co: "170", "gb-eng": "826", hr: "191", gh: "288", pa: "591",
+}
+
+let countryFeatures: Map<string, Feature<Polygon | MultiPolygon>> | null = null
+
+function getCountryFeatures(): Map<string, Feature<Polygon | MultiPolygon>> {
+    if (!countryFeatures) {
+        const topo = countriesTopo as unknown as Topology
+        const fc = feature(topo, topo.objects.countries as GeometryCollection) as unknown as
+            FeatureCollection<Polygon | MultiPolygon>
+        countryFeatures = new Map()
+        for (const f of fc.features) countryFeatures.set(String(f.id), f)
+    }
+    return countryFeatures
+}
+
+// Tessellate a flat (lng/lat) triangle, projecting each vertex onto the sphere.
+// Subdividing keeps the filled surface hugging the globe instead of cutting a
+// flat chord through it (which would sink below the surface for large countries).
+function emitProjectedTriangle(
+    a: THREE.Vector2, b: THREE.Vector2, c: THREE.Vector2,
+    radius: number, depth: number, positions: number[],
+) {
+    if (depth <= 0) {
+        for (const p of [a, b, c]) {
+            const v = latLngToVec3(p.y, p.x, radius)
+            positions.push(v.x, v.y, v.z)
+        }
+        return
+    }
+    const ab = a.clone().add(b).multiplyScalar(0.5)
+    const bc = b.clone().add(c).multiplyScalar(0.5)
+    const ca = c.clone().add(a).multiplyScalar(0.5)
+    emitProjectedTriangle(a, ab, ca, radius, depth - 1, positions)
+    emitProjectedTriangle(ab, b, bc, radius, depth - 1, positions)
+    emitProjectedTriangle(ca, bc, c, radius, depth - 1, positions)
+    emitProjectedTriangle(ab, bc, ca, radius, depth - 1, positions)
+}
+
+// Emits the side wall for one ring edge as two triangles spanning from the
+// base radius up to the raised top radius.
+function emitWallSegment(
+    a: THREE.Vector2, b: THREE.Vector2,
+    baseRadius: number, topRadius: number, positions: number[],
+) {
+    const baseA = latLngToVec3(a.y, a.x, baseRadius)
+    const baseB = latLngToVec3(b.y, b.x, baseRadius)
+    const topA = latLngToVec3(a.y, a.x, topRadius)
+    const topB = latLngToVec3(b.y, b.x, topRadius)
+    positions.push(baseA.x, baseA.y, baseA.z, baseB.x, baseB.y, baseB.z, topB.x, topB.y, topB.z)
+    positions.push(baseA.x, baseA.y, baseA.z, topB.x, topB.y, topB.z, topA.x, topA.y, topA.z)
+}
+
+// Builds a filled, slightly extruded geometry for a single country's landmass:
+// a triangulated top cap raised `height` above the globe surface, plus side
+// walls dropping back down to it. Returns null when the country is not present
+// in the dataset.
+export function buildCountryFillGeometry(
+    code: string, baseRadius: number, height: number,
+): THREE.BufferGeometry | null {
+    const iso = ALPHA2_TO_ISO_NUM[code]
+    if (!iso) return null
+    const f = getCountryFeatures().get(iso)
+    if (!f || !f.geometry) return null
+
+    const topRadius = baseRadius + height
+    const polygons: Position[][][] =
+        f.geometry.type === "Polygon" ? [f.geometry.coordinates] : f.geometry.coordinates
+
+    const positions: number[] = []
+    for (const polygon of polygons) {
+        const rings = polygon.map(ring => {
+            const pts = ring.map(p => new THREE.Vector2(p[0], p[1]))
+            if (pts.length > 1 && pts[0].equals(pts[pts.length - 1])) pts.pop()
+            return pts
+        })
+        const contour = rings[0]
+        if (!contour || contour.length < 3) continue
+        const holes = rings.slice(1)
+
+        const faces = THREE.ShapeUtils.triangulateShape(contour, holes)
+        const all = [...contour, ...holes.flat()]
+        for (const [i, j, k] of faces) {
+            emitProjectedTriangle(all[i], all[j], all[k], topRadius, 2, positions)
+        }
+
+        for (const ring of rings) {
+            for (let i = 0; i < ring.length; i++) {
+                emitWallSegment(ring[i], ring[(i + 1) % ring.length], baseRadius, topRadius, positions)
+            }
+        }
+    }
+
+    if (positions.length === 0) return null
+    const geom = new THREE.BufferGeometry()
+    geom.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3))
+    geom.computeVertexNormals()
+    return geom
 }
