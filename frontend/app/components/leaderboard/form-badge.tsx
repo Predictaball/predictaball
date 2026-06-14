@@ -8,6 +8,15 @@ function dotStyle(points: number | null): string {
     return "bg-slate-900/10 dark:bg-white/10 text-slate-400 dark:text-gray-500"
 }
 
+// Ring colour for the highlighted latest dot, matched to that dot's own colour.
+function ringStyle(points: number | null): string {
+    if (points === 10) return "ring-yellow-400"
+    if (points === 5) return "ring-amber-400"
+    if (points === 4) return "ring-indigo-400"
+    if (points === 2) return "ring-blue-400"
+    return "ring-slate-400 dark:ring-gray-500"
+}
+
 export default function FormBadge({form, highlightLatest = false}: {form: (number | null)[], highlightLatest?: boolean}) {
     // Incoming form is most-recent-first; render it reversed so the most recent score sits on the right.
     const ordered = [...form].reverse()
@@ -15,7 +24,7 @@ export default function FormBadge({form, highlightLatest = false}: {form: (numbe
     return (
         <div className="flex items-center gap-1">
             {ordered.map((pts, i) => (
-                <div key={i} className={`h-6 w-6 rounded-full flex items-center justify-center text-[10px] font-black ${dotStyle(pts)} ${highlightLatest && i === latestIndex ? "ring-2 ring-cyan-400 ring-offset-2 ring-offset-slate-50 dark:ring-offset-gray-900" : ""}`}>
+                <div key={i} className={`h-6 w-6 rounded-full flex items-center justify-center text-[10px] font-black ${dotStyle(pts)} ${highlightLatest && i === latestIndex ? `ring-2 ${ringStyle(pts)} ring-offset-2 ring-offset-slate-50 dark:ring-offset-gray-900` : ""}`}>
                     {pts ?? 0}
                 </div>
             ))}
