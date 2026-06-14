@@ -94,15 +94,15 @@ export default async function Home({
                             {(leaderboardEntry || form.length > 0) && (
                                 <div className="flex w-full items-stretch justify-between gap-3 sm:w-auto sm:justify-start">
                                     {leaderboardEntry && (
-                                        <div className="rounded-2xl border border-slate-200/70 dark:border-white/10 bg-white/70 dark:bg-gray-900/70 backdrop-blur-sm px-5 py-2.5 min-w-[88px] text-center">
-                                            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-gray-400">Rank</p>
-                                            <p className="text-xl font-black tabular-nums text-slate-900 dark:text-white">#{leaderboardEntry.position}</p>
-                                        </div>
-                                    )}
-                                    {leaderboardEntry && (
-                                        <div className="rounded-2xl border border-slate-200/70 dark:border-white/10 bg-white/70 dark:bg-gray-900/70 backdrop-blur-sm px-5 py-2.5 min-w-[88px] text-center">
-                                            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-gray-400">Points</p>
-                                            <p className="text-xl font-black tabular-nums bg-gradient-to-r from-blue-500 via-cyan-500 to-teal-500 dark:from-blue-400 dark:via-cyan-300 dark:to-teal-300 bg-clip-text text-transparent">{totalPoints}</p>
+                                        <div className="flex items-stretch gap-3">
+                                            <div className="rounded-2xl border border-slate-200/70 dark:border-white/10 bg-white/70 dark:bg-gray-900/70 backdrop-blur-sm px-5 py-2.5 min-w-[88px] text-center">
+                                                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-gray-400">Rank</p>
+                                                <p className="text-xl font-black tabular-nums text-slate-900 dark:text-white">#{leaderboardEntry.position}</p>
+                                            </div>
+                                            <div className="rounded-2xl border border-slate-200/70 dark:border-white/10 bg-white/70 dark:bg-gray-900/70 backdrop-blur-sm px-5 py-2.5 min-w-[88px] text-center">
+                                                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-gray-400">Points</p>
+                                                <p className="text-xl font-black tabular-nums bg-gradient-to-r from-blue-500 via-cyan-500 to-teal-500 dark:from-blue-400 dark:via-cyan-300 dark:to-teal-300 bg-clip-text text-transparent">{totalPoints}</p>
+                                            </div>
                                         </div>
                                     )}
 
