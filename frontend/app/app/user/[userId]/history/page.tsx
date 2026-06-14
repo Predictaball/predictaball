@@ -108,7 +108,8 @@ export default async function Home({
 
                                     {/* On mobile the form sits in line with rank & points; on desktop it moves to its own block below */}
                                     {form.length > 0 && (
-                                        <div className="flex items-center sm:hidden">
+                                        <div className="flex flex-col items-center justify-center gap-1.5 sm:hidden">
+                                            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-gray-400">Recent form</p>
                                             <FormBadge form={form}/>
                                         </div>
                                     )}
