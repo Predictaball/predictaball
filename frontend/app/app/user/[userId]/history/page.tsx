@@ -110,7 +110,7 @@ export default async function Home({
                                     {form.length > 0 && (
                                         <div className="flex flex-col items-center justify-center gap-1.5 sm:hidden">
                                             <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-gray-400">Recent form</p>
-                                            <FormBadge form={form}/>
+                                            <FormBadge form={form} highlightLatest/>
                                         </div>
                                     )}
                                 </div>
@@ -119,7 +119,7 @@ export default async function Home({
                             {form.length > 0 && (
                                 <div className="hidden sm:flex flex-col items-end gap-2">
                                     <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-gray-400">Recent form</p>
-                                    <FormBadge form={form}/>
+                                    <FormBadge form={form} highlightLatest/>
                                 </div>
                             )}
                         </div>
