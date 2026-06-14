@@ -13,6 +13,7 @@ import {SECTION_EYEBROW} from "@/app/util/css-classes";
 import FocusedGlobeClient from "@/app/components/flags/focused-globe-client";
 import {LocalTime} from "@/app/components/predictions/local-time";
 import {MatchScoreOverlay} from "@/app/components/predictions/match-score-overlay";
+import DistributionBar from "@/app/components/predictions/distribution-bar";
 
 const ROUND_LABEL: Record<MatchRoundEnum, string> = {
     GROUP_STAGE: "Group Stage",
@@ -35,6 +36,7 @@ function MatchGlobeHeader({match}: {match: Match}): React.JSX.Element {
     const live = match.state === MatchStateEnum.Live
     const homeCode = match.homeTeamFlagCode.toLowerCase()
     const awayCode = match.awayTeamFlagCode.toLowerCase()
+    const showDistribution = match.state !== MatchStateEnum.Upcoming && match.predictionDistribution !== undefined
 
     return (
         <div className="relative rounded-3xl bg-gradient-to-br from-slate-900/15 to-slate-900/5 dark:from-white/15 dark:to-white/5 p-[1px] shadow-2xl shadow-cyan-500/10">
@@ -59,6 +61,15 @@ function MatchGlobeHeader({match}: {match: Match}): React.JSX.Element {
                         <MatchScoreOverlay match={match}/>
                     </div>
                 </div>
+                {showDistribution && (
+                    // The bar's own component adds mt-4 internally; cancel it
+                    // with -mt-4 so the panel padding lands cleanly.
+                    <div className="border-t border-slate-200/70 dark:border-white/5 px-4 sm:px-5 pt-3 pb-4">
+                        <div className="-mt-4">
+                            <DistributionBar distribution={match.predictionDistribution!} homeName={match.homeTeam} awayName={match.awayTeam}/>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     )

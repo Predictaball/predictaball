@@ -31,7 +31,7 @@ export default function MatchStrip({liveMatches, upcomingMatches, completedMatch
     return (
         <div className="space-y-4">
             {liveMatches.length > 0 && (
-                <StripRow title="Live" matches={liveMatches} selectedId={selectedId} onSelect={onSelect} live/>
+                <LinkRow title="Live" matches={liveMatches} live/>
             )}
             {upcomingMatches.length > 0 && (
                 <StripRow title="Upcoming" matches={upcomingMatches} selectedId={selectedId} onSelect={onSelect}/>
@@ -39,6 +39,32 @@ export default function MatchStrip({liveMatches, upcomingMatches, completedMatch
             {completedMatches.length > 0 && (
                 <CompletedRow matches={completedMatches} historyHref={historyHref}/>
             )}
+        </div>
+    )
+}
+
+// Pills that link out to the match's predictions page rather than selecting
+// the card on this page. Used for live matches (predictions locked, but you
+// can see what others picked) — completed matches use their own row with the
+// trailing "View all" pill.
+function LinkRow({title, matches, live}: {title: string; matches: Match[]; live?: boolean}) {
+    return (
+        <div>
+            <RowHeader title={title} live={live}/>
+            <div
+                className="flex gap-3 overflow-x-auto pb-2 px-4 sm:px-6 snap-x snap-mandatory scrollbar-thin"
+                style={{scrollbarWidth: "thin"}}
+            >
+                {matches.map(m => (
+                    <Link
+                        key={m.matchId}
+                        href={`/app/match/${m.matchId}/predictions`}
+                        className={`snap-center shrink-0 rounded-2xl p-[1.5px] transition-transform hover:scale-[1.02] ${PILL_BORDER}`}
+                    >
+                        <PillBody match={m}/>
+                    </Link>
+                ))}
+            </div>
         </div>
     )
 }
