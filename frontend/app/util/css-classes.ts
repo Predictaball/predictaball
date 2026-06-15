@@ -39,7 +39,7 @@ export const ACTION_BUTTON_CLASS = "bg-gradient-to-r from-amber-400 to-orange-50
 // as a podium while still sitting happily next to the cool brand gradient.
 export const PODIUM_GLOW: Record<1 | 2 | 3, string> = {
     1: "bg-gradient-to-r from-amber-200 via-yellow-400 to-amber-500 shadow-[0_0_28px_-2px_rgba(251,191,36,0.75)] dark:shadow-[0_0_32px_-2px_rgba(251,191,36,0.65)]",
-    2: "bg-gradient-to-r from-slate-200 via-gray-300 to-slate-400 shadow-[0_0_16px_-4px_rgba(148,163,184,0.6)] dark:shadow-[0_0_18px_-4px_rgba(203,213,225,0.5)]",
+    2: "bg-gradient-to-r from-slate-300 via-slate-400 to-slate-500 dark:from-slate-200 dark:via-gray-300 dark:to-slate-400 shadow-[0_0_18px_-3px_rgba(100,116,139,0.55)] dark:shadow-[0_0_18px_-4px_rgba(203,213,225,0.5)]",
     3: "bg-gradient-to-r from-orange-300 via-amber-600 to-orange-700 shadow-[0_0_16px_-4px_rgba(217,119,6,0.6)] dark:shadow-[0_0_18px_-4px_rgba(234,88,12,0.55)]",
 }
 
