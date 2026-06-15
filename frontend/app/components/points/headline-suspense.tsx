@@ -2,12 +2,14 @@ import React, { Suspense } from "react";
 import Headline from "@/app/components/points/headline";
 import DefaultCards from "@/app/components/points/default-cards";
 import TournamentCountdown from "@/app/components/points/tournament-countdown";
+import {StreakStats} from "@/app/util/streaks";
 
 interface HeadlineSuspenseProps {
     tournamentStarted: boolean
     nextKickoff?: Date
     hasLiveMatch: boolean
     supportedTeamId?: string
+    streaks: StreakStats
 }
 
 function calendarDaysUntil(kickoff: Date): number {
@@ -18,14 +20,14 @@ function calendarDaysUntil(kickoff: Date): number {
     return Math.round((target.getTime() - today.getTime()) / 86_400_000)
 }
 
-export default function HeadlineSuspense({tournamentStarted, nextKickoff, hasLiveMatch, supportedTeamId}: HeadlineSuspenseProps): React.JSX.Element | null {
+export default function HeadlineSuspense({tournamentStarted, nextKickoff, hasLiveMatch, supportedTeamId, streaks}: HeadlineSuspenseProps): React.JSX.Element | null {
     if (!tournamentStarted && nextKickoff && nextKickoff.getTime() > Date.now()) {
         return <TournamentCountdown kickoff={nextKickoff} initialDays={calendarDaysUntil(nextKickoff)} />
     }
 
     return (
         <Suspense fallback={<DefaultCards />}>
-            <Headline hasLiveMatch={hasLiveMatch} supportedTeamId={supportedTeamId} />
+            <Headline hasLiveMatch={hasLiveMatch} supportedTeamId={supportedTeamId} streaks={streaks} />
         </Suspense>
     )
 }
