@@ -32,6 +32,17 @@ export const ACTION_PILL_BORDER = "bg-amber-500/40 hover:bg-amber-500/60 dark:bg
 // brand UI. Use for the single most important action on a surface.
 export const ACTION_BUTTON_CLASS = "bg-gradient-to-r from-amber-400 to-orange-500 text-gray-950 font-bold shadow-lg shadow-orange-500/25 transition-transform hover:scale-[1.01]"
 
+// Podium glows for the top three leaderboard places. Each value is the
+// gradient "border" (revealed by the row's 1px padding) plus a coloured glow
+// shadow. Gold is intentionally the most prominent — biggest, brightest glow —
+// with silver and bronze progressively subtler. Warm metallics chosen to read
+// as a podium while still sitting happily next to the cool brand gradient.
+export const PODIUM_GLOW: Record<1 | 2 | 3, string> = {
+    1: "bg-gradient-to-r from-amber-200 via-yellow-400 to-amber-500 shadow-[0_0_28px_-2px_rgba(251,191,36,0.75)] dark:shadow-[0_0_32px_-2px_rgba(251,191,36,0.65)]",
+    2: "bg-gradient-to-r from-slate-200 via-gray-300 to-slate-400 shadow-[0_0_16px_-4px_rgba(148,163,184,0.6)] dark:shadow-[0_0_18px_-4px_rgba(203,213,225,0.5)]",
+    3: "bg-gradient-to-r from-orange-300 via-amber-600 to-orange-700 shadow-[0_0_16px_-4px_rgba(217,119,6,0.6)] dark:shadow-[0_0_18px_-4px_rgba(234,88,12,0.55)]",
+}
+
 // Semantic chips (border + tint + text), used for leaderboard movement etc.
 export const POSITIVE_CHIP = "bg-emerald-500/15 text-emerald-700 border-emerald-500/30 dark:bg-emerald-400/15 dark:text-emerald-300 dark:border-emerald-400/30"
 export const NEGATIVE_CHIP = "bg-rose-500/15 text-rose-700 border-rose-500/30 dark:bg-rose-400/15 dark:text-rose-300 dark:border-rose-400/30"
