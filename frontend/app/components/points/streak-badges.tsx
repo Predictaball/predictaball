@@ -1,11 +1,14 @@
 import React from "react"
-import {Streaks} from "@/app/util/streaks"
+import {StreakStats} from "@/app/util/streaks"
 
-// A streak only feels like a streak once it's two-deep, so shorter runs are
-// hidden to avoid cluttering the UI for new players.
-const MIN_STREAK = 2
+// A points streak only feels like a streak once it's two-deep, so shorter runs
+// are hidden to avoid cluttering the UI for new players.
+const MIN_POINTS_STREAK = 2
 // Above this a points streak is "on fire" and gets the warm flame treatment.
 const HOT_STREAK = 3
+// A prediction rate needs a few games behind it before the percentage means
+// anything (100% off a single match isn't worth shouting about).
+const MIN_PLAYED_FOR_RATE = 3
 
 function StreakPill({
     icon,
@@ -14,7 +17,7 @@ function StreakPill({
     hot = false,
 }: {
     icon: string
-    value: number
+    value: React.ReactNode
     label: string
     hot?: boolean
 }): React.JSX.Element {
@@ -34,21 +37,35 @@ function StreakPill({
     )
 }
 
-// Shows the player's current prediction and points streaks as pills. Renders
-// nothing when neither streak is meaningful yet.
-export default function StreakBadges({streaks, className = ""}: {streaks: Streaks, className?: string}): React.JSX.Element | null {
-    const showPrediction = streaks.prediction >= MIN_STREAK
-    const showPoints = streaks.points >= MIN_STREAK
-    if (!showPrediction && !showPoints) return null
+// The bare streak pills, with no wrapper, so they can be dropped straight into
+// an existing pill row (e.g. the points headline). Renders nothing when neither
+// stat is meaningful yet.
+export function StreakPills({stats}: {stats: StreakStats}): React.JSX.Element | null {
+    const showRate = stats.played >= MIN_PLAYED_FOR_RATE
+    const showPoints = stats.pointsStreak >= MIN_POINTS_STREAK
+    if (!showRate && !showPoints) return null
+
+    return (
+        <>
+            {showRate && (
+                <StreakPill icon="🎯" value={`${Math.round(stats.predictionRate * 100)}%`} label="predicted" />
+            )}
+            {showPoints && (
+                <StreakPill icon="🔥" value={stats.pointsStreak} label="scoring streak" hot={stats.pointsStreak >= HOT_STREAK} />
+            )}
+        </>
+    )
+}
+
+// Standalone, self-centring version for surfaces without an existing pill row
+// (e.g. the player history header).
+export default function StreakBadges({stats, className = ""}: {stats: StreakStats, className?: string}): React.JSX.Element | null {
+    const pills = StreakPills({stats})
+    if (!pills) return null
 
     return (
         <div className={`flex flex-wrap items-center justify-center gap-2 ${className}`}>
-            {showPrediction && (
-                <StreakPill icon="🎯" value={streaks.prediction} label="predicted in a row" />
-            )}
-            {showPoints && (
-                <StreakPill icon="🔥" value={streaks.points} label="scoring streak" hot={streaks.points >= HOT_STREAK} />
-            )}
+            {pills}
         </div>
     )
 }

@@ -6,10 +6,13 @@ import { getConfigWithAuthHeader } from "@/app/api/client-config";
 import { getUserId } from "@/app/auth/jwt-handler";
 import { getPositionForLeague } from "@/app/app/league/get-position-for-league";
 import { FlagImage } from "@/app/components/predictions/flag-image";
+import { StreakPills } from "@/app/components/points/streak-badges";
+import { StreakStats } from "@/app/util/streaks";
 
 interface HeadlineProps {
     hasLiveMatch: boolean
     supportedTeamId?: string
+    streaks: StreakStats
 }
 
 function ordinal(n: number): string {
@@ -23,7 +26,7 @@ function ordinal(n: number): string {
     }
 }
 
-export default async function Headline({ hasLiveMatch, supportedTeamId }: HeadlineProps): Promise<React.JSX.Element> {
+export default async function Headline({ hasLiveMatch, supportedTeamId, streaks }: HeadlineProps): Promise<React.JSX.Element> {
 
     const userId = await getUserId()
     const config = await getConfigWithAuthHeader()
@@ -104,6 +107,7 @@ export default async function Headline({ hasLiveMatch, supportedTeamId }: Headli
                             <span className="text-slate-500 dark:text-gray-400 text-[11px] uppercase tracking-[0.15em]">live</span>
                         </span>
                     )}
+                    <StreakPills stats={streaks} />
                 </div>
             </div>
         </div>

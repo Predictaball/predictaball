@@ -23,8 +23,7 @@ import PredictNowBanner from "@/app/components/predictions/predict-now-banner";
 import {MatchSelectionProvider} from "@/app/components/predictions/match-selection";
 import {getUserChips} from "@/app/components/predictions/get-user-chips";
 import {getUserId} from "@/app/auth/jwt-handler";
-import StreakBadges from "@/app/components/points/streak-badges";
-import {computeStreaks} from "@/app/util/streaks";
+import {computeStreakStats} from "@/app/util/streaks";
 
 const Home = async ({searchParams}: {searchParams: Promise<Record<string, string | string[] | undefined>>}) => {
     const resolvedSearchParams = await searchParams
@@ -56,7 +55,7 @@ const Home = async ({searchParams}: {searchParams: Promise<Record<string, string
         .sort((a, b) => b.datetime.valueOf() - a.datetime.valueOf())
         .slice(0, 3)
     const historyHref = userId ? `/app/user/${userId}/history` : "/app"
-    const streaks = computeStreaks(completedMatches)
+    const streaks = computeStreakStats(completedMatches)
     const tournamentStarted = tournamentState ? tournamentState.state !== GetTournamentState200ResponseStateEnum.PreTournament : false
 
     const initials = profile ? `${profile.firstName.charAt(0)}${profile.familyName.charAt(0)}`.toUpperCase() : "?"
@@ -99,9 +98,7 @@ const Home = async ({searchParams}: {searchParams: Promise<Record<string, string
                 <MatchSelectionProvider initialId={firstMatchId}>
                     <PredictNowBanner upcomingMatches={upcomingMatches} />
 
-                    <HeadlineSuspense tournamentStarted={tournamentStarted} nextKickoff={tournamentState?.nextKickoff} hasLiveMatch={liveMatches.length > 0} supportedTeamId={profile?.supportedTeamId} />
-
-                    <StreakBadges streaks={streaks} className="-mt-4" />
+                    <HeadlineSuspense tournamentStarted={tournamentStarted} nextKickoff={tournamentState?.nextKickoff} hasLiveMatch={liveMatches.length > 0} supportedTeamId={profile?.supportedTeamId} streaks={streaks} />
 
                     <section id="matches" className="space-y-4">
                         <SectionHeading title="Matches" count={liveMatches.length + upcomingMatches.length} action={<MatchesHelp/>}/>

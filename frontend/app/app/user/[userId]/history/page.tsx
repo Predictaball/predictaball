@@ -9,7 +9,7 @@ import {FlagImage} from "@/app/components/predictions/flag-image";
 import FormBadge from "@/app/components/leaderboard/form-badge";
 import {SECTION_EYEBROW} from "@/app/util/css-classes";
 import StreakBadges from "@/app/components/points/streak-badges";
-import {computeStreaks} from "@/app/util/streaks";
+import {computeStreakStats} from "@/app/util/streaks";
 
 export default async function Home({
     params
@@ -52,7 +52,7 @@ export default async function Home({
 
     const [leaderboardEntry, form, games] = await Promise.all([getEntry(), getUserForm(userId), getGames()])
 
-    const streaks = computeStreaks(games)
+    const streaks = computeStreakStats(games)
     const user = leaderboardEntry?.user
     const fullName = user ? `${user.firstName} ${user.familyName}` : "Player"
     const initials = user ? `${user.firstName.charAt(0)}${user.familyName.charAt(0)}` : "?"
@@ -129,7 +129,7 @@ export default async function Home({
                     )}
                 </section>
 
-                <StreakBadges streaks={streaks} />
+                <StreakBadges stats={streaks} />
 
                 <section className="space-y-4">
                     <h2 className={SECTION_EYEBROW + " text-center"}>Match history</h2>
