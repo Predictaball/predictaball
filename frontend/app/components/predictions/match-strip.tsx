@@ -7,6 +7,8 @@ import {LocalTime} from "@/app/components/predictions/local-time"
 import {FlagImage} from "@/app/components/predictions/flag-image"
 import {ACTION_PILL_BORDER} from "@/app/util/css-classes"
 import {PointsPill} from "@/app/components/predictions/chip-impact"
+import {PredictionRatePill} from "@/app/components/points/streak-badges"
+import type {StreakStats} from "@/app/util/streaks"
 
 // Power-ups worth surfacing on the pill. Crowd has its own "? - ?" treatment.
 const CHIP_GLYPH: Partial<Record<Chip, string>> = {
@@ -25,9 +27,11 @@ interface MatchStripProps {
     historyHref: string
     selectedId: string
     onSelect: (id: string) => void
+    /** Drives the prediction-rate pill in the Completed row header. */
+    streaks: StreakStats
 }
 
-export default function MatchStrip({liveMatches, upcomingMatches, completedMatches, historyHref, selectedId, onSelect}: MatchStripProps) {
+export default function MatchStrip({liveMatches, upcomingMatches, completedMatches, historyHref, selectedId, onSelect, streaks}: MatchStripProps) {
     return (
         <div className="space-y-4">
             {liveMatches.length > 0 && (
@@ -37,7 +41,7 @@ export default function MatchStrip({liveMatches, upcomingMatches, completedMatch
                 <StripRow title="Upcoming" matches={upcomingMatches} selectedId={selectedId} onSelect={onSelect}/>
             )}
             {completedMatches.length > 0 && (
-                <CompletedRow matches={completedMatches} historyHref={historyHref}/>
+                <CompletedRow matches={completedMatches} historyHref={historyHref} streaks={streaks}/>
             )}
         </div>
     )
@@ -112,10 +116,10 @@ function StripRow({title, matches, selectedId, onSelect, live}: {
 // Completed matches aren't predictable, so their pills link out to the match's
 // result/predictions page (like the history cards) rather than selecting into
 // the card above. The trailing "View all" pill opens the full history.
-function CompletedRow({matches, historyHref}: {matches: Match[]; historyHref: string}) {
+function CompletedRow({matches, historyHref, streaks}: {matches: Match[]; historyHref: string; streaks: StreakStats}) {
     return (
         <div>
-            <RowHeader title="Completed"/>
+            <RowHeader title="Completed" action={<PredictionRatePill stats={streaks}/>}/>
             <div
                 className="flex gap-3 overflow-x-auto pb-2 px-4 sm:px-6 snap-x snap-mandatory scrollbar-thin"
                 style={{scrollbarWidth: "thin"}}
@@ -143,11 +147,12 @@ function CompletedRow({matches, historyHref}: {matches: Match[]; historyHref: st
     )
 }
 
-function RowHeader({title, live}: {title: string; live?: boolean}) {
+function RowHeader({title, live, action}: {title: string; live?: boolean; action?: React.ReactNode}) {
     return (
         <div className="flex items-center gap-2 mb-2 px-4 sm:px-6">
             {live && <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse"/>}
             <h3 className="text-sm font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-gray-400">{title}</h3>
+            {action && <div className="ml-auto">{action}</div>}
         </div>
     )
 }
