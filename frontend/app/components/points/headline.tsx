@@ -8,6 +8,8 @@ import { getPositionForLeague } from "@/app/app/league/get-position-for-league";
 import { FlagImage } from "@/app/components/predictions/flag-image";
 import { StreakPills } from "@/app/components/points/streak-badges";
 import { StreakStats } from "@/app/util/streaks";
+import FormBadge from "@/app/components/leaderboard/form-badge";
+import { getUserForm } from "@/app/components/leaderboard/get-user-form";
 
 interface HeadlineProps {
     hasLiveMatch: boolean
@@ -53,10 +55,11 @@ export default async function Headline({ hasLiveMatch, supportedTeamId, streaks 
         }
     }
 
-    const [fetchedData, position, countryRankings] = await Promise.all([
+    const [fetchedData, position, countryRankings, form] = await Promise.all([
         fetchUserData(),
         getPositionForLeague("global", config, userId),
         fetchCountryRankings(),
+        userId ? getUserForm(userId) : Promise.resolve<(number | null)[]>([]),
     ])
     const total = (fetchedData?.fixedPoints || 0) + (fetchedData?.livePoints || 0)
     const live = fetchedData?.livePoints ?? 0
@@ -108,6 +111,12 @@ export default async function Headline({ hasLiveMatch, supportedTeamId, streaks 
                         </span>
                     )}
                     <StreakPills stats={streaks} />
+                    {form.length > 0 && (
+                        <span className="inline-flex items-center gap-2.5 rounded-full bg-slate-900/5 dark:bg-white/5 border border-slate-900/10 dark:border-white/10 px-3.5 py-1.5">
+                            <span className="text-slate-500 dark:text-gray-400 text-[11px] uppercase tracking-[0.15em]">form</span>
+                            <FormBadge form={form} highlightLatest />
+                        </span>
+                    )}
                 </div>
             </div>
         </div>
