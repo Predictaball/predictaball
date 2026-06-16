@@ -570,8 +570,8 @@ function Scene({homeCode, awayCode, venue, enableControls, userStopped, onUserSt
                 <meshBasicMaterial color="#22d3ee" wireframe transparent opacity={0.08}/>
             </mesh>
             <Continents/>
-            {hasHome && <CountryFill code={homeCode} color="#fbbf24"/>}
-            {hasAway && <CountryFill code={awayCode} color="#fbbf24"/>}
+            {hasHome && <CountryFill code={homeCode} color="#06b6d4"/>}
+            {hasAway && <CountryFill code={awayCode} color="#6366f1"/>}
             {arcs.map((points, i) => (
                 <AnimatedArc key={i} points={points} anim={anim}/>
             ))}
