@@ -42,7 +42,7 @@ function StreakPill({
 // nothing until there are enough games for the percentage to mean anything.
 export function PredictionRatePill({stats}: {stats: StreakStats}): React.JSX.Element | null {
     if (stats.played < MIN_PLAYED_FOR_RATE) return null
-    return <StreakPill icon="✅" value={`${Math.round(stats.predictionRate * 100)}%`} label="prediction rate" />
+    return <StreakPill icon="✅" value={`${Math.round(stats.predictionRate * 100)}%`} label="predicted" />
 }
 
 // The scoring-streak pill on its own. Hidden until a run is at least two-deep.
