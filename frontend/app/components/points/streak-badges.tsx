@@ -48,7 +48,7 @@ export function StreakPills({stats}: {stats: StreakStats}): React.JSX.Element | 
     return (
         <>
             {showRate && (
-                <StreakPill icon="✅" value={`${Math.round(stats.predictionRate * 100)}%`} label="completed matches predicted" />
+                <StreakPill icon="✅" value={`${Math.round(stats.predictionRate * 100)}%`} label="predicted" />
             )}
             {showPoints && (
                 <StreakPill icon="🔥" value={stats.pointsStreak} label="scoring streak" hot={stats.pointsStreak >= HOT_STREAK} />
