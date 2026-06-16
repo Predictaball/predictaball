@@ -10,6 +10,14 @@ const HOT_STREAK = 3
 // anything (100% off a single match isn't worth shouting about).
 const MIN_PLAYED_FOR_RATE = 3
 
+// Shared pill styling so every chip in the points headline reads as one calm,
+// borderless set. A soft tinted fill stands in for the old hard border; PILL
+// bundles the default fill, PILL_BASE leaves it off for tinted variants.
+const PILL_BASE = "inline-flex items-center gap-1.5 rounded-full px-3 py-1"
+const PILL_FILL = "bg-slate-900/[0.05] dark:bg-white/[0.06]"
+export const PILL = `${PILL_BASE} ${PILL_FILL}`
+export const PILL_LABEL = "text-slate-500 dark:text-gray-400 text-[11px] uppercase tracking-[0.15em]"
+
 function StreakPill({
     icon,
     value,
@@ -24,15 +32,13 @@ function StreakPill({
     return (
         <span
             className={
-                "inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-sm border " +
-                (hot
-                    ? "border-amber-500/30 bg-amber-500/10 dark:border-amber-400/30 dark:bg-amber-400/10"
-                    : "border-slate-900/10 bg-slate-900/5 dark:border-white/10 dark:bg-white/5")
+                `${PILL_BASE} text-sm ` +
+                (hot ? "bg-amber-500/10 dark:bg-amber-400/10" : PILL_FILL)
             }
         >
             <span className={hot ? "animate-pulse" : ""} aria-hidden>{icon}</span>
             <span className={`font-bold tabular-nums ${hot ? "text-amber-600 dark:text-amber-300" : "text-slate-900 dark:text-white"}`}>{value}</span>
-            <span className="text-slate-500 dark:text-gray-400 text-[11px] uppercase tracking-[0.15em]">{label}</span>
+            <span className={PILL_LABEL}>{label}</span>
         </span>
     )
 }
