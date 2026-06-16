@@ -11,6 +11,7 @@ import {MatchScoreOverlay} from "@/app/components/predictions/match-score-overla
 import {PointsPill} from "@/app/components/predictions/chip-impact"
 import {useMatchSelection} from "@/app/components/predictions/match-selection"
 import type {UserChips} from "@/app/components/predictions/get-user-chips"
+import type {StreakStats} from "@/app/util/streaks"
 
 const ROUND_LABEL: Record<MatchRoundEnum, string> = {
     GROUP_STAGE: "Group Stage",
@@ -26,9 +27,10 @@ interface PredictionPanelProps {
     completedMatches: Match[]
     historyHref: string
     userChips: UserChips
+    streaks: StreakStats
 }
 
-export default function PredictionPanel({liveMatches, upcomingMatches, completedMatches, historyHref, userChips}: PredictionPanelProps): React.JSX.Element {
+export default function PredictionPanel({liveMatches, upcomingMatches, completedMatches, historyHref, userChips, streaks}: PredictionPanelProps): React.JSX.Element {
     const allMatches = useMemo(() => [...liveMatches, ...upcomingMatches], [liveMatches, upcomingMatches])
     const {selectedId, setSelectedId} = useMatchSelection()
     const [chips, setChips] = useState<UserChips>(userChips)
@@ -121,6 +123,7 @@ export default function PredictionPanel({liveMatches, upcomingMatches, completed
                 historyHref={historyHref}
                 selectedId={selected.matchId}
                 onSelect={setSelectedId}
+                streaks={streaks}
             />
         </div>
     )

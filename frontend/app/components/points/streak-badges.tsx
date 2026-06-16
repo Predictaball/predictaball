@@ -10,14 +10,6 @@ const HOT_STREAK = 3
 // anything (100% off a single match isn't worth shouting about).
 const MIN_PLAYED_FOR_RATE = 3
 
-// Shared pill styling so every chip in the points headline reads as one calm,
-// borderless set. A soft tinted fill stands in for the old hard border; PILL
-// bundles the default fill, PILL_BASE leaves it off for tinted variants.
-const PILL_BASE = "inline-flex items-center gap-1.5 rounded-full px-3 py-1"
-const PILL_FILL = "bg-slate-900/[0.05] dark:bg-white/[0.06]"
-export const PILL = `${PILL_BASE} ${PILL_FILL}`
-export const PILL_LABEL = "text-slate-500 dark:text-gray-400 text-[11px] uppercase tracking-[0.15em]"
-
 function StreakPill({
     icon,
     value,
@@ -32,33 +24,44 @@ function StreakPill({
     return (
         <span
             className={
-                `${PILL_BASE} text-sm ` +
-                (hot ? "bg-amber-500/10 dark:bg-amber-400/10" : PILL_FILL)
+                "inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-sm border " +
+                (hot
+                    ? "border-amber-500/30 bg-amber-500/10 dark:border-amber-400/30 dark:bg-amber-400/10"
+                    : "border-slate-900/10 bg-slate-900/5 dark:border-white/10 dark:bg-white/5")
             }
         >
             <span className={hot ? "animate-pulse" : ""} aria-hidden>{icon}</span>
             <span className={`font-bold tabular-nums ${hot ? "text-amber-600 dark:text-amber-300" : "text-slate-900 dark:text-white"}`}>{value}</span>
-            <span className={PILL_LABEL}>{label}</span>
+            <span className="text-slate-500 dark:text-gray-400 text-[11px] uppercase tracking-[0.15em]">{label}</span>
         </span>
     )
 }
 
+// The prediction-rate pill on its own, so it can live apart from the points
+// headline (e.g. right-aligned in the Completed matches row header). Renders
+// nothing until there are enough games for the percentage to mean anything.
+export function PredictionRatePill({stats}: {stats: StreakStats}): React.JSX.Element | null {
+    if (stats.played < MIN_PLAYED_FOR_RATE) return null
+    return <StreakPill icon="✅" value={`${Math.round(stats.predictionRate * 100)}%`} label="prediction rate" />
+}
+
+// The scoring-streak pill on its own. Hidden until a run is at least two-deep.
+export function ScoringStreakPill({stats}: {stats: StreakStats}): React.JSX.Element | null {
+    if (stats.pointsStreak < MIN_POINTS_STREAK) return null
+    return <StreakPill icon="🔥" value={stats.pointsStreak} label="scoring streak" hot={stats.pointsStreak >= HOT_STREAK} />
+}
+
 // The bare streak pills, with no wrapper, so they can be dropped straight into
-// an existing pill row (e.g. the points headline). Renders nothing when neither
-// stat is meaningful yet.
+// an existing pill row. Renders nothing when neither stat is meaningful yet.
 export function StreakPills({stats}: {stats: StreakStats}): React.JSX.Element | null {
-    const showRate = stats.played >= MIN_PLAYED_FOR_RATE
-    const showPoints = stats.pointsStreak >= MIN_POINTS_STREAK
-    if (!showRate && !showPoints) return null
+    const rate = PredictionRatePill({stats})
+    const points = ScoringStreakPill({stats})
+    if (!rate && !points) return null
 
     return (
         <>
-            {showRate && (
-                <StreakPill icon="✅" value={`${Math.round(stats.predictionRate * 100)}%`} label="prediction rate" />
-            )}
-            {showPoints && (
-                <StreakPill icon="🔥" value={stats.pointsStreak} label="scoring streak" hot={stats.pointsStreak >= HOT_STREAK} />
-            )}
+            {rate}
+            {points}
         </>
     )
 }

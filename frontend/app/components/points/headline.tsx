@@ -6,7 +6,7 @@ import { getConfigWithAuthHeader } from "@/app/api/client-config";
 import { getUserId } from "@/app/auth/jwt-handler";
 import { getPositionForLeague } from "@/app/app/league/get-position-for-league";
 import { FlagImage } from "@/app/components/predictions/flag-image";
-import { StreakPills, PILL, PILL_LABEL } from "@/app/components/points/streak-badges";
+import { ScoringStreakPill } from "@/app/components/points/streak-badges";
 import { StreakStats } from "@/app/util/streaks";
 import FormBadge from "@/app/components/leaderboard/form-badge";
 import { getUserForm } from "@/app/components/leaderboard/get-user-form";
@@ -70,31 +70,42 @@ export default async function Headline({ hasLiveMatch, supportedTeamId, streaks 
     const countryNeighbours = country ? countryRankings.slice(Math.max(0, countryIndex - 1), countryIndex + 2) : []
 
     return (
-        <div className="relative rounded-3xl bg-gradient-to-br from-slate-900/10 to-slate-900/[0.03] dark:from-white/10 dark:to-white/[0.03] p-[1px] shadow-xl shadow-cyan-500/5">
+        <div className="relative rounded-3xl bg-gradient-to-br from-slate-900/15 to-slate-900/5 dark:from-white/15 dark:to-white/5 p-[1px] shadow-2xl shadow-cyan-500/10">
             <div className="rounded-3xl bg-white dark:bg-gray-900/80 backdrop-blur-sm px-6 py-7 sm:py-10 text-center">
-                <div className="text-5xl sm:text-7xl font-black leading-none tracking-tight">
-                    <span className="bg-gradient-to-r from-blue-500 via-cyan-400 to-teal-300 bg-clip-text text-transparent">
-                        <CountUpWrapped end={total} />
-                    </span>
+                {/* The points total stays dead-centre; the live pill rides alongside
+                    it on the right without nudging the number off-centre. */}
+                <div className="relative">
+                    <div className="text-5xl sm:text-7xl font-black leading-none tracking-tight">
+                        <span className="bg-gradient-to-r from-blue-500 via-cyan-400 to-teal-300 bg-clip-text text-transparent">
+                            <CountUpWrapped end={total} />
+                        </span>
+                    </div>
+                    {hasLiveMatch && (
+                        <span className="absolute right-0 top-1/2 -translate-y-1/2 inline-flex items-center gap-2 rounded-full bg-slate-900/5 dark:bg-white/5 border border-slate-900/10 dark:border-white/10 px-3.5 py-1.5 text-sm">
+                            <span className="h-1.5 w-1.5 rounded-full bg-red-500 animate-pulse"/>
+                            <span className="font-bold text-slate-900 dark:text-white tabular-nums">{live}</span>
+                            <span className="text-slate-500 dark:text-gray-400 text-[11px] uppercase tracking-[0.15em]">live</span>
+                        </span>
+                    )}
                 </div>
                 <div className="mt-2 text-[11px] sm:text-xs font-bold uppercase tracking-[0.25em] text-slate-500 dark:text-gray-400">points</div>
-                <div className="mt-6 flex items-center justify-center gap-2 flex-wrap text-sm">
-                    <span className={PILL}>
-                        <span className="h-1 w-1 rounded-full bg-blue-400"/>
+                <div className="mt-5 flex items-center justify-center gap-3 flex-wrap text-sm">
+                    <span className="inline-flex items-center gap-2 rounded-full bg-slate-900/5 dark:bg-white/5 border border-slate-900/10 dark:border-white/10 px-3.5 py-1.5">
+                        <span className="h-1.5 w-1.5 rounded-full bg-blue-400"/>
                         <span className="font-bold text-slate-900 dark:text-white tabular-nums">#{position ?? "—"}</span>
-                        <span className={PILL_LABEL}>global</span>
+                        <span className="text-slate-500 dark:text-gray-400 text-[11px] uppercase tracking-[0.15em]">global</span>
                     </span>
                     {country && (
                         <Link
                             href="/app/leaderboard/countries"
                             title={`${country.teamName} is ${ordinal(country.position)} of ${countryRankings.length} countries`}
-                            className={`${PILL} transition-colors hover:bg-slate-900/[0.09] dark:hover:bg-white/[0.1]`}
+                            className="inline-flex items-center gap-2.5 rounded-full bg-slate-900/5 dark:bg-white/5 border border-slate-900/10 dark:border-white/10 px-3.5 py-1.5 transition-colors hover:border-cyan-500/40 dark:hover:border-cyan-400/40"
                         >
                             {countryNeighbours.map(entry => {
                                 const isUser = entry.teamId === supportedTeamId
                                 return (
                                     <span key={entry.teamId} className={`inline-flex items-center gap-1.5 ${isUser ? "" : "opacity-50"}`}>
-                                        <FlagImage code={entry.flagCode} name={entry.teamName} size={isUser ? 18 : 15}/>
+                                        <FlagImage code={entry.flagCode} name={entry.teamName} size={isUser ? 20 : 16}/>
                                         <span className={`tabular-nums ${isUser ? "font-black text-slate-900 dark:text-white" : "font-medium text-slate-500 dark:text-gray-400"}`}>
                                             {entry.position}
                                         </span>
@@ -103,17 +114,10 @@ export default async function Headline({ hasLiveMatch, supportedTeamId, streaks 
                             })}
                         </Link>
                     )}
-                    {hasLiveMatch && (
-                        <span className={PILL}>
-                            <span className="h-1 w-1 rounded-full bg-red-500 animate-pulse"/>
-                            <span className="font-bold text-slate-900 dark:text-white tabular-nums">{live}</span>
-                            <span className={PILL_LABEL}>live</span>
-                        </span>
-                    )}
-                    <StreakPills stats={streaks} />
+                    <ScoringStreakPill stats={streaks} />
                     {form.length > 0 && (
-                        <span className={PILL}>
-                            <span className={PILL_LABEL}>form</span>
+                        <span className="inline-flex items-center gap-2.5 rounded-full bg-slate-900/5 dark:bg-white/5 border border-slate-900/10 dark:border-white/10 px-3.5 py-1.5">
+                            <span className="text-slate-500 dark:text-gray-400 text-[11px] uppercase tracking-[0.15em]">form</span>
                             <FormBadge form={form} highlightLatest />
                         </span>
                     )}
