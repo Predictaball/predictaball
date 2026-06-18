@@ -335,6 +335,58 @@ function CountryFill({code, color}: {code: string; color: string}) {
     )
 }
 
+// Fills the host nation's landmass with its own flag, extruded off the globe
+// exactly like the playing-country highlights and fading in the same way. Used
+// only when the host country is not itself playing the match (when it is, the
+// home/away colour fill takes precedence).
+function CountryFlagFill({code}: {code: string}) {
+    const geometry = useMemo(
+        () => buildCountryFillGeometry(code, COUNTRY_FILL_BASE, COUNTRY_FILL_HEIGHT, true),
+        [code],
+    )
+    const texture = useTexture(`https://flagcdn.com/w320/${code}.png`) as THREE.Texture
+    useMemo(() => {
+        texture.colorSpace = THREE.SRGBColorSpace
+        texture.wrapS = THREE.ClampToEdgeWrapping
+        texture.wrapT = THREE.ClampToEdgeWrapping
+        texture.needsUpdate = true
+    }, [texture])
+
+    const materialRef = useRef<THREE.MeshStandardMaterial>(null)
+    const elapsed = useRef(0)
+
+    useEffect(() => {
+        elapsed.current = 0
+    }, [code])
+
+    useFrame((_, delta) => {
+        if (!materialRef.current) return
+        if (elapsed.current >= COUNTRY_FILL_FADE_SECONDS) return
+        elapsed.current = Math.min(COUNTRY_FILL_FADE_SECONDS, elapsed.current + delta)
+        const t = easeInOut(elapsed.current / COUNTRY_FILL_FADE_SECONDS)
+        materialRef.current.opacity = t * COUNTRY_FILL_OPACITY
+    })
+
+    if (!geometry) return null
+    return (
+        <mesh geometry={geometry}>
+            <meshStandardMaterial
+                ref={materialRef}
+                map={texture}
+                emissive="#ffffff"
+                emissiveMap={texture}
+                emissiveIntensity={0.25}
+                roughness={0.5}
+                metalness={0.1}
+                transparent
+                opacity={0}
+                side={THREE.DoubleSide}
+                toneMapped={false}
+            />
+        </mesh>
+    )
+}
+
 function mirrorHorizontally(source: THREE.Texture): THREE.Texture {
     const tex = source.clone()
     tex.wrapS = THREE.ClampToEdgeWrapping
@@ -504,6 +556,14 @@ function Scene({homeCode, awayCode, venue, enableControls, userStopped, onUserSt
         setIntroDone(false)
     }, [homeCode, awayCode, stadium])
 
+    // The host nation, the team code it extrudes under, and whether it is one of
+    // the two playing teams. When the host is not playing we extrude it anyway to
+    // fill its landmass with its flag, so it always stands proud of the globe.
+    const hostCode = stadium ? HOST_NATION_CODE[stadium.country] : undefined
+    const hostIsPlaying = Boolean(hostCode) && (hostCode === homeCode || hostCode === awayCode)
+    const showHostFlag = Boolean(hostCode) && !hostIsPlaying && hasCountryFill(hostCode as string)
+    const hostExtruded = hostIsPlaying || showHostFlag
+
     const {arcs, aPos, bPos, stadiumPos, tourLegs} = useMemo(() => {
         const hc = COUNTRY_COORDS[homeCode]
         const ac = COUNTRY_COORDS[awayCode]
@@ -515,10 +575,9 @@ function Scene({homeCode, awayCode, venue, enableControls, userStopped, onUserSt
         const bRadius = countryGroundRadius(awayCode)
         if (stadium) {
             const sDir = latLngToVec3(stadium.lat, stadium.lng, 1)
-            // The venue always sits in a host nation; if that host is playing it
-            // is extruded, so rest the stadium on the raised top.
-            const hostCode = HOST_NATION_CODE[stadium.country]
-            const hostExtruded = hostCode === homeCode || hostCode === awayCode
+            // The venue always sits in a host nation; that host is extruded (by
+            // the colour fill when it plays, otherwise by its flag fill), so rest
+            // the stadium on the raised top.
             const sRadius = hostExtruded ? COUNTRY_FILL_TOP : GLOBE_RADIUS + STADIUM_BASE_OFFSET
             const arcHome = visibleArc(aDir, sDir, aRadius, sRadius)
             const arcAway = visibleArc(bDir, sDir, bRadius, sRadius)
@@ -538,7 +597,7 @@ function Scene({homeCode, awayCode, venue, enableControls, userStopped, onUserSt
             stadiumPos: undefined,
             tourLegs: [arcHA, [...arcHA].reverse()],
         }
-    }, [homeCode, awayCode, stadium])
+    }, [homeCode, awayCode, stadium, hostExtruded])
 
     const hasHome = Boolean(COUNTRY_COORDS[homeCode])
     const hasAway = Boolean(COUNTRY_COORDS[awayCode])
@@ -572,6 +631,9 @@ function Scene({homeCode, awayCode, venue, enableControls, userStopped, onUserSt
             <Continents/>
             {hasHome && <CountryFill code={homeCode} color="#67e8f9"/>}
             {hasAway && <CountryFill code={awayCode} color="#818cf8"/>}
+            <React.Suspense fallback={null}>
+                {showHostFlag && <CountryFlagFill code={hostCode as string}/>}
+            </React.Suspense>
             {arcs.map((points, i) => (
                 <AnimatedArc key={i} points={points} anim={anim}/>
             ))}
