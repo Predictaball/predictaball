@@ -106,27 +106,62 @@ function getCountryFeatures(): Map<string, Feature<Polygon | MultiPolygon>> {
     return countryFeatures
 }
 
+// Geographic bounds used to project a flag image across a country's landmass.
+// When a country straddles the antimeridian (raw longitude span > 180°, as the
+// US does via the Aleutians) longitudes west of 0 are wrapped by +360 so the
+// landmass stays contiguous and the flag maps onto it sensibly.
+type LngLatBounds = {minLng: number; maxLng: number; minLat: number; maxLat: number; wrap: boolean}
+
+function computeLngLatBounds(polygons: Position[][][]): LngLatBounds {
+    let rawMin = Infinity, rawMax = -Infinity
+    for (const polygon of polygons) for (const ring of polygon) for (const [lng] of ring) {
+        if (lng < rawMin) rawMin = lng
+        if (lng > rawMax) rawMax = lng
+    }
+    const wrap = rawMax - rawMin > 180
+    let minLng = Infinity, maxLng = -Infinity, minLat = Infinity, maxLat = -Infinity
+    for (const polygon of polygons) for (const ring of polygon) for (const [lng, lat] of ring) {
+        const x = wrap && lng < 0 ? lng + 360 : lng
+        if (x < minLng) minLng = x
+        if (x > maxLng) maxLng = x
+        if (lat < minLat) minLat = lat
+        if (lat > maxLat) maxLat = lat
+    }
+    return {minLng, maxLng, minLat, maxLat, wrap}
+}
+
+function uvForPoint(p: THREE.Vector2, bounds: LngLatBounds): [number, number] {
+    const lng = bounds.wrap && p.x < 0 ? p.x + 360 : p.x
+    const u = (lng - bounds.minLng) / (bounds.maxLng - bounds.minLng)
+    const v = (p.y - bounds.minLat) / (bounds.maxLat - bounds.minLat)
+    return [u, v]
+}
+
 // Tessellate a flat (lng/lat) triangle, projecting each vertex onto the sphere.
 // Subdividing keeps the filled surface hugging the globe instead of cutting a
 // flat chord through it (which would sink below the surface for large countries).
+// When `uvOut` is supplied, an equirectangular UV per vertex is emitted too so a
+// flag texture can be stretched across the country's bounding box.
 function emitProjectedTriangle(
     a: THREE.Vector2, b: THREE.Vector2, c: THREE.Vector2,
     radius: number, depth: number, positions: number[],
+    uvOut?: {uvs: number[]; bounds: LngLatBounds},
 ) {
     if (depth <= 0) {
         for (const p of [a, b, c]) {
             const v = latLngToVec3(p.y, p.x, radius)
             positions.push(v.x, v.y, v.z)
+            if (uvOut) uvOut.uvs.push(...uvForPoint(p, uvOut.bounds))
         }
         return
     }
     const ab = a.clone().add(b).multiplyScalar(0.5)
     const bc = b.clone().add(c).multiplyScalar(0.5)
     const ca = c.clone().add(a).multiplyScalar(0.5)
-    emitProjectedTriangle(a, ab, ca, radius, depth - 1, positions)
-    emitProjectedTriangle(ab, b, bc, radius, depth - 1, positions)
-    emitProjectedTriangle(ca, bc, c, radius, depth - 1, positions)
-    emitProjectedTriangle(ab, bc, ca, radius, depth - 1, positions)
+    emitProjectedTriangle(a, ab, ca, radius, depth - 1, positions, uvOut)
+    emitProjectedTriangle(ab, b, bc, radius, depth - 1, positions, uvOut)
+    emitProjectedTriangle(ca, bc, c, radius, depth - 1, positions, uvOut)
+    emitProjectedTriangle(ab, bc, ca, radius, depth - 1, positions, uvOut)
 }
 
 // Emits the side wall for one ring edge as two triangles spanning from the
@@ -134,6 +169,7 @@ function emitProjectedTriangle(
 function emitWallSegment(
     a: THREE.Vector2, b: THREE.Vector2,
     baseRadius: number, topRadius: number, positions: number[],
+    uvOut?: {uvs: number[]; bounds: LngLatBounds},
 ) {
     const baseA = latLngToVec3(a.y, a.x, baseRadius)
     const baseB = latLngToVec3(b.y, b.x, baseRadius)
@@ -141,14 +177,21 @@ function emitWallSegment(
     const topB = latLngToVec3(b.y, b.x, topRadius)
     positions.push(baseA.x, baseA.y, baseA.z, baseB.x, baseB.y, baseB.z, topB.x, topB.y, topB.z)
     positions.push(baseA.x, baseA.y, baseA.z, topB.x, topB.y, topB.z, topA.x, topA.y, topA.z)
+    if (uvOut) {
+        const uvA = uvForPoint(a, uvOut.bounds)
+        const uvB = uvForPoint(b, uvOut.bounds)
+        uvOut.uvs.push(...uvA, ...uvB, ...uvB)
+        uvOut.uvs.push(...uvA, ...uvB, ...uvA)
+    }
 }
 
 // Builds a filled, slightly extruded geometry for a single country's landmass:
 // a triangulated top cap raised `height` above the globe surface, plus side
 // walls dropping back down to it. Returns null when the country is not present
-// in the dataset.
+// in the dataset. When `withUv` is set, a `uv` attribute is added that projects
+// a flag image across the country's geographic bounding box.
 export function buildCountryFillGeometry(
-    code: string, baseRadius: number, height: number,
+    code: string, baseRadius: number, height: number, withUv = false,
 ): THREE.BufferGeometry | null {
     const geometry = UK_NATION_GEOMETRY[code] ?? getCountryFeatures().get(ALPHA2_TO_ISO_NUM[code])?.geometry
     if (!geometry) return null
@@ -158,6 +201,7 @@ export function buildCountryFillGeometry(
         geometry.type === "Polygon" ? [geometry.coordinates] : geometry.coordinates
 
     const positions: number[] = []
+    const uvOut = withUv ? {uvs: [] as number[], bounds: computeLngLatBounds(polygons)} : undefined
     for (const polygon of polygons) {
         const rings = polygon.map(ring => {
             const pts = ring.map(p => new THREE.Vector2(p[0], p[1]))
@@ -171,12 +215,12 @@ export function buildCountryFillGeometry(
         const faces = THREE.ShapeUtils.triangulateShape(contour, holes)
         const all = [...contour, ...holes.flat()]
         for (const [i, j, k] of faces) {
-            emitProjectedTriangle(all[i], all[j], all[k], topRadius, 2, positions)
+            emitProjectedTriangle(all[i], all[j], all[k], topRadius, 2, positions, uvOut)
         }
 
         for (const ring of rings) {
             for (let i = 0; i < ring.length; i++) {
-                emitWallSegment(ring[i], ring[(i + 1) % ring.length], baseRadius, topRadius, positions)
+                emitWallSegment(ring[i], ring[(i + 1) % ring.length], baseRadius, topRadius, positions, uvOut)
             }
         }
     }
@@ -184,6 +228,7 @@ export function buildCountryFillGeometry(
     if (positions.length === 0) return null
     const geom = new THREE.BufferGeometry()
     geom.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3))
+    if (uvOut) geom.setAttribute("uv", new THREE.Float32BufferAttribute(uvOut.uvs, 2))
     geom.computeVertexNormals()
     return geom
 }
