@@ -7,5 +7,6 @@ object TeamTable : Table("team") {
     val name = varchar("name", 30).uniqueIndex()
     val flagCode = varchar("flag_code", 100)
     val ranking = integer("ranking").nullable()
+    val group = varchar("group", 1).nullable()
     override val primaryKey = PrimaryKey(id)
 }

@@ -22,6 +22,7 @@ import scorcerer.server.resources.leagueRoutes
 import scorcerer.server.resources.matchRoutes
 import scorcerer.server.resources.miscRoutes
 import scorcerer.server.resources.predictionRoutes
+import scorcerer.server.resources.standingsRoutes
 import scorcerer.server.resources.teamRoutes
 import scorcerer.server.resources.tournamentRoutes
 import scorcerer.server.resources.userRoutes
@@ -58,6 +59,7 @@ private val allRoutes = routes(
     leagueRoutes(requestContext, leaderboardService),
     matchRoutes(requestContext, leaderboardService, tournamentStateService),
     predictionRoutes(requestContext),
+    standingsRoutes(),
     teamRoutes(requestContext),
     tournamentRoutes(tournamentStateService),
     userRoutes(requestContext, leaderboardService, authProvider),

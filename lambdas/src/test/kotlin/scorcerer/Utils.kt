@@ -36,6 +36,8 @@ fun givenMatchExists(
     matchDatetime: OffsetDateTime = OffsetDateTime.now(),
     matchState: Match.State = Match.State.UPCOMING,
     matchDay: Int = 1,
+    homeScore: Int? = null,
+    awayScore: Int? = null,
 ): String {
     return (
         transaction {
@@ -47,17 +49,21 @@ fun givenMatchExists(
                 it[this.venue] = "Test Venue"
                 it[this.matchDay] = matchDay
                 it[this.round] = MatchRound.GROUP_STAGE
+                if (homeScore != null) it[this.homeScore] = homeScore
+                if (awayScore != null) it[this.awayScore] = awayScore
             }
         } get MatchTable.id
         ).toString()
 }
 
-fun givenTeamExists(teamName: String): String {
+fun givenTeamExists(teamName: String, group: String? = null, ranking: Int? = null): String {
     return (
         transaction {
             TeamTable.insert {
                 it[this.name] = teamName
                 it[this.flagCode] = ""
+                if (group != null) it[this.group] = group
+                if (ranking != null) it[this.ranking] = ranking
             }
         } get TeamTable.id
         ).toString()

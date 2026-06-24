@@ -191,6 +191,92 @@ components:
         flagCode:
           description: Team flag uri
           type: string
+        group:
+          description: Group letter (A-L) the team belongs to in the group stage
+          type: string
+    groupStandingRow:
+      type: object
+      required:
+        - position
+        - teamId
+        - teamName
+        - flagCode
+        - group
+        - played
+        - won
+        - drawn
+        - lost
+        - goalsFor
+        - goalsAgainst
+        - goalDifference
+        - points
+      properties:
+        position:
+          description: Position within the group (1-4) or, for the third-placed table, the overall third-placed ranking
+          type: integer
+          format: int32
+        teamId:
+          type: string
+        teamName:
+          type: string
+        flagCode:
+          type: string
+        group:
+          description: Group letter (A-L)
+          type: string
+        played:
+          type: integer
+          format: int32
+        won:
+          type: integer
+          format: int32
+        drawn:
+          type: integer
+          format: int32
+        lost:
+          type: integer
+          format: int32
+        goalsFor:
+          type: integer
+          format: int32
+        goalsAgainst:
+          type: integer
+          format: int32
+        goalDifference:
+          type: integer
+          format: int32
+        points:
+          type: integer
+          format: int32
+    groupStanding:
+      type: object
+      required:
+        - group
+        - standings
+      properties:
+        group:
+          description: Group letter (A-L)
+          type: string
+        standings:
+          type: array
+          items:
+            $ref: '#/components/schemas/groupStandingRow'
+    standings:
+      type: object
+      required:
+        - groups
+        - thirdPlaced
+      properties:
+        groups:
+          description: Standings for each of the 12 groups, ordered A-L
+          type: array
+          items:
+            $ref: '#/components/schemas/groupStanding'
+        thirdPlaced:
+          description: Ranking of the third-placed team from every group, as they stand
+          type: array
+          items:
+            $ref: '#/components/schemas/groupStandingRow'
     leaderboard:
       type: array
       items:
@@ -348,6 +434,25 @@ x-amazon-apigateway-request-validators:
     validateRequestParameters: true
     validateRequestBody: true
 paths:
+  /standings:
+    get:
+      tags:
+        - standings
+      operationId: getStandings
+      description: Group stage standings (as they stand, including live scores) plus the third-placed team ranking
+      x-amazon-apigateway-integration:
+        type: "aws_proxy"
+        httpMethod: "POST"
+        uri: "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${apiHandlerArn}/invocations"
+        credentials: "${apiGatewayRoleArn}"
+        payloadFormatVersion: "1.0"
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/standings'
   /team:
     get:
       tags:
