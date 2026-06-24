@@ -7,7 +7,7 @@ import {PitchPerspective} from "@/app/components/atmosphere"
 import ThirdPlacedTable from "@/app/components/standings/third-placed-table"
 import StandingsRefresher from "@/app/components/standings/standings-refresher"
 import StandingsGroups from "@/app/components/standings/standings-groups"
-import type {GroupMatch} from "@/app/components/flags/group-venue-globe"
+import type {GroupMatch} from "@/app/components/flags/group-venue-map"
 
 export const dynamic = "force-dynamic"
 
