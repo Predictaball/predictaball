@@ -196,3 +196,10 @@ export function hasCountryFill(code: string): boolean {
     const iso = ALPHA2_TO_ISO_NUM[code]
     return iso !== undefined && getCountryFeatures().has(iso)
 }
+
+// Raw GeoJSON geometry for a country's landmass, keyed by the alpha-2 codes used
+// elsewhere. Returns null when the country isn't in the dataset. Used by the
+// flat venue map to draw country outlines.
+export function getCountryGeometry(code: string): Polygon | MultiPolygon | null {
+    return UK_NATION_GEOMETRY[code] ?? getCountryFeatures().get(ALPHA2_TO_ISO_NUM[code])?.geometry ?? null
+}

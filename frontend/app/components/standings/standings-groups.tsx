@@ -3,8 +3,8 @@
 import React, {useState} from "react"
 import {GroupStanding} from "@/client"
 import GroupTable from "@/app/components/standings/group-table"
-import GroupVenueGlobeClient from "@/app/components/flags/group-venue-globe-client"
-import type {GroupMatch} from "@/app/components/flags/group-venue-globe"
+import GroupVenueMap from "@/app/components/flags/group-venue-map"
+import type {GroupMatch} from "@/app/components/flags/group-venue-map"
 
 interface StandingsGroupsProps {
     groups: GroupStanding[]
@@ -51,7 +51,7 @@ export default function StandingsGroups({groups, matchesByGroup}: StandingsGroup
                         <div className="relative w-full aspect-square sm:aspect-[16/10] bg-gradient-to-br from-slate-100 via-slate-50 to-slate-100 dark:from-gray-900 dark:via-slate-900 dark:to-gray-900">
                             <div className="absolute inset-0">
                                 {matches.length > 0 ? (
-                                    <GroupVenueGlobeClient key={selected.group} matches={matches}/>
+                                    <GroupVenueMap key={selected.group} matches={matches}/>
                                 ) : (
                                     <div className="flex h-full w-full items-center justify-center px-6 text-center text-sm text-slate-500 dark:text-gray-400">
                                         Venues for Group {selected.group} will appear here once its fixtures are scheduled.
