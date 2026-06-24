@@ -2,13 +2,41 @@ import React from "react"
 import Link from "next/link"
 import BackButton from "@/app/components/back-button"
 import {getConfigWithAuthHeader} from "@/app/api/client-config"
-import {ListMatchesFilterTypeEnum, MatchApi, Standings, StandingsApi} from "@/client"
+import {ListMatchesFilterTypeEnum, Match, MatchApi, MatchRoundEnum, Standings, StandingsApi} from "@/client"
 import {PitchPerspective} from "@/app/components/atmosphere"
-import GroupTable from "@/app/components/standings/group-table"
 import ThirdPlacedTable from "@/app/components/standings/third-placed-table"
 import StandingsRefresher from "@/app/components/standings/standings-refresher"
+import StandingsGroups from "@/app/components/standings/standings-groups"
+import type {GroupMatch} from "@/app/components/flags/group-venue-globe"
 
 export const dynamic = "force-dynamic"
+
+// Matches don't carry a group letter, so we resolve it from the standings: both
+// teams in a group-stage fixture share a group, so a team-name lookup places the
+// fixture. Returns the group-stage fixtures bucketed by group.
+function bucketMatchesByGroup(groups: Standings["groups"], matches: Match[]): Record<string, GroupMatch[]> {
+    const teamGroup = new Map<string, string>()
+    for (const g of groups) {
+        for (const row of g.standings) teamGroup.set(row.teamName.toLowerCase(), g.group)
+    }
+
+    const seen = new Set<string>()
+    const byGroup: Record<string, GroupMatch[]> = {}
+    for (const m of matches) {
+        if (m.round !== MatchRoundEnum.GroupStage || seen.has(m.matchId)) continue
+        const group = teamGroup.get(m.homeTeam.toLowerCase()) ?? teamGroup.get(m.awayTeam.toLowerCase())
+        if (!group) continue
+        seen.add(m.matchId)
+        ;(byGroup[group] ??= []).push({
+            homeTeam: m.homeTeam,
+            homeFlagCode: m.homeTeamFlagCode,
+            awayTeam: m.awayTeam,
+            awayFlagCode: m.awayTeamFlagCode,
+            venue: m.venue,
+        })
+    }
+    return byGroup
+}
 
 function TableIcon({className}: {className?: string}): React.JSX.Element {
     return (
@@ -21,11 +49,15 @@ function TableIcon({className}: {className?: string}): React.JSX.Element {
 
 export default async function StandingsPage(): Promise<React.JSX.Element> {
     const config = await getConfigWithAuthHeader()
-    const [standings, liveMatches] = await Promise.all([
+    const matchApi = new MatchApi(config)
+    const [standings, liveMatches, upcomingMatches, completedMatches] = await Promise.all([
         new StandingsApi(config).getStandings().catch((): Standings => ({groups: [], thirdPlaced: []})),
-        new MatchApi(config).listMatches({filterType: ListMatchesFilterTypeEnum.Live}).catch(() => []),
+        matchApi.listMatches({filterType: ListMatchesFilterTypeEnum.Live}).catch((): Match[] => []),
+        matchApi.listMatches({filterType: ListMatchesFilterTypeEnum.Upcoming}).catch((): Match[] => []),
+        matchApi.listMatches({filterType: ListMatchesFilterTypeEnum.Completed}).catch((): Match[] => []),
     ])
     const hasLiveMatch = liveMatches.length > 0
+    const matchesByGroup = bucketMatchesByGroup(standings.groups, [...liveMatches, ...upcomingMatches, ...completedMatches])
 
     return (
         <main className="relative min-h-svh bg-slate-50 text-slate-900 dark:bg-gray-900 dark:text-white overflow-x-hidden">
@@ -68,11 +100,7 @@ export default async function StandingsPage(): Promise<React.JSX.Element> {
                     </div>
                 ) : (
                     <>
-                        <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {standings.groups.map(g => (
-                                <GroupTable key={g.group} group={g.group} standings={g.standings}/>
-                            ))}
-                        </section>
+                        <StandingsGroups groups={standings.groups} matchesByGroup={matchesByGroup}/>
 
                         <section className="space-y-4">
                             <div className="flex flex-col items-center text-center">
