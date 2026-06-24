@@ -1,7 +1,7 @@
 'use client'
 
-import React, {useEffect, useMemo, useState} from "react"
-import {Canvas, useThree} from "@react-three/fiber"
+import React, {useContext, useEffect, useMemo, useRef, useState} from "react"
+import {Canvas, useFrame, useThree} from "@react-three/fiber"
 import {Html, OrbitControls} from "@react-three/drei"
 import * as THREE from "three"
 import {COUNTRY_COORDS} from "./country-coords"
@@ -120,23 +120,105 @@ function flagEmoji(code: string): string {
     return String.fromCodePoint(...[...cc].map(ch => 0x1f1e6 + ch.charCodeAt(0) - 97))
 }
 
+// Per-pill pixel nudge applied on top of its 3D anchor to keep neighbouring
+// pills from overlapping. Mutated in place each frame by the declutter manager.
+type PillOffset = {ox: number; oy: number}
+
+// Shared registry of every on-screen pill element and its current nudge, so a
+// single manager can resolve overlaps across all of them.
+const PillDeclutterContext = React.createContext<React.MutableRefObject<Map<HTMLElement, PillOffset>> | null>(null)
+
+// Gap (px) to leave between pills once separated.
+const SEPARATION_PADDING = 4
+// How strongly a nudged pill is pulled back toward its true anchor each frame,
+// so pills settle back over their venue as soon as there's room.
+const OFFSET_DECAY = 0.85
+const SEPARATION_ITERATIONS = 8
+
+// Runs every frame: measures each pill's on-screen box, relaxes its nudge back
+// toward its anchor, then iteratively pushes overlapping pairs apart along their
+// shallowest axis. The pills are anchored in 3D (and the camera can rotate), so
+// this has to work in live screen space rather than a precomputed layout.
+function PillDeclutterManager(): null {
+    const store = useContext(PillDeclutterContext)
+    useFrame(() => {
+        if (!store) return
+        const map = store.current
+
+        type Entry = {off: PillOffset; el: HTMLElement; w: number; h: number; ax: number; ay: number}
+        const entries: Entry[] = []
+        map.forEach((off, el) => {
+            const r = el.getBoundingClientRect()
+            if (r.width === 0 && r.height === 0) return
+            // Anchor centre = current on-screen centre minus the nudge already applied.
+            entries.push({off, el, w: r.width, h: r.height, ax: r.left + r.width / 2 - off.ox, ay: r.top + r.height / 2 - off.oy})
+        })
+
+        for (const e of entries) {
+            e.off.ox *= OFFSET_DECAY
+            e.off.oy *= OFFSET_DECAY
+        }
+
+        for (let iter = 0; iter < SEPARATION_ITERATIONS; iter++) {
+            for (let i = 0; i < entries.length; i++) {
+                for (let j = i + 1; j < entries.length; j++) {
+                    const a = entries[i]
+                    const b = entries[j]
+                    const dx = (a.ax + a.off.ox) - (b.ax + b.off.ox)
+                    const dy = (a.ay + a.off.oy) - (b.ay + b.off.oy)
+                    const overlapX = (a.w + b.w) / 2 + SEPARATION_PADDING - Math.abs(dx)
+                    const overlapY = (a.h + b.h) / 2 + SEPARATION_PADDING - Math.abs(dy)
+                    if (overlapX <= 0 || overlapY <= 0) continue
+                    // Resolve along whichever axis they overlap least — the smaller move.
+                    if (overlapX < overlapY) {
+                        const push = (overlapX / 2) * (dx === 0 ? (i < j ? 1 : -1) : Math.sign(dx))
+                        a.off.ox += push
+                        b.off.ox -= push
+                    } else {
+                        const push = (overlapY / 2) * (dy === 0 ? -1 : Math.sign(dy))
+                        a.off.oy += push
+                        b.off.oy -= push
+                    }
+                }
+            }
+        }
+
+        for (const e of entries) {
+            e.el.style.transform = `translate(${Math.round(e.off.ox)}px, ${Math.round(e.off.oy)}px)`
+        }
+    })
+    return null
+}
+
 // A small flag pill — "home v away" — sitting just above a venue marker. While
 // we refine the look we render the flags as emoji: crisp at any zoom (no
 // pixelation) and compact. When a venue hosts more than one group fixture the
-// pills stack.
+// pills stack. The inner element registers with the declutter manager, which
+// nudges it in screen space to avoid overlapping neighbouring venues' pills.
 function VenuePill({matchups}: {matchups: VenuePlot["matchups"]}) {
+    const store = useContext(PillDeclutterContext)
+    const ref = useRef<HTMLDivElement>(null)
+    useEffect(() => {
+        const el = ref.current
+        if (!store || !el) return
+        store.current.set(el, {ox: 0, oy: 0})
+        return () => { store.current.delete(el) }
+    }, [store])
+
     return (
-        <div className="pointer-events-none flex flex-col items-center gap-0.5" style={{transform: "translate(-50%, -100%)"}}>
-            {matchups.map((m, i) => (
-                <span
-                    key={`${m.homeFlagCode}-${m.awayFlagCode}-${i}`}
-                    className="inline-flex items-center gap-0.5 rounded-full bg-white/85 border border-slate-200 dark:bg-black/55 dark:border-white/10 px-1 py-px shadow-sm backdrop-blur whitespace-nowrap leading-none"
-                >
-                    <span className="text-[8px]" role="img" aria-label={m.homeTeam}>{flagEmoji(m.homeFlagCode)}</span>
-                    <span className="text-[6px] font-bold uppercase text-slate-400 dark:text-gray-500">v</span>
-                    <span className="text-[8px]" role="img" aria-label={m.awayTeam}>{flagEmoji(m.awayFlagCode)}</span>
-                </span>
-            ))}
+        <div className="pointer-events-none" style={{transform: "translate(-50%, -100%)"}}>
+            <div ref={ref} className="flex flex-col items-center gap-0.5" style={{willChange: "transform"}}>
+                {matchups.map((m, i) => (
+                    <span
+                        key={`${m.homeFlagCode}-${m.awayFlagCode}-${i}`}
+                        className="inline-flex items-center gap-0.5 rounded-full bg-white/85 border border-slate-200 dark:bg-black/55 dark:border-white/10 px-1 py-px shadow-sm backdrop-blur whitespace-nowrap leading-none"
+                    >
+                        <span className="text-[8px]" role="img" aria-label={m.homeTeam}>{flagEmoji(m.homeFlagCode)}</span>
+                        <span className="text-[6px] font-bold uppercase text-slate-400 dark:text-gray-500">v</span>
+                        <span className="text-[8px]" role="img" aria-label={m.awayTeam}>{flagEmoji(m.awayFlagCode)}</span>
+                    </span>
+                ))}
+            </div>
         </div>
     )
 }
@@ -183,6 +265,7 @@ function CameraRig({position}: {position: [number, number, number]}) {
 }
 
 function Scene({matches, enableControls}: {matches: GroupMatch[]; enableControls: boolean}) {
+    const pillStore = useRef<Map<HTMLElement, PillOffset>>(new Map())
     const {venues, cameraPos} = useMemo(() => {
         const plots = resolveVenues(matches)
         const focusDirs = plots.length > 0
@@ -192,7 +275,7 @@ function Scene({matches, enableControls}: {matches: GroupMatch[]; enableControls
     }, [matches])
 
     return (
-        <>
+        <PillDeclutterContext.Provider value={pillStore}>
             <CameraRig position={cameraPos}/>
             <mesh>
                 <sphereGeometry args={[GLOBE_RADIUS, 64, 64]}/>
@@ -204,10 +287,11 @@ function Scene({matches, enableControls}: {matches: GroupMatch[]; enableControls
             </mesh>
             <Continents/>
             {venues.map(plot => <VenueMarker key={plot.stadium.city} plot={plot}/>)}
+            <PillDeclutterManager/>
             {enableControls && (
                 <OrbitControls enableZoom={false} enablePan={false} rotateSpeed={0.5} enableDamping dampingFactor={0.08}/>
             )}
-        </>
+        </PillDeclutterContext.Provider>
     )
 }
 
