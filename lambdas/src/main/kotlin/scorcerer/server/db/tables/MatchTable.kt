@@ -12,6 +12,7 @@ enum class MatchResult(val value: String) {
 
 enum class MatchRound(val value: String) {
     GROUP_STAGE("GROUP_STAGE"),
+    ROUND_OF_THIRTY_TWO("ROUND_OF_THIRTY_TWO"),
     ROUND_OF_SIXTEEN("ROUND_OF_SIXTEEN"),
     QUARTER_FINAL("QUARTER_FINAL"),
     SEMI_FINAL("SEMI_FINAL"),

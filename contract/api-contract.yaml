@@ -110,6 +110,7 @@ components:
           type: string
           enum:
             - GROUP_STAGE
+            - ROUND_OF_THIRTY_TWO
             - ROUND_OF_SIXTEEN
             - QUARTER_FINAL
             - SEMI_FINAL
@@ -717,6 +718,7 @@ paths:
                   type: string
                   enum:
                     - GROUP_STAGE
+                    - ROUND_OF_THIRTY_TWO
                     - ROUND_OF_SIXTEEN
                     - QUARTER_FINAL
                     - SEMI_FINAL

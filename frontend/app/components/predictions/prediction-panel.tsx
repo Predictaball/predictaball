@@ -15,6 +15,7 @@ import type {StreakStats} from "@/app/util/streaks"
 
 const ROUND_LABEL: Record<MatchRoundEnum, string> = {
     GROUP_STAGE: "Group Stage",
+    ROUND_OF_THIRTY_TWO: "Round of 32",
     ROUND_OF_SIXTEEN: "Round of 16",
     QUARTER_FINAL: "Quarter-Final",
     SEMI_FINAL: "Semi-Final",
