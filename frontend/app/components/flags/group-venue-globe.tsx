@@ -28,37 +28,24 @@ const CAMERA_MIN_DISTANCE = 2.15
 // The pills float just above the markers; frame to keep them in shot.
 const FOCUS_OUTER_RADIUS = GLOBE_RADIUS + 0.2
 
-// A unique venue plus every group fixture being played there.
+// A distinct venue hosting one or more of the group's fixtures.
 type VenuePlot = {
     stadium: Stadium
     position: THREE.Vector3
-    matchups: {homeFlagCode: string; awayFlagCode: string; homeTeam: string; awayTeam: string}[]
 }
 
-// Collapses the group's fixtures down to the distinct venues hosting them, each
-// carrying the matchups played there. Fixtures whose venue we can't place are
-// dropped from the globe (they still appear in the table).
+// Collapses the group's fixtures down to the distinct venues hosting them.
+// Fixtures whose venue we can't place are dropped from the globe (they still
+// appear in the table).
 function resolveVenues(matches: GroupMatch[]): VenuePlot[] {
     const byCity = new Map<string, VenuePlot>()
     for (const m of matches) {
         const stadium = resolveStadium(m.venue)
-        if (!stadium) continue
-        const matchup = {
-            homeFlagCode: m.homeFlagCode.toLowerCase(),
-            awayFlagCode: m.awayFlagCode.toLowerCase(),
-            homeTeam: m.homeTeam,
-            awayTeam: m.awayTeam,
-        }
-        const existing = byCity.get(stadium.city)
-        if (existing) {
-            existing.matchups.push(matchup)
-            continue
-        }
+        if (!stadium || byCity.has(stadium.city)) continue
         const dir = latLngToVec3(stadium.lat, stadium.lng, 1)
         byCity.set(stadium.city, {
             stadium,
             position: dir.multiplyScalar(GLOBE_RADIUS + STADIUM_BASE_OFFSET),
-            matchups: [matchup],
         })
     }
     return [...byCity.values()]
@@ -100,25 +87,6 @@ function Continents() {
 }
 
 const PILL_LIFT = 0.16
-
-// GB home nations have dedicated tag-sequence emoji rather than a regional
-// indicator pair, so they're mapped explicitly.
-const SUBDIVISION_FLAG_EMOJI: Record<string, string> = {
-    "gb-eng": "\u{1F3F4}\u{E0067}\u{E0062}\u{E0065}\u{E006E}\u{E0067}\u{E007F}",
-    "gb-sct": "\u{1F3F4}\u{E0067}\u{E0062}\u{E0073}\u{E0063}\u{E0074}\u{E007F}",
-    "gb-wls": "\u{1F3F4}\u{E0067}\u{E0062}\u{E0077}\u{E006C}\u{E0073}\u{E007F}",
-}
-
-// Turns a flag code into its emoji flag. Two-letter ISO codes become a pair of
-// regional indicator symbols; GB home nations use their tag sequences. Returns
-// an empty string for codes we can't map (the pill then just shows the "v").
-function flagEmoji(code: string): string {
-    const c = code.toLowerCase()
-    if (SUBDIVISION_FLAG_EMOJI[c]) return SUBDIVISION_FLAG_EMOJI[c]
-    const cc = c.slice(0, 2)
-    if (!/^[a-z]{2}$/.test(cc)) return ""
-    return String.fromCodePoint(...[...cc].map(ch => 0x1f1e6 + ch.charCodeAt(0) - 97))
-}
 
 // Per-pill pixel nudge applied on top of its 3D anchor to keep neighbouring
 // pills from overlapping. Mutated in place each frame by the declutter manager.
@@ -190,12 +158,10 @@ function PillDeclutterManager(): null {
     return null
 }
 
-// A small flag pill — "home v away" — sitting just above a venue marker. While
-// we refine the look we render the flags as emoji: crisp at any zoom (no
-// pixelation) and compact. When a venue hosts more than one group fixture the
-// pills stack. The inner element registers with the declutter manager, which
-// nudges it in screen space to avoid overlapping neighbouring venues' pills.
-function VenuePill({matchups}: {matchups: VenuePlot["matchups"]}) {
+// A small pill naming the venue, sitting just above its dot. The inner element
+// registers with the declutter manager, which nudges it in screen space to
+// avoid overlapping neighbouring venues' pills.
+function VenueLabel({stadium}: {stadium: Stadium}) {
     const store = useContext(PillDeclutterContext)
     const ref = useRef<HTMLDivElement>(null)
     useEffect(() => {
@@ -207,24 +173,18 @@ function VenuePill({matchups}: {matchups: VenuePlot["matchups"]}) {
 
     return (
         <div className="pointer-events-none" style={{transform: "translate(-50%, -100%)"}}>
-            <div ref={ref} className="flex flex-col items-center gap-0.5" style={{willChange: "transform"}}>
-                {matchups.map((m, i) => (
-                    <span
-                        key={`${m.homeFlagCode}-${m.awayFlagCode}-${i}`}
-                        className="inline-flex items-center gap-0.5 rounded-full bg-white/85 border border-slate-200 dark:bg-black/55 dark:border-white/10 px-1 py-px shadow-sm backdrop-blur whitespace-nowrap leading-none"
-                    >
-                        <span className="text-[8px]" role="img" aria-label={m.homeTeam}>{flagEmoji(m.homeFlagCode)}</span>
-                        <span className="text-[6px] font-bold uppercase text-slate-400 dark:text-gray-500">v</span>
-                        <span className="text-[8px]" role="img" aria-label={m.awayTeam}>{flagEmoji(m.awayFlagCode)}</span>
-                    </span>
-                ))}
+            <div ref={ref} style={{willChange: "transform"}}>
+                <span className="flex flex-col items-center rounded-md bg-white/85 border border-slate-200 dark:bg-black/55 dark:border-white/10 px-1.5 py-0.5 shadow-sm backdrop-blur whitespace-nowrap leading-tight">
+                    <span className="text-[8px] font-semibold text-slate-700 dark:text-gray-100">{stadium.name}</span>
+                    <span className="text-[6px] uppercase tracking-wide text-slate-400 dark:text-gray-400">{stadium.city}</span>
+                </span>
             </div>
         </div>
     )
 }
 
-// A venue pin: a glowing post rising off the surface, capped by a beacon, with a
-// ground ring marking the spot, and the matchup pill floating above it.
+// A venue marker: a glowing dot sitting on the surface (matching the landing
+// page's stadium dots), with a soft halo and a stadium-name pill floating above.
 function VenueMarker({plot}: {plot: VenuePlot}) {
     const quaternion = useMemo(() => {
         const normal = plot.position.clone().normalize()
@@ -233,23 +193,18 @@ function VenueMarker({plot}: {plot: VenuePlot}) {
 
     return (
         <group position={plot.position} quaternion={quaternion}>
-            {/* Ground ring */}
-            <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.001, 0]}>
-                <ringGeometry args={[0.028, 0.04, 32]}/>
-                <meshBasicMaterial color="#fbbf24" transparent opacity={0.75} side={THREE.DoubleSide}/>
+            {/* Soft glow halo */}
+            <mesh>
+                <sphereGeometry args={[0.03, 16, 16]}/>
+                <meshBasicMaterial color="#fbbf24" transparent opacity={0.25} blending={THREE.AdditiveBlending} depthWrite={false}/>
             </mesh>
-            {/* Post */}
-            <mesh position={[0, 0.05, 0]}>
-                <cylinderGeometry args={[0.006, 0.006, 0.1, 10]}/>
-                <meshStandardMaterial color="#fbbf24" emissive="#fbbf24" emissiveIntensity={0.6} roughness={0.4}/>
+            {/* Glowing dot */}
+            <mesh>
+                <sphereGeometry args={[0.016, 16, 16]}/>
+                <meshBasicMaterial color="#fbbf24" toneMapped={false}/>
             </mesh>
-            {/* Beacon */}
-            <mesh position={[0, 0.11, 0]}>
-                <sphereGeometry args={[0.022, 16, 16]}/>
-                <meshStandardMaterial color="#fff7cc" emissive="#fbbf24" emissiveIntensity={1.4} toneMapped={false}/>
-            </mesh>
-            <Html distanceFactor={1.8} position={[0, 0.11 + PILL_LIFT, 0]} occlude style={{pointerEvents: "none"}} zIndexRange={[20, 0]}>
-                <VenuePill matchups={plot.matchups}/>
+            <Html distanceFactor={1.8} position={[0, PILL_LIFT, 0]} occlude style={{pointerEvents: "none"}} zIndexRange={[20, 0]}>
+                <VenueLabel stadium={plot.stadium}/>
             </Html>
         </group>
     )
