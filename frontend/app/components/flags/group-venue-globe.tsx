@@ -101,21 +101,40 @@ function Continents() {
 
 const PILL_LIFT = 0.16
 
-// A small flag pill — "home v away" — sitting just above a venue marker. When a
-// venue hosts more than one group fixture they stack.
+// GB home nations have dedicated tag-sequence emoji rather than a regional
+// indicator pair, so they're mapped explicitly.
+const SUBDIVISION_FLAG_EMOJI: Record<string, string> = {
+    "gb-eng": "\u{1F3F4}\u{E0067}\u{E0062}\u{E0065}\u{E006E}\u{E0067}\u{E007F}",
+    "gb-sct": "\u{1F3F4}\u{E0067}\u{E0062}\u{E0073}\u{E0063}\u{E0074}\u{E007F}",
+    "gb-wls": "\u{1F3F4}\u{E0067}\u{E0062}\u{E0077}\u{E006C}\u{E0073}\u{E007F}",
+}
+
+// Turns a flag code into its emoji flag. Two-letter ISO codes become a pair of
+// regional indicator symbols; GB home nations use their tag sequences. Returns
+// an empty string for codes we can't map (the pill then just shows the "v").
+function flagEmoji(code: string): string {
+    const c = code.toLowerCase()
+    if (SUBDIVISION_FLAG_EMOJI[c]) return SUBDIVISION_FLAG_EMOJI[c]
+    const cc = c.slice(0, 2)
+    if (!/^[a-z]{2}$/.test(cc)) return ""
+    return String.fromCodePoint(...[...cc].map(ch => 0x1f1e6 + ch.charCodeAt(0) - 97))
+}
+
+// A small flag pill — "home v away" — sitting just above a venue marker. While
+// we refine the look we render the flags as emoji: crisp at any zoom (no
+// pixelation) and compact. When a venue hosts more than one group fixture the
+// pills stack.
 function VenuePill({matchups}: {matchups: VenuePlot["matchups"]}) {
     return (
         <div className="pointer-events-none flex flex-col items-center gap-0.5" style={{transform: "translate(-50%, -100%)"}}>
             {matchups.map((m, i) => (
                 <span
                     key={`${m.homeFlagCode}-${m.awayFlagCode}-${i}`}
-                    className="inline-flex items-center gap-0.5 rounded-full bg-white/85 border border-slate-200 dark:bg-black/55 dark:border-white/10 px-1 py-0.5 shadow-sm backdrop-blur whitespace-nowrap"
+                    className="inline-flex items-center gap-0.5 rounded-full bg-white/85 border border-slate-200 dark:bg-black/55 dark:border-white/10 px-1 py-px shadow-sm backdrop-blur whitespace-nowrap leading-none"
                 >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={`https://flagcdn.com/w40/${m.homeFlagCode}.png`} alt={m.homeTeam} className="h-2.5 w-2.5 rounded-full object-cover ring-1 ring-slate-900/15 dark:ring-white/20"/>
-                    <span className="text-[7px] font-bold uppercase text-slate-400 dark:text-gray-500">v</span>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={`https://flagcdn.com/w40/${m.awayFlagCode}.png`} alt={m.awayTeam} className="h-2.5 w-2.5 rounded-full object-cover ring-1 ring-slate-900/15 dark:ring-white/20"/>
+                    <span className="text-[8px]" role="img" aria-label={m.homeTeam}>{flagEmoji(m.homeFlagCode)}</span>
+                    <span className="text-[6px] font-bold uppercase text-slate-400 dark:text-gray-500">v</span>
+                    <span className="text-[8px]" role="img" aria-label={m.awayTeam}>{flagEmoji(m.awayFlagCode)}</span>
                 </span>
             ))}
         </div>
@@ -147,7 +166,7 @@ function VenueMarker({plot}: {plot: VenuePlot}) {
                 <sphereGeometry args={[0.022, 16, 16]}/>
                 <meshStandardMaterial color="#fff7cc" emissive="#fbbf24" emissiveIntensity={1.4} toneMapped={false}/>
             </mesh>
-            <Html distanceFactor={3.4} position={[0, 0.11 + PILL_LIFT, 0]} occlude style={{pointerEvents: "none"}} zIndexRange={[20, 0]}>
+            <Html distanceFactor={1.8} position={[0, 0.11 + PILL_LIFT, 0]} occlude style={{pointerEvents: "none"}} zIndexRange={[20, 0]}>
                 <VenuePill matchups={plot.matchups}/>
             </Html>
         </group>
