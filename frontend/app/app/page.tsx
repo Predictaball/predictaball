@@ -101,7 +101,18 @@ const Home = async ({searchParams}: {searchParams: Promise<Record<string, string
                     <HeadlineSuspense tournamentStarted={tournamentStarted} nextKickoff={tournamentState?.nextKickoff} hasLiveMatch={liveMatches.length > 0} supportedTeamId={profile?.supportedTeamId} streaks={streaks} />
 
                     <section id="matches" className="space-y-4">
-                        <SectionHeading title="Matches" count={liveMatches.length + upcomingMatches.length} action={<MatchesHelp/>}/>
+                        <SectionHeading
+                            title="Matches"
+                            count={liveMatches.length + upcomingMatches.length}
+                            action={
+                                <div className="flex items-center gap-3">
+                                    <Link href="/app/standings" className="text-xs font-semibold text-cyan-600 dark:text-cyan-300 hover:text-cyan-700 dark:hover:text-cyan-200 transition-colors">
+                                        Standings →
+                                    </Link>
+                                    <MatchesHelp/>
+                                </div>
+                            }
+                        />
                     <PredictionPanel liveMatches={liveMatches} upcomingMatches={upcomingMatches} completedMatches={recentCompleted} historyHref={historyHref} userChips={userChips} streaks={streaks} />
                 </section>
 
