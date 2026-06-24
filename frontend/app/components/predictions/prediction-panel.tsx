@@ -1,7 +1,6 @@
 'use client'
 
 import React, {useEffect, useMemo, useState} from "react"
-import Link from "next/link"
 import {Match, MatchRoundEnum, MatchStateEnum} from "@/client"
 import FocusedGlobeClient from "@/app/components/flags/focused-globe-client"
 import PredictionForm from "@/app/components/predictions/prediction-form"
@@ -54,9 +53,24 @@ export default function PredictionPanel({liveMatches, upcomingMatches, completed
     }
 
     function advanceToNext() {
+        // Cycle forward through unpredicted matches: scan from current+1, wrap
+        // to the start of the list. If everything's predicted, fall back to the
+        // first match overall (soonest kickoff) so the user always lands
+        // somewhere predictable rather than lingering on the one they just
+        // saved.
         const idx = allMatches.findIndex(m => m.matchId === selected.matchId)
-        const next = allMatches[(idx + 1) % allMatches.length]
-        if (next) setSelectedId(next.matchId)
+        if (idx === -1) return
+        for (let offset = 1; offset < allMatches.length; offset++) {
+            const candidate = allMatches[(idx + offset) % allMatches.length]
+            if (!candidate.prediction) {
+                setSelectedId(candidate.matchId)
+                return
+            }
+        }
+        const first = allMatches[0]
+        if (first && first.matchId !== selected.matchId) {
+            setSelectedId(first.matchId)
+        }
     }
 
     const homeCode = selected.homeTeamFlagCode.toLowerCase()
@@ -68,43 +82,9 @@ export default function PredictionPanel({liveMatches, upcomingMatches, completed
                 <div className="relative rounded-3xl bg-gradient-to-br from-slate-900/15 to-slate-900/5 dark:from-white/15 dark:to-white/5 p-[1px] shadow-2xl shadow-cyan-500/10">
                     <div className="relative rounded-3xl bg-white dark:bg-gray-900/80 backdrop-blur-xl overflow-hidden">
                         <div className="flex flex-col md:flex-row">
-                            <div className="relative w-full md:w-[62%] aspect-square md:aspect-auto md:min-h-[480px] bg-gradient-to-br from-slate-100 via-slate-50 to-slate-100 dark:from-gray-900 dark:via-slate-900 dark:to-gray-900">
-                                <div className="absolute inset-0">
-                                    <FocusedGlobeClient homeCode={homeCode} awayCode={awayCode} venue={selected.venue}/>
-                                </div>
-                                <div className="absolute top-4 left-4 right-4 flex items-center justify-between gap-2 pointer-events-none">
-                                    {selected.state === MatchStateEnum.Live ? (
-                                        <Link
-                                            href={`/app/match/${selected.matchId}/predictions`}
-                                            className="pointer-events-auto inline-flex items-center gap-1.5 rounded-full bg-white/80 border border-slate-200 text-slate-700 hover:border-cyan-500/40 hover:text-cyan-700 dark:bg-black/50 dark:border-white/10 dark:text-gray-200 dark:hover:border-cyan-400/40 dark:hover:text-cyan-300 px-3 py-1 text-xs font-semibold backdrop-blur transition-colors"
-                                        >
-                                            <PredictionsIcon/>
-                                            All predictions
-                                        </Link>
-                                    ) : (
-                                        <span className="inline-flex items-center gap-2 rounded-full bg-white/80 border border-slate-200 text-slate-700 dark:bg-black/50 dark:border-white/10 dark:text-gray-200 px-3 py-1 text-xs font-semibold backdrop-blur">
-                                            {ROUND_LABEL[selected.round]}
-                                        </span>
-                                    )}
-                                    {selected.state === MatchStateEnum.Upcoming && (
-                                        <StatusBadge saved={status.saved} hasChanges={status.hasChanges}/>
-                                    )}
-                                    {selected.state === MatchStateEnum.Live && selected.prediction?.points !== undefined && (
-                                        <span className="rounded-full bg-white/80 border border-slate-200 dark:bg-black/50 dark:border-white/10 p-0.5 backdrop-blur">
-                                            <PointsPill points={selected.prediction.points}/>
-                                        </span>
-                                    )}
-                                </div>
-                                <div className={`absolute bottom-4 left-4 right-4 flex items-center pointer-events-none ${selected.state === MatchStateEnum.Live ? "justify-center" : "justify-between"}`}>
-                                    {selected.state === MatchStateEnum.Live ? (
-                                        <MatchScoreOverlay match={selected}/>
-                                    ) : (
-                                        <span className="rounded-full bg-white/80 border border-slate-200 text-slate-600 dark:bg-black/50 dark:border-white/10 dark:text-gray-300 px-3 py-1 text-xs backdrop-blur">
-                                            <MatchCountdown match={selected}/>
-                                        </span>
-                                    )}
-                                </div>
-                            </div>
+                            <GlobeSection match={selected} status={status}>
+                                <FocusedGlobeClient homeCode={homeCode} awayCode={awayCode} venue={selected.venue}/>
+                            </GlobeSection>
                             <PredictionForm
                                 match={selected}
                                 key={selected.matchId}
@@ -130,6 +110,45 @@ export default function PredictionPanel({liveMatches, upcomingMatches, completed
     )
 }
 
+// Left half of the prediction card — the globe with overlay pills.
+function GlobeSection({
+    match,
+    status,
+    children,
+}: {
+    match: Match
+    status: {saved: boolean; hasChanges: boolean}
+    children: React.ReactNode
+}): React.JSX.Element {
+    return (
+        <div className="relative w-full md:w-[62%] aspect-square md:aspect-auto md:min-h-[480px] bg-gradient-to-br from-slate-100 via-slate-50 to-slate-100 dark:from-gray-900 dark:via-slate-900 dark:to-gray-900">
+            <div className="absolute inset-0">{children}</div>
+            <div className="absolute top-4 left-4 right-4 flex items-center justify-between gap-2 pointer-events-none">
+                <span className="inline-flex items-center gap-2 rounded-full bg-white/80 border border-slate-200 text-slate-700 dark:bg-black/50 dark:border-white/10 dark:text-gray-200 px-3 py-1 text-xs font-semibold backdrop-blur">
+                    {ROUND_LABEL[match.round]}
+                </span>
+                {match.state === MatchStateEnum.Upcoming && (
+                    <StatusBadge saved={status.saved} hasChanges={status.hasChanges}/>
+                )}
+                {match.state === MatchStateEnum.Live && match.prediction?.points !== undefined && (
+                    <span className="rounded-full bg-white/80 border border-slate-200 dark:bg-black/50 dark:border-white/10 p-0.5 backdrop-blur">
+                        <PointsPill points={match.prediction.points}/>
+                    </span>
+                )}
+            </div>
+            <div className={`absolute bottom-4 left-4 right-4 flex items-center pointer-events-none ${match.state === MatchStateEnum.Live ? "justify-center" : "justify-between"}`}>
+                {match.state === MatchStateEnum.Live ? (
+                    <MatchScoreOverlay match={match}/>
+                ) : (
+                    <span className="rounded-full bg-white/80 border border-slate-200 text-slate-600 dark:bg-black/50 dark:border-white/10 dark:text-gray-300 px-3 py-1 text-xs backdrop-blur">
+                        <MatchCountdown match={match}/>
+                    </span>
+                )}
+            </div>
+        </div>
+    )
+}
+
 // Globe overlay pill mirroring the round/countdown pills, but colour-coded:
 // emerald when the prediction is locked in, amber when it still needs action.
 function StatusBadge({saved, hasChanges}: {saved: boolean; hasChanges: boolean}): React.JSX.Element {
@@ -149,17 +168,6 @@ function StatusBadge({saved, hasChanges}: {saved: boolean; hasChanges: boolean})
             <span className="h-1.5 w-1.5 rounded-full bg-amber-500 dark:bg-amber-400 animate-pulse"/>
             {saved ? "Unsaved changes" : "Not predicted yet"}
         </span>
-    )
-}
-
-// People icon hinting that the link opens everyone's predictions for the match.
-function PredictionsIcon(): React.JSX.Element {
-    return (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5 shrink-0" aria-hidden>
-            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
-            <circle cx="9" cy="7" r="4"/>
-            <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13A4 4 0 0 1 16 11"/>
-        </svg>
     )
 }
 

@@ -2,6 +2,7 @@
 
 import React, {useEffect, useRef} from "react"
 import Link from "next/link"
+import {useRouter} from "next/navigation"
 import {Chip, Match, MatchStateEnum} from "@/client"
 import {LocalTime} from "@/app/components/predictions/local-time"
 import {FlagImage} from "@/app/components/predictions/flag-image"
@@ -35,7 +36,7 @@ export default function MatchStrip({liveMatches, upcomingMatches, completedMatch
     return (
         <div className="space-y-4">
             {liveMatches.length > 0 && (
-                <LinkRow title="Live" matches={liveMatches} live/>
+                <StripRow title="Live" matches={liveMatches} selectedId={selectedId} onSelect={onSelect} live/>
             )}
             {upcomingMatches.length > 0 && (
                 <StripRow title="Upcoming" matches={upcomingMatches} selectedId={selectedId} onSelect={onSelect}/>
@@ -43,32 +44,6 @@ export default function MatchStrip({liveMatches, upcomingMatches, completedMatch
             {completedMatches.length > 0 && (
                 <CompletedRow matches={completedMatches} historyHref={historyHref} streaks={streaks}/>
             )}
-        </div>
-    )
-}
-
-// Pills that link out to the match's predictions page rather than selecting
-// the card on this page. Used for live matches (predictions locked, but you
-// can see what others picked) — completed matches use their own row with the
-// trailing "View all" pill.
-function LinkRow({title, matches, live}: {title: string; matches: Match[]; live?: boolean}) {
-    return (
-        <div>
-            <RowHeader title={title} live={live}/>
-            <div
-                className="flex gap-3 overflow-x-auto pb-2 px-4 sm:px-6 snap-x snap-mandatory scrollbar-thin"
-                style={{scrollbarWidth: "thin"}}
-            >
-                {matches.map(m => (
-                    <Link
-                        key={m.matchId}
-                        href={`/app/match/${m.matchId}/predictions`}
-                        className={`snap-center shrink-0 rounded-2xl p-[1.5px] transition-transform hover:scale-[1.02] ${PILL_BORDER}`}
-                    >
-                        <PillBody match={m}/>
-                    </Link>
-                ))}
-            </div>
         </div>
     )
 }
@@ -157,15 +132,28 @@ function RowHeader({title, live, action}: {title: string; live?: boolean; action
     )
 }
 
+// Clicking an unselected pill swaps the big card to that match. Clicking the
+// already-selected one opens the dedicated predictions page — same gesture,
+// context-dependent meaning. We keep the element type stable (always button)
+// to avoid the mouseup landing on a different node after the re-render swap.
 const MatchPill = React.forwardRef<HTMLButtonElement, {match: Match; selected: boolean; onSelect: () => void}>(
     function MatchPill({match, selected, onSelect}, ref) {
+    const router = useRouter()
     const needsPrediction = match.state === MatchStateEnum.Upcoming && !match.prediction
+
+    function handleClick() {
+        if (selected) {
+            router.push(`/app/match/${match.matchId}/predictions`)
+        } else {
+            onSelect()
+        }
+    }
 
     return (
         <button
             ref={ref}
             type="button"
-            onClick={onSelect}
+            onClick={handleClick}
             className={`snap-center shrink-0 rounded-2xl p-[1.5px] transition-transform ${
                 selected
                     ? "bg-gradient-to-br from-blue-500 via-cyan-400 to-teal-300 scale-[1.02]"
