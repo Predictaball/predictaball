@@ -3,7 +3,7 @@
 import React, {useMemo} from "react"
 import Link from "next/link"
 import type {MultiPolygon, Polygon, Position} from "geojson"
-import type {MatchStateEnum} from "@/client"
+import {MatchStateEnum} from "@/client"
 import {resolveStadium, Stadium} from "./stadium-coords"
 import {getCountryGeometry} from "./globe-utils"
 
@@ -276,6 +276,17 @@ export default function GroupVenueMap({matches}: {matches: GroupMatch[]}): React
                 const nameTop = l.cy + l.h / 2 - LABEL_HEIGHT
                 return l.matches.map((m, i) => {
                     const pillCy = nameTop - PILL_GAP - PILL_HEIGHT / 2 - i * (PILL_HEIGHT + PILL_GAP)
+                    const kickedOff = m.state === MatchStateEnum.Live || m.state === MatchStateEnum.Completed
+                    const pillClassName = "flex h-full w-full items-center justify-center gap-1.5 rounded-full border border-slate-200 bg-white/95 px-2 shadow-sm transition-colors hover:bg-white dark:border-white/15 dark:bg-black/70 dark:hover:bg-black/90"
+                    const pillContent = (
+                        <>
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={`https://flagcdn.com/w40/${m.homeFlagCode.toLowerCase()}.png`} alt={m.homeTeam} className="h-4 w-6 rounded-sm object-cover"/>
+                            <span className="text-[10px] font-semibold text-slate-400 dark:text-gray-500">v</span>
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={`https://flagcdn.com/w40/${m.awayFlagCode.toLowerCase()}.png`} alt={m.awayTeam} className="h-4 w-6 rounded-sm object-cover"/>
+                        </>
+                    )
                     return (
                         <foreignObject
                             key={`pill-${m.matchId}`}
@@ -285,17 +296,15 @@ export default function GroupVenueMap({matches}: {matches: GroupMatch[]}): React
                             height={PILL_HEIGHT}
                         >
                             <div style={{width: "100%", height: "100%"}}>
-                                <Link
-                                    href={`/app/match/${m.matchId}/predictions`}
-                                    className="flex h-full w-full items-center justify-center gap-1.5 rounded-full border border-slate-200 bg-white/95 px-2 shadow-sm transition-colors hover:bg-white dark:border-white/15 dark:bg-black/70 dark:hover:bg-black/90"
-                                    aria-label={`${m.homeTeam} vs ${m.awayTeam}`}
-                                >
-                                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                                    <img src={`https://flagcdn.com/w40/${m.homeFlagCode.toLowerCase()}.png`} alt={m.homeTeam} className="h-4 w-6 rounded-sm object-cover"/>
-                                    <span className="text-[10px] font-semibold text-slate-400 dark:text-gray-500">v</span>
-                                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                                    <img src={`https://flagcdn.com/w40/${m.awayFlagCode.toLowerCase()}.png`} alt={m.awayTeam} className="h-4 w-6 rounded-sm object-cover"/>
-                                </Link>
+                                {kickedOff ? (
+                                    <Link href={`/app/match/${m.matchId}/predictions`} className={pillClassName} aria-label={`${m.homeTeam} vs ${m.awayTeam}`}>
+                                        {pillContent}
+                                    </Link>
+                                ) : (
+                                    <div className={pillClassName} aria-label={`${m.homeTeam} vs ${m.awayTeam}`}>
+                                        {pillContent}
+                                    </div>
+                                )}
                             </div>
                         </foreignObject>
                     )
