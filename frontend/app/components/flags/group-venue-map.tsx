@@ -6,17 +6,7 @@ import type {MultiPolygon, Polygon, Position} from "geojson"
 import {MatchStateEnum} from "@/client"
 import {resolveStadium, Stadium} from "./stadium-coords"
 import {getCountryGeometry} from "./globe-utils"
-import {flagSrc, flagFallbackSrc} from "@/app/util/flag"
-
-// Swap to the fallback proxy once if flagcdn fails to serve the flag.
-function handleFlagError(code: string, resolution: string) {
-    return (event: React.SyntheticEvent<HTMLImageElement>) => {
-        const img = event.currentTarget
-        if (img.dataset.fallback) return
-        img.dataset.fallback = "1"
-        img.src = flagFallbackSrc(code, resolution)
-    }
-}
+import {FlagImg} from "./flag-img"
 
 // One fixture in a group, reduced to what the map and match list need to plot
 // and describe it, and link it to its match page.
@@ -291,11 +281,9 @@ export default function GroupVenueMap({matches}: {matches: GroupMatch[]}): React
                     const pillClassName = "flex h-full w-full items-center justify-center gap-1.5 rounded-full border border-slate-200 bg-white/95 px-2 shadow-sm transition-colors hover:bg-white dark:border-white/15 dark:bg-black/70 dark:hover:bg-black/90"
                     const pillContent = (
                         <>
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src={flagSrc(m.homeFlagCode, "w40")} alt={m.homeTeam} className="h-4 w-6 rounded-sm object-cover" onError={handleFlagError(m.homeFlagCode, "w40")}/>
+                            <FlagImg code={m.homeFlagCode} resolution="w40" alt={m.homeTeam} className="h-4 w-6 rounded-sm object-cover"/>
                             <span className="text-[10px] font-semibold text-slate-400 dark:text-gray-500">v</span>
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src={flagSrc(m.awayFlagCode, "w40")} alt={m.awayTeam} className="h-4 w-6 rounded-sm object-cover" onError={handleFlagError(m.awayFlagCode, "w40")}/>
+                            <FlagImg code={m.awayFlagCode} resolution="w40" alt={m.awayTeam} className="h-4 w-6 rounded-sm object-cover"/>
                         </>
                     )
                     return (
