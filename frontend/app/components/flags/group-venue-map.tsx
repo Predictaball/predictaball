@@ -284,7 +284,7 @@ export default function GroupVenueMap({matches}: {matches: GroupMatch[]}): React
                             width={PILL_WIDTH}
                             height={PILL_HEIGHT}
                         >
-                            <div xmlns="http://www.w3.org/1999/xhtml" style={{width: "100%", height: "100%"}}>
+                            <div style={{width: "100%", height: "100%"}}>
                                 <Link
                                     href={`/app/match/${m.matchId}/predictions`}
                                     className="flex h-full w-full items-center justify-center gap-1.5 rounded-full border border-slate-200 bg-white/95 px-2 shadow-sm transition-colors hover:bg-white dark:border-white/15 dark:bg-black/70 dark:hover:bg-black/90"
