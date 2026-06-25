@@ -5,6 +5,7 @@ import {GroupStanding} from "@/client"
 import GroupTable from "@/app/components/standings/group-table"
 import GroupVenueMap from "@/app/components/flags/group-venue-map"
 import type {GroupMatch} from "@/app/components/flags/group-venue-map"
+import GroupMatchList from "@/app/components/standings/group-match-list"
 
 interface StandingsGroupsProps {
     groups: GroupStanding[]
@@ -74,6 +75,8 @@ export default function StandingsGroups({groups, matchesByGroup}: StandingsGroup
 
                 <GroupTable group={selected.group} standings={selected.standings}/>
             </div>
+
+            <GroupMatchList group={selected.group} matches={matches}/>
         </section>
     )
 }
