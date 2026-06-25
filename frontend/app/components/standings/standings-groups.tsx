@@ -1,6 +1,7 @@
 'use client'
 
 import React, {useState} from "react"
+import {useRouter} from "next/navigation"
 import {GroupStanding} from "@/client"
 import GroupTable from "@/app/components/standings/group-table"
 import GroupVenueMap from "@/app/components/flags/group-venue-map"
@@ -10,18 +11,30 @@ import GroupMatchList from "@/app/components/standings/group-match-list"
 interface StandingsGroupsProps {
     groups: GroupStanding[]
     matchesByGroup: Record<string, GroupMatch[]>
+    initialGroup?: string
 }
 
 /**
  * Standings, one group at a time. A pill selector switches between groups; the
  * chosen group shows its table alongside a globe zoomed to the venues hosting
  * its fixtures, each marked with a pill of the matchup's flags.
+ *
+ * The selected group is mirrored into the URL (via replace, so it doesn't grow
+ * browser history) so that navigating to a match and back lands on the same
+ * group instead of resetting to the first one.
  */
-export default function StandingsGroups({groups, matchesByGroup}: StandingsGroupsProps): React.JSX.Element {
-    const [active, setActive] = useState(groups[0]?.group)
+export default function StandingsGroups({groups, matchesByGroup, initialGroup}: StandingsGroupsProps): React.JSX.Element {
+    const router = useRouter()
+    const initial = groups.find(g => g.group === initialGroup)?.group ?? groups[0]?.group
+    const [active, setActive] = useState(initial)
     const selected = groups.find(g => g.group === active) ?? groups[0]
     const matches = matchesByGroup[selected.group] ?? []
     const venueCount = new Set(matches.map(m => m.venue)).size
+
+    function selectGroup(group: string): void {
+        setActive(group)
+        router.replace(`/app/standings?group=${encodeURIComponent(group)}`, {scroll: false})
+    }
 
     return (
         <section className="space-y-5">
@@ -32,7 +45,7 @@ export default function StandingsGroups({groups, matchesByGroup}: StandingsGroup
                         <button
                             key={g.group}
                             type="button"
-                            onClick={() => setActive(g.group)}
+                            onClick={() => selectGroup(g.group)}
                             aria-pressed={isActive}
                             className={`flex h-9 min-w-9 items-center justify-center rounded-full px-3 text-sm font-bold transition-colors ${
                                 isActive

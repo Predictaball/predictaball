@@ -34,13 +34,13 @@ export default function GroupMatchList({group, matches}: GroupMatchListProps): R
 function MatchRow({match}: {match: GroupMatch}): React.JSX.Element {
     const live = match.state === MatchStateEnum.Live
     const completed = match.state === MatchStateEnum.Completed
+    const kickedOff = live || completed
     const hasScore = match.homeScore !== undefined && match.awayScore !== undefined
 
-    return (
-        <Link
-            href={`/app/match/${match.matchId}/predictions`}
-            className="flex items-center gap-3 rounded-2xl border border-slate-900/5 bg-slate-900/[0.02] px-3 py-2.5 transition-colors hover:bg-slate-900/5 dark:border-white/5 dark:bg-white/[0.02] dark:hover:bg-white/5"
-        >
+    const className = "flex items-center gap-3 rounded-2xl border border-slate-900/5 bg-slate-900/[0.02] px-3 py-2.5 transition-colors hover:bg-slate-900/5 dark:border-white/5 dark:bg-white/[0.02] dark:hover:bg-white/5"
+
+    const content = (
+        <>
             <div className="flex flex-1 items-center gap-2 min-w-0">
                 <FlagImage code={match.homeFlagCode.toLowerCase()} name={match.homeTeam} size={28}/>
                 <span className="truncate text-sm font-semibold text-slate-700 dark:text-gray-200">{match.homeTeam}</span>
@@ -68,6 +68,18 @@ function MatchRow({match}: {match: GroupMatch}): React.JSX.Element {
                 <span className="truncate text-right text-sm font-semibold text-slate-700 dark:text-gray-200">{match.awayTeam}</span>
                 <FlagImage code={match.awayFlagCode.toLowerCase()} name={match.awayTeam} size={28}/>
             </div>
+        </>
+    )
+
+    // Fixtures that haven't kicked off yet don't have anything to show on the
+    // match page, so they're rendered as plain rows rather than links.
+    if (!kickedOff) {
+        return <div className={className}>{content}</div>
+    }
+
+    return (
+        <Link href={`/app/match/${match.matchId}/predictions`} className={className}>
+            {content}
         </Link>
     )
 }

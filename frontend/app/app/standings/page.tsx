@@ -53,7 +53,12 @@ function TableIcon({className}: {className?: string}): React.JSX.Element {
     )
 }
 
-export default async function StandingsPage(): Promise<React.JSX.Element> {
+export default async function StandingsPage(
+    {searchParams}: {searchParams: Promise<{[key: string]: string | string[] | undefined}>}
+): Promise<React.JSX.Element> {
+    const resolvedSearchParams = await searchParams
+    const groupParam = resolvedSearchParams["group"]
+    const initialGroup = typeof groupParam === "string" ? groupParam : undefined
     const config = await getConfigWithAuthHeader()
     const matchApi = new MatchApi(config)
     const [standings, liveMatches, upcomingMatches, completedMatches] = await Promise.all([
@@ -106,7 +111,7 @@ export default async function StandingsPage(): Promise<React.JSX.Element> {
                     </div>
                 ) : (
                     <>
-                        <StandingsGroups groups={standings.groups} matchesByGroup={matchesByGroup}/>
+                        <StandingsGroups groups={standings.groups} matchesByGroup={matchesByGroup} initialGroup={initialGroup}/>
 
                         <section className="space-y-4">
                             <div className="flex flex-col items-center text-center">
