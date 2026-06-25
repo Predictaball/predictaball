@@ -1,9 +1,20 @@
 import React from "react"
+import {flagSrc, flagFallbackSrc} from "@/app/util/flag"
 
 interface FlagImageProps {
     code: string
     name: string
     size?: number
+}
+
+// Swap to the fallback proxy once if flagcdn fails to serve the flag.
+function handleFlagError(code: string, resolution: string) {
+    return (event: React.SyntheticEvent<HTMLImageElement>) => {
+        const img = event.currentTarget
+        if (img.dataset.fallback) return
+        img.dataset.fallback = "1"
+        img.src = flagFallbackSrc(code, resolution)
+    }
 }
 
 export function FlagImage({code, name, size = 48}: FlagImageProps): React.JSX.Element {
@@ -15,7 +26,12 @@ export function FlagImage({code, name, size = 48}: FlagImageProps): React.JSX.El
             style={{width: size, height: size}}
         >
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={`https://flagcdn.com/${resolution}/${code}.png`} alt={name} className="h-full w-full object-cover"/>
+            <img
+                src={flagSrc(code, resolution)}
+                alt={name}
+                className="h-full w-full object-cover"
+                onError={handleFlagError(code, resolution)}
+            />
         </div>
     )
 }
