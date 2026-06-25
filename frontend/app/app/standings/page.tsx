@@ -28,13 +28,19 @@ function bucketMatchesByGroup(groups: Standings["groups"], matches: Match[]): Re
         if (!group) continue
         seen.add(m.matchId)
         ;(byGroup[group] ??= []).push({
+            matchId: m.matchId,
             homeTeam: m.homeTeam,
             homeFlagCode: m.homeTeamFlagCode,
             awayTeam: m.awayTeam,
             awayFlagCode: m.awayTeamFlagCode,
             venue: m.venue,
+            datetime: m.datetime,
+            state: m.state,
+            homeScore: m.homeScore,
+            awayScore: m.awayScore,
         })
     }
+    for (const group of Object.values(byGroup)) group.sort((a, b) => a.datetime.getTime() - b.datetime.getTime())
     return byGroup
 }
 
