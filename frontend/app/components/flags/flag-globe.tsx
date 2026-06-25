@@ -2,21 +2,22 @@
 
 import React, {useEffect, useMemo, useRef, useState} from "react"
 import {Canvas, useFrame} from "@react-three/fiber"
-import {Line, OrbitControls, useTexture} from "@react-three/drei"
+import {Line, OrbitControls} from "@react-three/drei"
 import * as THREE from "three"
 import {useTheme} from "next-themes"
 import {COUNTRY_COORDS} from "./country-coords"
 import {WORLD_CUP_2026_STADIUMS} from "./stadium-coords"
 import {GLOBE_RADIUS, latLngToVec3, buildContinentGeometry, orientationForPosition, cropSquare} from "./globe-utils"
+import {useFlagTextures} from "./flag-textures"
 
 const FLAG_RADIUS = 1.92
 const FLAG_DISC_RADIUS = 0.09
 const FLAG_BORDER_WIDTH = 0.012
+const FLAG_PLACEHOLDER_COLOR = "#334155"
 const MIN_ANGLE = 0.11
 const RELAX_ITERATIONS = 220
 
 const COUNTRY_CODES = Object.keys(COUNTRY_COORDS)
-const FLAG_URLS = COUNTRY_CODES.map(c => `https://flagcdn.com/w80/${c}.png`)
 
 export type Match = {home: string; away: string}
 
@@ -228,9 +229,11 @@ function StarField() {
 }
 
 function Flags() {
-    const textures = useTexture(FLAG_URLS) as THREE.Texture[]
+    const textures = useFlagTextures(COUNTRY_CODES, "w80")
 
-    const markers = useMemo(() => {
+    // Positions only depend on the (stable) country set, so the expensive
+    // relaxation runs once rather than re-running as flags stream in.
+    const layout = useMemo(() => {
         const anchors = COUNTRY_CODES.map(code => {
             const [lat, lng] = COUNTRY_COORDS[code]
             return latLngToVec3(lat, lng, 1)
@@ -238,19 +241,27 @@ function Flags() {
         const relaxed = relaxOnSphere(anchors, MIN_ANGLE, RELAX_ITERATIONS)
 
         return COUNTRY_CODES.map((code, i) => {
-            const anchorPos = anchors[i].clone().multiplyScalar(GLOBE_RADIUS + 0.005)
             const flagPos = relaxed[i].clone().multiplyScalar(FLAG_RADIUS)
-            const frontTex = cropSquare(textures[i])
             return {
                 code,
-                anchorPos,
+                anchorPos: anchors[i].clone().multiplyScalar(GLOBE_RADIUS + 0.005),
                 flagPos,
                 rotation: orientationForPosition(flagPos),
-                frontTexture: frontTex,
-                backTexture: mirrorHorizontally(frontTex),
             }
         })
-    }, [textures])
+    }, [])
+
+    const markers = useMemo(() =>
+        layout.map((marker, i) => {
+            const texture = textures[i]
+            const frontTexture = texture ? cropSquare(texture) : null
+            return {
+                ...marker,
+                frontTexture,
+                backTexture: frontTexture ? mirrorHorizontally(frontTexture) : null,
+            }
+        }),
+    [layout, textures])
 
     return (
         <>
@@ -266,14 +277,23 @@ function Flags() {
                             <circleGeometry args={[FLAG_DISC_RADIUS + FLAG_BORDER_WIDTH, 48]}/>
                             <meshBasicMaterial color="#ffffff" side={THREE.DoubleSide}/>
                         </mesh>
-                        <mesh position={[0, 0, 0.001]}>
-                            <circleGeometry args={[FLAG_DISC_RADIUS, 48]}/>
-                            <meshBasicMaterial map={frontTexture} toneMapped={false} side={THREE.FrontSide}/>
-                        </mesh>
-                        <mesh position={[0, 0, -0.001]} rotation={[0, Math.PI, 0]}>
-                            <circleGeometry args={[FLAG_DISC_RADIUS, 48]}/>
-                            <meshBasicMaterial map={backTexture} toneMapped={false} side={THREE.FrontSide}/>
-                        </mesh>
+                        {frontTexture && backTexture ? (
+                            <>
+                                <mesh position={[0, 0, 0.001]}>
+                                    <circleGeometry args={[FLAG_DISC_RADIUS, 48]}/>
+                                    <meshBasicMaterial map={frontTexture} toneMapped={false} side={THREE.FrontSide}/>
+                                </mesh>
+                                <mesh position={[0, 0, -0.001]} rotation={[0, Math.PI, 0]}>
+                                    <circleGeometry args={[FLAG_DISC_RADIUS, 48]}/>
+                                    <meshBasicMaterial map={backTexture} toneMapped={false} side={THREE.FrontSide}/>
+                                </mesh>
+                            </>
+                        ) : (
+                            <mesh position={[0, 0, 0.001]}>
+                                <circleGeometry args={[FLAG_DISC_RADIUS, 48]}/>
+                                <meshBasicMaterial color={FLAG_PLACEHOLDER_COLOR} side={THREE.DoubleSide}/>
+                            </mesh>
+                        )}
                     </group>
                 </group>
             ))}
