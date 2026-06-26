@@ -1,6 +1,6 @@
 import {getConfigWithAuthHeader} from "@/app/api/client-config"
-import HistoryMatchCard from "@/app/components/history/history-match-card"
-import {LeaderboardInner, LeagueApi, ListMatchesFilterTypeEnum, Match, MatchApi} from "@/client"
+import HistoryGroupFilter from "@/app/components/history/history-group-filter"
+import {LeaderboardInner, LeagueApi, ListMatchesFilterTypeEnum, Match, MatchApi, Standings, StandingsApi} from "@/client"
 import BackButton from "@/app/components/back-button";
 import Link from "next/link";
 import React from "react";
@@ -10,6 +10,7 @@ import FormBadge from "@/app/components/leaderboard/form-badge";
 import {SECTION_EYEBROW} from "@/app/util/css-classes";
 import StreakBadges from "@/app/components/points/streak-badges";
 import {computeStreakStats} from "@/app/util/streaks";
+import {bucketMatchesByGroupLetter, KNOCKOUT_GROUP} from "@/app/util/group-matches";
 
 export default async function Home({
     params
@@ -50,9 +51,30 @@ export default async function Home({
         }
     }
 
-    const [leaderboardEntry, form, games] = await Promise.all([getEntry(), getUserForm(userId), getGames()])
+    async function getStandings(): Promise<Standings> {
+        try {
+            return await new StandingsApi(await getConfigWithAuthHeader()).getStandings()
+        } catch (error) {
+            console.log(error)
+            return {groups: [], thirdPlaced: []}
+        }
+    }
+
+    const [leaderboardEntry, form, games, standings] = await Promise.all([getEntry(), getUserForm(userId), getGames(), getStandings()])
 
     const streaks = computeStreakStats(games)
+    const matchesByGroup = bucketMatchesByGroupLetter(standings.groups, games)
+    const groupOrder = [
+        ...standings.groups.map(g => g.group).filter(group => matchesByGroup[group]?.length),
+        ...(matchesByGroup[KNOCKOUT_GROUP]?.length ? [KNOCKOUT_GROUP] : []),
+    ]
+    const mostRecentMatch = games.reduce<Match | undefined>(
+        (latest, m) => !latest || m.datetime.valueOf() > latest.datetime.valueOf() ? m : latest,
+        undefined
+    )
+    const initialGroup = mostRecentMatch
+        ? groupOrder.find(group => matchesByGroup[group]?.some(m => m.matchId === mostRecentMatch.matchId))
+        : undefined
     const user = leaderboardEntry?.user
     const fullName = user ? `${user.firstName} ${user.familyName}` : "Player"
     const initials = user ? `${user.firstName.charAt(0)}${user.familyName.charAt(0)}` : "?"
@@ -133,13 +155,11 @@ export default async function Home({
 
                 <section className="space-y-4">
                     <h2 className={SECTION_EYEBROW + " text-center"}>Match history</h2>
-                    <div className="flex flex-col items-center gap-3">
-                        {games.length > 0 ? games.map((match) => (
-                            <HistoryMatchCard match={match} key={match.matchId}/>
-                        )) : (
-                            <p className="py-8 text-center text-sm text-slate-500 dark:text-gray-400">No completed matches yet — check back once games have been played.</p>
-                        )}
-                    </div>
+                    {games.length > 0 ? (
+                        <HistoryGroupFilter matchesByGroup={matchesByGroup} groupOrder={groupOrder} initialGroup={initialGroup}/>
+                    ) : (
+                        <p className="py-8 text-center text-sm text-slate-500 dark:text-gray-400">No completed matches yet — check back once games have been played.</p>
+                    )}
                 </section>
             </div>
         </main>
