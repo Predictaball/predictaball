@@ -1,6 +1,6 @@
 'use client'
 
-import React, {useMemo} from "react"
+import React, {useCallback, useMemo, useRef, useState} from "react"
 import Link from "next/link"
 import type {MultiPolygon, Polygon, Position} from "geojson"
 import {MatchStateEnum} from "@/client"
@@ -47,9 +47,13 @@ const SEPARATION_ITERATIONS = 80
 const ANCHOR_SPRING = 0.05
 
 // Match pill sizing (the clickable "flag v flag" badge above each venue).
-const PILL_WIDTH = 112
-const PILL_HEIGHT = 34
-const PILL_GAP = 6
+const PILL_WIDTH = 144
+const PILL_HEIGHT = 44
+const PILL_GAP = 8
+
+// Zoom limits for the interactive map (1 = fit-to-view, as computed above).
+const MIN_SCALE = 1
+const MAX_SCALE = 4
 
 // Standard Mercator, lng/lat in degrees -> planar units (x east, y north).
 function mercator(lng: number, lat: number): [number, number] {
@@ -196,6 +200,9 @@ function declutter(labels: VenueLabel[], width: number, height: number): void {
     }
 }
 
+// Pinch/drag state for one active pointer, in client (screen) coordinates.
+type PointerState = {x: number; y: number}
+
 export default function GroupVenueMap({matches}: {matches: GroupMatch[]}): React.JSX.Element {
     const {paths, labels, height} = useMemo(() => {
         const stadiums = matches
@@ -212,14 +219,95 @@ export default function GroupVenueMap({matches}: {matches: GroupMatch[]}): React
         return {paths, labels, height}
     }, [matches])
 
+    const svgRef = useRef<SVGSVGElement>(null)
+    const pointers = useRef(new Map<number, PointerState>())
+    const panStart = useRef<{cx: number; cy: number; tx: number; ty: number} | null>(null)
+    const pinchStart = useRef<{dist: number; scale: number} | null>(null)
+    const [view, setView] = useState({scale: 1, tx: 0, ty: 0})
+
+    // Converts a client (screen) coordinate to this SVG's fixed viewBox space,
+    // accounting for letterboxing from preserveAspectRatio="meet". This space
+    // doesn't move when the user zooms/pans - only the inner <g> transform does.
+    const toViewBox = useCallback((clientX: number, clientY: number): [number, number] => {
+        const svg = svgRef.current
+        if (!svg) return [0, 0]
+        const rect = svg.getBoundingClientRect()
+        const scale = Math.min(rect.width / VIEW_WIDTH, rect.height / height)
+        const offsetX = (rect.width - VIEW_WIDTH * scale) / 2
+        const offsetY = (rect.height - height * scale) / 2
+        return [(clientX - rect.left - offsetX) / scale, (clientY - rect.top - offsetY) / scale]
+    }, [height])
+
+    const zoomAt = useCallback((cx: number, cy: number, nextScale: number) => {
+        setView(v => {
+            const scale = Math.min(Math.max(nextScale, MIN_SCALE), MAX_SCALE)
+            if (scale === v.scale) return v
+            const px = (cx - v.tx) / v.scale
+            const py = (cy - v.ty) / v.scale
+            const tx = scale === MIN_SCALE ? 0 : cx - scale * px
+            const ty = scale === MIN_SCALE ? 0 : cy - scale * py
+            return {scale, tx, ty}
+        })
+    }, [])
+
+    const handleWheel = useCallback((e: React.WheelEvent<SVGSVGElement>) => {
+        e.preventDefault()
+        const [cx, cy] = toViewBox(e.clientX, e.clientY)
+        zoomAt(cx, cy, view.scale * (e.deltaY < 0 ? 1.2 : 1 / 1.2))
+    }, [toViewBox, zoomAt, view.scale])
+
+    const handlePointerDown = useCallback((e: React.PointerEvent<SVGSVGElement>) => {
+        svgRef.current?.setPointerCapture(e.pointerId)
+        pointers.current.set(e.pointerId, {x: e.clientX, y: e.clientY})
+        if (pointers.current.size === 1) {
+            panStart.current = {cx: e.clientX, cy: e.clientY, tx: view.tx, ty: view.ty}
+        } else if (pointers.current.size === 2) {
+            const [a, b] = [...pointers.current.values()]
+            pinchStart.current = {dist: Math.hypot(a.x - b.x, a.y - b.y), scale: view.scale}
+        }
+    }, [view])
+
+    const handlePointerMove = useCallback((e: React.PointerEvent<SVGSVGElement>) => {
+        if (!pointers.current.has(e.pointerId)) return
+        pointers.current.set(e.pointerId, {x: e.clientX, y: e.clientY})
+        if (pointers.current.size === 2 && pinchStart.current) {
+            const [a, b] = [...pointers.current.values()]
+            const dist = Math.hypot(a.x - b.x, a.y - b.y)
+            const mid = toViewBox((a.x + b.x) / 2, (a.y + b.y) / 2)
+            zoomAt(mid[0], mid[1], pinchStart.current.scale * (dist / pinchStart.current.dist))
+        } else if (pointers.current.size === 1 && panStart.current && view.scale > MIN_SCALE) {
+            const {cx, cy, tx, ty} = panStart.current
+            setView(v => ({...v, tx: tx + (e.clientX - cx), ty: ty + (e.clientY - cy)}))
+        }
+    }, [toViewBox, zoomAt, view.scale])
+
+    const endPointer = useCallback((e: React.PointerEvent<SVGSVGElement>) => {
+        pointers.current.delete(e.pointerId)
+        if (pointers.current.size < 2) pinchStart.current = null
+        if (pointers.current.size === 0) panStart.current = null
+    }, [])
+
+    const resetView = useCallback(() => setView({scale: 1, tx: 0, ty: 0}), [])
+
     return (
-        <svg
-            viewBox={`0 0 ${VIEW_WIDTH} ${height}`}
-            preserveAspectRatio="xMidYMid meet"
-            className="h-full w-full"
-            role="img"
-            aria-label="Map of venues hosting this group's fixtures"
-        >
+        <div className="relative h-full w-full">
+            <svg
+                ref={svgRef}
+                viewBox={`0 0 ${VIEW_WIDTH} ${height}`}
+                preserveAspectRatio="xMidYMid meet"
+                className="h-full w-full touch-none"
+                style={{cursor: view.scale > MIN_SCALE ? "grab" : "default"}}
+                role="img"
+                aria-label="Map of venues hosting this group's fixtures, zoomable with scroll, pinch, or the on-screen controls"
+                onWheel={handleWheel}
+                onPointerDown={handlePointerDown}
+                onPointerMove={handlePointerMove}
+                onPointerUp={endPointer}
+                onPointerCancel={endPointer}
+                onPointerLeave={endPointer}
+                onDoubleClick={resetView}
+            >
+            <g transform={`translate(${view.tx} ${view.ty}) scale(${view.scale})`}>
             {paths.map((d, i) => (
                 <path
                     key={HOST_CODES[i]}
@@ -281,9 +369,9 @@ export default function GroupVenueMap({matches}: {matches: GroupMatch[]}): React
                     const pillClassName = "flex h-full w-full items-center justify-center gap-1.5 rounded-full border border-slate-200 bg-white/95 px-2 shadow-sm transition-colors hover:bg-white dark:border-white/15 dark:bg-black/70 dark:hover:bg-black/90"
                     const pillContent = (
                         <>
-                            <FlagImg code={m.homeFlagCode} resolution="w40" alt={m.homeTeam} className="h-4 w-6 rounded-sm object-cover"/>
-                            <span className="text-[10px] font-semibold text-slate-400 dark:text-gray-500">v</span>
-                            <FlagImg code={m.awayFlagCode} resolution="w40" alt={m.awayTeam} className="h-4 w-6 rounded-sm object-cover"/>
+                            <FlagImg code={m.homeFlagCode} resolution="w40" alt={m.homeTeam} className="h-5 w-8 rounded-sm object-cover"/>
+                            <span className="text-xs font-semibold text-slate-400 dark:text-gray-500">v</span>
+                            <FlagImg code={m.awayFlagCode} resolution="w40" alt={m.awayTeam} className="h-5 w-8 rounded-sm object-cover"/>
                         </>
                     )
                     return (
@@ -309,6 +397,28 @@ export default function GroupVenueMap({matches}: {matches: GroupMatch[]}): React
                     )
                 })
             })}
-        </svg>
+            </g>
+            </svg>
+
+            <div className="absolute bottom-3 right-3 flex flex-col overflow-hidden rounded-lg border border-slate-200 bg-white/90 shadow-sm dark:border-white/15 dark:bg-black/70">
+                <button
+                    type="button"
+                    onClick={() => zoomAt(VIEW_WIDTH / 2, height / 2, view.scale * 1.5)}
+                    aria-label="Zoom in"
+                    className="flex h-8 w-8 items-center justify-center text-lg font-semibold text-slate-700 hover:bg-slate-100 dark:text-gray-200 dark:hover:bg-white/10"
+                >
+                    +
+                </button>
+                <div className="h-px bg-slate-200 dark:bg-white/15"/>
+                <button
+                    type="button"
+                    onClick={() => zoomAt(VIEW_WIDTH / 2, height / 2, view.scale / 1.5)}
+                    aria-label="Zoom out"
+                    className="flex h-8 w-8 items-center justify-center text-lg font-semibold text-slate-700 hover:bg-slate-100 dark:text-gray-200 dark:hover:bg-white/10"
+                >
+                    −
+                </button>
+            </div>
+        </div>
     )
 }

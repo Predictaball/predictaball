@@ -77,7 +77,7 @@ export default async function StandingsPage(
 
             {hasLiveMatch && <StandingsRefresher/>}
 
-            <div className="relative w-full max-w-5xl mx-auto px-4 sm:px-6 py-6 space-y-8">
+            <div className="relative w-full max-w-5xl mx-auto px-4 sm:px-6 py-6 space-y-6">
                 <header className="relative flex items-center justify-between gap-3">
                     <BackButton/>
                     <Link href="/" className="hidden sm:flex items-baseline font-black tracking-tight text-lg absolute left-1/2 -translate-x-1/2">
@@ -89,11 +89,11 @@ export default async function StandingsPage(
                 </header>
 
                 <div className="flex flex-col items-center text-center">
-                    <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 via-cyan-400 to-teal-300 shadow-lg shadow-cyan-500/30">
-                        <TableIcon className="h-8 w-8 text-white"/>
+                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 via-cyan-400 to-teal-300 shadow-lg shadow-cyan-500/30">
+                        <TableIcon className="h-6 w-6 text-white"/>
                     </div>
-                    <p className="mt-3 text-xs font-bold uppercase tracking-[0.25em] text-slate-500 dark:text-gray-400">Group Stage</p>
-                    <h1 className="mt-1 text-3xl font-black tracking-tight text-slate-900 dark:text-white">Standings</h1>
+                    <p className="mt-2 text-xs font-bold uppercase tracking-[0.25em] text-slate-500 dark:text-gray-400">Group Stage</p>
+                    <h1 className="mt-0.5 text-3xl font-black tracking-tight text-slate-900 dark:text-white">Standings</h1>
                     <p className="mt-2 max-w-md text-sm text-slate-500 dark:text-gray-400">
                         Live group tables, updated as scores come in.
                         {hasLiveMatch && (
