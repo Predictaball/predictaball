@@ -1,6 +1,6 @@
 'use client'
 
-import React, {useCallback, useMemo, useRef, useState} from "react"
+import React, {useCallback, useLayoutEffect, useMemo, useRef, useState} from "react"
 import Link from "next/link"
 import type {MultiPolygon, Polygon, Position} from "geojson"
 import {MatchStateEnum} from "@/client"
@@ -35,21 +35,35 @@ type View = typeof FULL_HOST_VIEW
 const VIEW_WIDTH = 1000
 const PADDING = 28
 
-// Marker / label sizing, in viewBox units.
-const DOT_RADIUS = 6
-const LABEL_GAP = 12
-const NAME_FONT = 18
-const CITY_FONT = 13
-const LABEL_PAD_X = 9
-const LABEL_HEIGHT = 42
-const SEPARATION_PADDING = 6
+// Marker / label / pill sizing, in viewBox units, at sizeScale = 1 (i.e. when
+// the viewBox fits the container at 1:1). Some groups' venues span a window
+// that's tall relative to VIEW_WIDTH (e.g. a coastal run from Vancouver to LA),
+// which then gets scaled down hard to fit a normal (wide) container - shrinking
+// these fixed-unit elements along with it. sizeScale (computed from the actual
+// render size, see GroupVenueMap) grows these so pills/text stay legible.
+const BASE_SIZES = {
+    dotRadius: 6,
+    labelGap: 12,
+    nameFont: 18,
+    cityFont: 13,
+    labelPadX: 9,
+    labelHeight: 42,
+    separationPadding: 6,
+    pillWidth: 144,
+    pillHeight: 44,
+    pillGap: 8,
+}
+type Sizes = typeof BASE_SIZES
+
+function scaleSizes(scale: number): Sizes {
+    return Object.fromEntries(Object.entries(BASE_SIZES).map(([k, v]) => [k, v * scale])) as unknown as Sizes
+}
+
+// How much sizes are allowed to grow above baseline for an extreme aspect ratio.
+const MAX_SIZE_SCALE = 2.2
+
 const SEPARATION_ITERATIONS = 80
 const ANCHOR_SPRING = 0.05
-
-// Match pill sizing (the clickable "flag v flag" badge above each venue).
-const PILL_WIDTH = 144
-const PILL_HEIGHT = 44
-const PILL_GAP = 8
 
 // Zoom limits for the interactive map (1 = fit-to-view, as computed above).
 const MIN_SCALE = 1
@@ -146,7 +160,7 @@ type VenueLabel = {
 // to viewBox coordinates and keeping every fixture hosted there (a venue can host
 // more than one match in a group). Fixtures whose venue we can't resolve are
 // dropped from the map (they still appear in the match list).
-function resolveVenues(matches: GroupMatch[], project: (lng: number, lat: number) => [number, number]): VenueLabel[] {
+function resolveVenues(matches: GroupMatch[], project: (lng: number, lat: number) => [number, number], sizes: Sizes): VenueLabel[] {
     const byCity = new Map<string, {stadium: Stadium; matches: GroupMatch[]}>()
     for (const m of matches) {
         const stadium = resolveStadium(m.venue)
@@ -157,21 +171,21 @@ function resolveVenues(matches: GroupMatch[], project: (lng: number, lat: number
     }
     return [...byCity.values()].map(({stadium, matches}) => {
         const [x, y] = project(stadium.lng, stadium.lat)
-        const nameW = Math.max(stadium.name.length * (NAME_FONT * 0.56), stadium.city.length * (CITY_FONT * 0.6)) + 2 * LABEL_PAD_X
-        const w = Math.max(nameW, PILL_WIDTH)
-        const h = LABEL_HEIGHT + matches.length * (PILL_HEIGHT + PILL_GAP)
-        return {stadium, matches, x, y, w, h, cx: x, cy: y - LABEL_GAP - h / 2}
+        const nameW = Math.max(stadium.name.length * (sizes.nameFont * 0.56), stadium.city.length * (sizes.cityFont * 0.6)) + 2 * sizes.labelPadX
+        const w = Math.max(nameW, sizes.pillWidth)
+        const h = sizes.labelHeight + matches.length * (sizes.pillHeight + sizes.pillGap)
+        return {stadium, matches, x, y, w, h, cx: x, cy: y - sizes.labelGap - h / 2}
     })
 }
 
 // Nudges the venue boxes (name label + its stack of match pills) apart so they
 // don't overlap, while a light spring keeps each one tugged back above its own
 // dot. Pure 2D layout — no zoom, no per-frame work.
-function declutter(labels: VenueLabel[], width: number, height: number): void {
+function declutter(labels: VenueLabel[], width: number, height: number, sizes: Sizes): void {
     for (let iter = 0; iter < SEPARATION_ITERATIONS; iter++) {
         for (const a of labels) {
             a.cx += (a.x - a.cx) * ANCHOR_SPRING
-            a.cy += ((a.y - LABEL_GAP - a.h / 2) - a.cy) * ANCHOR_SPRING
+            a.cy += ((a.y - sizes.labelGap - a.h / 2) - a.cy) * ANCHOR_SPRING
         }
         for (let i = 0; i < labels.length; i++) {
             for (let j = i + 1; j < labels.length; j++) {
@@ -179,8 +193,8 @@ function declutter(labels: VenueLabel[], width: number, height: number): void {
                 const b = labels[j]
                 const dx = a.cx - b.cx
                 const dy = a.cy - b.cy
-                const overlapX = (a.w + b.w) / 2 + SEPARATION_PADDING - Math.abs(dx)
-                const overlapY = (a.h + b.h) / 2 + SEPARATION_PADDING - Math.abs(dy)
+                const overlapX = (a.w + b.w) / 2 + sizes.separationPadding - Math.abs(dx)
+                const overlapY = (a.h + b.h) / 2 + sizes.separationPadding - Math.abs(dy)
                 if (overlapX <= 0 || overlapY <= 0) continue
                 if (overlapX < overlapY) {
                     const push = (overlapX / 2) * (dx === 0 ? (i < j ? 1 : -1) : Math.sign(dx))
@@ -201,25 +215,53 @@ function declutter(labels: VenueLabel[], width: number, height: number): void {
 }
 
 // Pinch/drag state for one active pointer, in client (screen) coordinates.
-type PointerState = {x: number; y: number}
+type PointerState = {x: number; y: number; type: string}
 
 export default function GroupVenueMap({matches}: {matches: GroupMatch[]}): React.JSX.Element {
-    const {paths, labels, height} = useMemo(() => {
+    const {paths, project, view: geoView, height} = useMemo(() => {
         const stadiums = matches
             .map(m => resolveStadium(m.venue))
             .filter((s): s is Stadium => s !== undefined)
-        const view = computeView(stadiums)
-        const {project, height} = makeProjection(view)
+        const geoView = computeView(stadiums)
+        const {project, height} = makeProjection(geoView)
         const paths = HOST_CODES
             .map(code => getCountryGeometry(code))
             .filter((g): g is Polygon | MultiPolygon => g !== null)
-            .map(g => geometryToPath(g, project, view))
-        const labels = resolveVenues(matches, project)
-        declutter(labels, VIEW_WIDTH, height)
-        return {paths, labels, height}
+            .map(g => geometryToPath(g, project, geoView))
+        return {paths, project, view: geoView, height}
     }, [matches])
 
     const svgRef = useRef<SVGSVGElement>(null)
+
+    // How far the viewBox (fit to the container at "meet") shrinks fixed-unit
+    // elements below their 1:1 baseline. Groups whose venues span a window
+    // that's tall relative to VIEW_WIDTH (e.g. a coastal run from Vancouver to
+    // LA) get scaled down hard to fit a normal, wider container - this grows
+    // pill/label sizes back up so they stay legible at the default zoom.
+    const [fitScale, setFitScale] = useState(1)
+    useLayoutEffect(() => {
+        const svg = svgRef.current
+        if (!svg) return
+        const update = () => {
+            const rect = svg.getBoundingClientRect()
+            if (rect.width === 0 || rect.height === 0) return
+            setFitScale(Math.min(rect.width / VIEW_WIDTH, rect.height / height))
+        }
+        update()
+        const observer = new ResizeObserver(update)
+        observer.observe(svg)
+        return () => observer.disconnect()
+    }, [height])
+
+    const sizeScale = Math.min(MAX_SIZE_SCALE, Math.max(1, 1 / fitScale))
+    const sizes = useMemo(() => scaleSizes(sizeScale), [sizeScale])
+
+    const labels = useMemo(() => {
+        const labels = resolveVenues(matches, project, sizes)
+        declutter(labels, VIEW_WIDTH, height, sizes)
+        return labels
+    }, [matches, project, sizes, height])
+
     const pointers = useRef(new Map<number, PointerState>())
     const panStart = useRef<{cx: number; cy: number; tx: number; ty: number} | null>(null)
     const pinchStart = useRef<{dist: number; scale: number} | null>(null)
@@ -257,8 +299,12 @@ export default function GroupVenueMap({matches}: {matches: GroupMatch[]}): React
     }, [toViewBox, zoomAt, view.scale])
 
     const handlePointerDown = useCallback((e: React.PointerEvent<SVGSVGElement>) => {
+        pointers.current.set(e.pointerId, {x: e.clientX, y: e.clientY, type: e.pointerType})
+        // A single touch is left alone (no capture, no preventDefault) so the
+        // page keeps scrolling normally; the map only pans/zooms once a second
+        // finger joins. Mouse/pen can still pan with a single pointer.
+        if (e.pointerType === "touch" && pointers.current.size === 1) return
         svgRef.current?.setPointerCapture(e.pointerId)
-        pointers.current.set(e.pointerId, {x: e.clientX, y: e.clientY})
         if (pointers.current.size === 1) {
             panStart.current = {cx: e.clientX, cy: e.clientY, tx: view.tx, ty: view.ty}
         } else if (pointers.current.size === 2) {
@@ -269,13 +315,14 @@ export default function GroupVenueMap({matches}: {matches: GroupMatch[]}): React
 
     const handlePointerMove = useCallback((e: React.PointerEvent<SVGSVGElement>) => {
         if (!pointers.current.has(e.pointerId)) return
-        pointers.current.set(e.pointerId, {x: e.clientX, y: e.clientY})
+        pointers.current.set(e.pointerId, {x: e.clientX, y: e.clientY, type: e.pointerType})
         if (pointers.current.size === 2 && pinchStart.current) {
+            e.preventDefault()
             const [a, b] = [...pointers.current.values()]
             const dist = Math.hypot(a.x - b.x, a.y - b.y)
             const mid = toViewBox((a.x + b.x) / 2, (a.y + b.y) / 2)
             zoomAt(mid[0], mid[1], pinchStart.current.scale * (dist / pinchStart.current.dist))
-        } else if (pointers.current.size === 1 && panStart.current && view.scale > MIN_SCALE) {
+        } else if (pointers.current.size === 1 && panStart.current && view.scale > MIN_SCALE && e.pointerType !== "touch") {
             const {cx, cy, tx, ty} = panStart.current
             setView(v => ({...v, tx: tx + (e.clientX - cx), ty: ty + (e.clientY - cy)}))
         }
@@ -295,8 +342,8 @@ export default function GroupVenueMap({matches}: {matches: GroupMatch[]}): React
                 ref={svgRef}
                 viewBox={`0 0 ${VIEW_WIDTH} ${height}`}
                 preserveAspectRatio="xMidYMid meet"
-                className="h-full w-full touch-none"
-                style={{cursor: view.scale > MIN_SCALE ? "grab" : "default"}}
+                className="h-full w-full"
+                style={{cursor: view.scale > MIN_SCALE ? "grab" : "default", touchAction: "pan-y"}}
                 role="img"
                 aria-label="Map of venues hosting this group's fixtures, zoomable with scroll, pinch, or the on-screen controls"
                 onWheel={handleWheel}
@@ -333,28 +380,28 @@ export default function GroupVenueMap({matches}: {matches: GroupMatch[]}): React
 
             {labels.map(l => (
                 <g key={`dot-${l.stadium.city}`}>
-                    <circle cx={l.x} cy={l.y} r={DOT_RADIUS * 2.2} className="fill-amber-400/25"/>
-                    <circle cx={l.x} cy={l.y} r={DOT_RADIUS} className="fill-amber-400"/>
+                    <circle cx={l.x} cy={l.y} r={sizes.dotRadius * 2.2} className="fill-amber-400/25"/>
+                    <circle cx={l.x} cy={l.y} r={sizes.dotRadius} className="fill-amber-400"/>
                 </g>
             ))}
 
             {labels.map(l => {
-                const nameCy = l.cy + l.h / 2 - LABEL_HEIGHT / 2
+                const nameCy = l.cy + l.h / 2 - sizes.labelHeight / 2
                 return (
                     <g key={`label-${l.stadium.city}`}>
                         <rect
                             x={l.cx - l.w / 2}
-                            y={nameCy - LABEL_HEIGHT / 2}
+                            y={nameCy - sizes.labelHeight / 2}
                             width={l.w}
-                            height={LABEL_HEIGHT}
+                            height={sizes.labelHeight}
                             rx={8}
                             className="fill-white/90 stroke-slate-200 dark:fill-black/60 dark:stroke-white/10"
                             strokeWidth={1}
                         />
-                        <text x={l.cx} y={nameCy - 3} textAnchor="middle" className="fill-slate-800 dark:fill-gray-100" fontSize={NAME_FONT} fontWeight={600}>
+                        <text x={l.cx} y={nameCy - 3} textAnchor="middle" className="fill-slate-800 dark:fill-gray-100" fontSize={sizes.nameFont} fontWeight={600}>
                             {l.stadium.name}
                         </text>
-                        <text x={l.cx} y={nameCy + CITY_FONT} textAnchor="middle" className="fill-slate-400 dark:fill-gray-400" fontSize={CITY_FONT} letterSpacing={0.5}>
+                        <text x={l.cx} y={nameCy + sizes.cityFont} textAnchor="middle" className="fill-slate-400 dark:fill-gray-400" fontSize={sizes.cityFont} letterSpacing={0.5}>
                             {l.stadium.city.toUpperCase()}
                         </text>
                     </g>
@@ -362,9 +409,9 @@ export default function GroupVenueMap({matches}: {matches: GroupMatch[]}): React
             })}
 
             {labels.flatMap(l => {
-                const nameTop = l.cy + l.h / 2 - LABEL_HEIGHT
+                const nameTop = l.cy + l.h / 2 - sizes.labelHeight
                 return l.matches.map((m, i) => {
-                    const pillCy = nameTop - PILL_GAP - PILL_HEIGHT / 2 - i * (PILL_HEIGHT + PILL_GAP)
+                    const pillCy = nameTop - sizes.pillGap - sizes.pillHeight / 2 - i * (sizes.pillHeight + sizes.pillGap)
                     const kickedOff = m.state === MatchStateEnum.Live || m.state === MatchStateEnum.Completed
                     const pillClassName = "flex h-full w-full items-center justify-center gap-1.5 rounded-full border border-slate-200 bg-white/95 px-2 shadow-sm transition-colors hover:bg-white dark:border-white/15 dark:bg-black/70 dark:hover:bg-black/90"
                     const pillContent = (
@@ -377,10 +424,10 @@ export default function GroupVenueMap({matches}: {matches: GroupMatch[]}): React
                     return (
                         <foreignObject
                             key={`pill-${m.matchId}`}
-                            x={l.cx - PILL_WIDTH / 2}
-                            y={pillCy - PILL_HEIGHT / 2}
-                            width={PILL_WIDTH}
-                            height={PILL_HEIGHT}
+                            x={l.cx - sizes.pillWidth / 2}
+                            y={pillCy - sizes.pillHeight / 2}
+                            width={sizes.pillWidth}
+                            height={sizes.pillHeight}
                         >
                             <div style={{width: "100%", height: "100%"}}>
                                 {kickedOff ? (
