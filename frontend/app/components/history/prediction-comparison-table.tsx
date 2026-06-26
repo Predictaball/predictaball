@@ -4,10 +4,10 @@ import {FlagImage} from "@/app/components/predictions/flag-image"
 import {positionAccent, positionDot} from "@/app/components/standings/group-table"
 
 /**
- * Diff arrow showing how a team's real finish compares to where the user
- * predicted it. `delta` is `predictedPosition - actualPosition`, so a positive
- * value means the team finished higher (a smaller position number) than the
- * user predicted — an up arrow.
+ * Diff arrow showing how a team's predicted position compares to where it
+ * really finished. `delta` is `actualPosition - predictedPosition`, so a
+ * positive value means you predicted the team higher (a smaller position
+ * number) than it actually finished — an up arrow.
  */
 function CallDelta({delta}: {delta: number}): React.JSX.Element {
     if (delta === 0) {
@@ -18,7 +18,7 @@ function CallDelta({delta}: {delta: number}): React.JSX.Element {
     const up = delta > 0
     return (
         <span
-            title={`Finished ${Math.abs(delta)} place${Math.abs(delta) === 1 ? "" : "s"} ${up ? "higher" : "lower"} than you predicted`}
+            title={`You predicted ${Math.abs(delta)} place${Math.abs(delta) === 1 ? "" : "s"} ${up ? "higher" : "lower"} than they finished`}
             className={`inline-flex shrink-0 items-center gap-px text-[11px] font-bold leading-none tabular-nums ${
                 up ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"
             }`}
@@ -76,7 +76,7 @@ export default function PredictionComparisonTable({group, actualStandings, predi
                     <tbody>
                         {actualStandings.map(row => {
                             const predicted = predictedPositionByTeam[row.teamId]
-                            const delta = predicted != null ? predicted - row.position : undefined
+                            const delta = predicted != null ? row.position - predicted : undefined
                             return (
                                 <tr key={row.teamId} className={`border-t border-slate-900/5 dark:border-white/5 ${positionAccent(row.position)}`}>
                                     <td className="py-2 pl-4 pr-1">
@@ -126,7 +126,7 @@ export default function PredictionComparisonTable({group, actualStandings, predi
                         <p className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-gray-500">Predicted</p>
                         {predictedStandings.map(row => {
                             const actualPosition = actualPositionByTeam[row.teamId]
-                            const delta = actualPosition != null ? row.position - actualPosition : undefined
+                            const delta = actualPosition != null ? actualPosition - row.position : undefined
                             return (
                                 <div key={row.teamId} className={`flex items-center gap-1.5 border-t border-slate-900/5 px-3 py-2 dark:border-white/5 ${positionAccent(row.position)}`}>
                                     <span className="flex w-4 shrink-0 justify-center">{delta != null && <CallDelta delta={delta}/>}</span>
