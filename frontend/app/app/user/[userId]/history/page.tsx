@@ -11,6 +11,7 @@ import {SECTION_EYEBROW} from "@/app/util/css-classes";
 import StreakBadges from "@/app/components/points/streak-badges";
 import {computeStreakStats} from "@/app/util/streaks";
 import {bucketMatchesByGroupLetter, KNOCKOUT_GROUP} from "@/app/util/group-matches";
+import {computePredictedStandings} from "@/app/util/predicted-standings";
 
 export default async function Home({
     params
@@ -64,6 +65,8 @@ export default async function Home({
 
     const streaks = computeStreakStats(games)
     const matchesByGroup = bucketMatchesByGroupLetter(standings.groups, games)
+    const predictedStandingsByGroup = computePredictedStandings(standings.groups, games)
+    const actualStandingsByGroup = Object.fromEntries(standings.groups.map(g => [g.group, g.standings]))
     const groupOrder = [
         ...standings.groups.map(g => g.group).filter(group => matchesByGroup[group]?.length),
         ...(matchesByGroup[KNOCKOUT_GROUP]?.length ? [KNOCKOUT_GROUP] : []),
@@ -156,7 +159,13 @@ export default async function Home({
                 <section className="space-y-4">
                     <h2 className={SECTION_EYEBROW + " text-center"}>Match history</h2>
                     {games.length > 0 ? (
-                        <HistoryGroupFilter matchesByGroup={matchesByGroup} groupOrder={groupOrder} initialGroup={initialGroup}/>
+                        <HistoryGroupFilter
+                            matchesByGroup={matchesByGroup}
+                            groupOrder={groupOrder}
+                            initialGroup={initialGroup}
+                            predictedStandingsByGroup={predictedStandingsByGroup}
+                            actualStandingsByGroup={actualStandingsByGroup}
+                        />
                     ) : (
                         <p className="py-8 text-center text-sm text-slate-500 dark:text-gray-400">No completed matches yet — check back once games have been played.</p>
                     )}
