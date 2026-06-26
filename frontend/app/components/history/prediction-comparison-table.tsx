@@ -129,9 +129,7 @@ export default function PredictionComparisonTable({group, actualStandings, predi
                             const delta = actualPosition != null ? row.position - actualPosition : undefined
                             return (
                                 <div key={row.teamId} className={`flex items-center gap-1.5 border-t border-slate-900/5 px-3 py-2 dark:border-white/5 ${positionAccent(row.position)}`}>
-                                    <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${positionDot(row.position)}`}/>
-                                    <span className="w-3 shrink-0 text-xs font-semibold text-slate-500 dark:text-gray-400">{row.position}</span>
-                                    {delta != null && <CallDelta delta={delta}/>}
+                                    <span className="flex w-4 shrink-0 justify-center">{delta != null && <CallDelta delta={delta}/>}</span>
                                     <FlagImage code={row.flagCode} name={row.teamName} size={20}/>
                                     <span className="ml-auto tabular-nums font-black text-slate-900 dark:text-white">{row.points}</span>
                                 </div>
