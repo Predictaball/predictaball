@@ -1,19 +1,25 @@
 'use client'
 
 import React, {useState} from "react"
-import {Match} from "@/client"
+import {GroupStandingRow, Match} from "@/client"
 import HistoryMatchCard from "@/app/components/history/history-match-card"
+import GroupTable from "@/app/components/standings/group-table"
 import {KNOCKOUT_GROUP} from "@/app/util/group-matches"
+import {SECTION_EYEBROW} from "@/app/util/css-classes"
 
 interface HistoryGroupFilterProps {
     matchesByGroup: Record<string, Match[]>
     groupOrder: string[]
     initialGroup?: string
+    predictedStandingsByGroup: Record<string, GroupStandingRow[]>
+    actualStandingsByGroup: Record<string, GroupStandingRow[]>
 }
 
-export default function HistoryGroupFilter({matchesByGroup, groupOrder, initialGroup}: HistoryGroupFilterProps): React.JSX.Element {
+export default function HistoryGroupFilter({matchesByGroup, groupOrder, initialGroup, predictedStandingsByGroup, actualStandingsByGroup}: HistoryGroupFilterProps): React.JSX.Element {
     const [active, setActive] = useState(initialGroup ?? groupOrder[0])
     const matches = matchesByGroup[active] ?? []
+    const predictedStandings = predictedStandingsByGroup[active]
+    const actualStandings = actualStandingsByGroup[active]
 
     return (
         <div className="space-y-4">
@@ -37,6 +43,19 @@ export default function HistoryGroupFilter({matchesByGroup, groupOrder, initialG
                             </button>
                         )
                     })}
+                </div>
+            )}
+
+            {active !== KNOCKOUT_GROUP && predictedStandings && actualStandings && (
+                <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="space-y-2">
+                        <p className={SECTION_EYEBROW + " text-center"}>Your predicted table</p>
+                        <GroupTable group={active} standings={predictedStandings}/>
+                    </div>
+                    <div className="space-y-2">
+                        <p className={SECTION_EYEBROW + " text-center"}>Actual table</p>
+                        <GroupTable group={active} standings={actualStandings}/>
+                    </div>
                 </div>
             )}
 
