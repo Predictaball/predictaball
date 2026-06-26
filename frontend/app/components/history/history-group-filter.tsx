@@ -39,7 +39,7 @@ export default function HistoryGroupFilter({matchesByGroup, groupOrder, initialG
                                         : "bg-slate-900/5 text-slate-600 hover:bg-slate-900/10 dark:bg-white/5 dark:text-gray-300 dark:hover:bg-white/10"
                                 }`}
                             >
-                                {group === KNOCKOUT_GROUP ? group : `Group ${group}`}
+                                {group}
                             </button>
                         )
                     })}
@@ -52,8 +52,8 @@ export default function HistoryGroupFilter({matchesByGroup, groupOrder, initialG
                     <PredictionComparisonTable group={active} actualStandings={actualStandings} predictedStandings={predictedStandings}/>
                     <p className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-center text-[11px] text-slate-500 dark:text-gray-400">
                         <span><span className="font-semibold text-slate-600 dark:text-gray-300">Your call</span> = where you predicted each team.</span>
-                        <span className="inline-flex items-center gap-1"><span className="font-bold text-emerald-600 dark:text-emerald-400">▲</span> finished higher</span>
-                        <span className="inline-flex items-center gap-1"><span className="font-bold text-rose-600 dark:text-rose-400">▼</span> finished lower</span>
+                        <span className="inline-flex items-center gap-1"><span className="font-bold text-emerald-600 dark:text-emerald-400">▲</span> predicted higher than they finished</span>
+                        <span className="inline-flex items-center gap-1"><span className="font-bold text-rose-600 dark:text-rose-400">▼</span> predicted lower than they finished</span>
                         <span className="inline-flex items-center gap-1"><span className="font-bold text-emerald-600 dark:text-emerald-400">✓</span> spot on</span>
                     </p>
                 </div>
