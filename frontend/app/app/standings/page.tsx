@@ -8,17 +8,13 @@ import ThirdPlacedTable from "@/app/components/standings/third-placed-table"
 import StandingsRefresher from "@/app/components/standings/standings-refresher"
 import StandingsGroups from "@/app/components/standings/standings-groups"
 import type {GroupMatch} from "@/app/components/flags/group-venue-map"
+import {buildTeamGroupMap} from "@/app/util/group-matches"
 
 export const dynamic = "force-dynamic"
 
-// Matches don't carry a group letter, so we resolve it from the standings: both
-// teams in a group-stage fixture share a group, so a team-name lookup places the
-// fixture. Returns the group-stage fixtures bucketed by group.
+// Returns the group-stage fixtures bucketed by group.
 function bucketMatchesByGroup(groups: Standings["groups"], matches: Match[]): Record<string, GroupMatch[]> {
-    const teamGroup = new Map<string, string>()
-    for (const g of groups) {
-        for (const row of g.standings) teamGroup.set(row.teamName.toLowerCase(), g.group)
-    }
+    const teamGroup = buildTeamGroupMap(groups)
 
     const seen = new Set<string>()
     const byGroup: Record<string, GroupMatch[]> = {}
