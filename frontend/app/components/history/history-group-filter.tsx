@@ -48,14 +48,8 @@ export default function HistoryGroupFilter({matchesByGroup, groupOrder, initialG
 
             {active !== KNOCKOUT_GROUP && predictedStandings && actualStandings && (
                 <div className="space-y-2">
-                    <p className={SECTION_EYEBROW + " text-center"}>Final table vs your prediction</p>
+                    <p className={SECTION_EYEBROW + " text-center"}>Table vs your prediction</p>
                     <PredictionComparisonTable group={active} actualStandings={actualStandings} predictedStandings={predictedStandings}/>
-                    <p className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-center text-[11px] text-slate-500 dark:text-gray-400">
-                        <span><span className="font-semibold text-slate-600 dark:text-gray-300">Your call</span> = where you predicted each team.</span>
-                        <span className="inline-flex items-center gap-1"><span className="font-bold text-emerald-600 dark:text-emerald-400">▲</span> predicted higher than they finished</span>
-                        <span className="inline-flex items-center gap-1"><span className="font-bold text-rose-600 dark:text-rose-400">▼</span> predicted lower than they finished</span>
-                        <span className="inline-flex items-center gap-1"><span className="font-bold text-emerald-600 dark:text-emerald-400">✓</span> spot on</span>
-                    </p>
                 </div>
             )}
 
