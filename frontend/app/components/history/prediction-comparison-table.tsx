@@ -23,7 +23,7 @@ function CallDelta({delta}: {delta: number}): React.JSX.Element {
                 up ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"
             }`}
         >
-            <span aria-hidden>{up ? "▲" : "▼"}</span>{Math.abs(delta)}
+            <span aria-hidden>{up ? "▲" : "▼"}</span>
         </span>
     )
 }
