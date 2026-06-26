@@ -4,9 +4,10 @@ import {FlagImage} from "@/app/components/predictions/flag-image"
 import {positionAccent, positionDot} from "@/app/components/standings/group-table"
 
 /**
- * Diff arrow for the "Your call" column. `delta` is `predictedPosition -
- * actualPosition`, so a positive value means the team finished higher (a
- * smaller position number) than the user predicted — an up arrow.
+ * Diff arrow showing how a team's real finish compares to where the user
+ * predicted it. `delta` is `predictedPosition - actualPosition`, so a positive
+ * value means the team finished higher (a smaller position number) than the
+ * user predicted — an up arrow.
  */
 function CallDelta({delta}: {delta: number}): React.JSX.Element {
     if (delta === 0) {
@@ -34,13 +35,19 @@ interface PredictionComparisonTableProps {
 }
 
 /**
- * A single table that merges a user's predicted group table with the real one.
- * Rows follow the actual final standings; the "Your call" column shows where
- * the user predicted each team, with an arrow for how far reality differed.
+ * Compares a user's predicted group table with the real one.
+ *
+ * On wider screens it renders a single table that follows the actual final
+ * standings, with a "Your call" column showing the predicted position and an
+ * arrow for how far reality differed. On mobile it splits into two compact
+ * flag-only mini-tables — actual on the left, predicted on the right — with the
+ * diff arrows on the predicted side.
  */
 export default function PredictionComparisonTable({group, actualStandings, predictedStandings}: PredictionComparisonTableProps): React.JSX.Element {
     const predictedPositionByTeam: Record<string, number> = {}
     for (const row of predictedStandings) predictedPositionByTeam[row.teamId] = row.position
+    const actualPositionByTeam: Record<string, number> = {}
+    for (const row of actualStandings) actualPositionByTeam[row.teamId] = row.position
 
     return (
         <div className="relative rounded-3xl bg-gradient-to-br from-slate-900/15 to-slate-900/5 dark:from-white/15 dark:to-white/5 p-[1px] shadow-xl shadow-slate-900/5 dark:shadow-cyan-500/5">
@@ -52,14 +59,16 @@ export default function PredictionComparisonTable({group, actualStandings, predi
                     <span className="text-sm font-bold text-slate-700 dark:text-gray-200">Group {group}</span>
                     <span className="ml-auto text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-gray-500">Final vs your call</span>
                 </div>
-                <table className="w-full text-sm">
+
+                {/* Desktop: single actual-anchored table with a "Your call" column */}
+                <table className="hidden w-full text-sm sm:table">
                     <thead>
                         <tr className="text-[11px] uppercase tracking-wider text-slate-400 dark:text-gray-500">
                             <th className="py-1.5 pl-4 pr-1 text-left font-semibold">#</th>
                             <th className="py-1.5 px-1 text-left font-semibold">Team</th>
-                            <th className="py-1.5 px-1 text-center font-semibold w-7 hidden sm:table-cell">W</th>
-                            <th className="py-1.5 px-1 text-center font-semibold w-7 hidden sm:table-cell">D</th>
-                            <th className="py-1.5 px-1 text-center font-semibold w-7 hidden sm:table-cell">L</th>
+                            <th className="py-1.5 px-1 text-center font-semibold w-7">W</th>
+                            <th className="py-1.5 px-1 text-center font-semibold w-7">D</th>
+                            <th className="py-1.5 px-1 text-center font-semibold w-7">L</th>
                             <th className="py-1.5 px-1 text-center font-semibold w-9">Pts</th>
                             <th className="py-1.5 pl-1 pr-4 text-center font-semibold">Your call</th>
                         </tr>
@@ -82,9 +91,9 @@ export default function PredictionComparisonTable({group, actualStandings, predi
                                             <span className="truncate font-semibold text-slate-800 dark:text-gray-100">{row.teamName}</span>
                                         </span>
                                     </td>
-                                    <td className="py-2 px-1 text-center tabular-nums text-slate-600 dark:text-gray-300 hidden sm:table-cell">{row.won}</td>
-                                    <td className="py-2 px-1 text-center tabular-nums text-slate-600 dark:text-gray-300 hidden sm:table-cell">{row.drawn}</td>
-                                    <td className="py-2 px-1 text-center tabular-nums text-slate-600 dark:text-gray-300 hidden sm:table-cell">{row.lost}</td>
+                                    <td className="py-2 px-1 text-center tabular-nums text-slate-600 dark:text-gray-300">{row.won}</td>
+                                    <td className="py-2 px-1 text-center tabular-nums text-slate-600 dark:text-gray-300">{row.drawn}</td>
+                                    <td className="py-2 px-1 text-center tabular-nums text-slate-600 dark:text-gray-300">{row.lost}</td>
                                     <td className="py-2 px-1 text-center tabular-nums font-black text-slate-900 dark:text-white">{row.points}</td>
                                     <td className="py-2 pl-1 pr-4">
                                         <span className="flex items-center justify-center gap-1.5">
@@ -99,6 +108,37 @@ export default function PredictionComparisonTable({group, actualStandings, predi
                         })}
                     </tbody>
                 </table>
+
+                {/* Mobile: partitioned actual | predicted, flags only */}
+                <div className="grid grid-cols-2 sm:hidden">
+                    <div>
+                        <p className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-gray-500">Actual</p>
+                        {actualStandings.map(row => (
+                            <div key={row.teamId} className={`flex items-center gap-1.5 border-t border-slate-900/5 px-3 py-2 dark:border-white/5 ${positionAccent(row.position)}`}>
+                                <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${positionDot(row.position)}`}/>
+                                <span className="w-3 shrink-0 text-xs font-semibold text-slate-500 dark:text-gray-400">{row.position}</span>
+                                <FlagImage code={row.flagCode} name={row.teamName} size={20}/>
+                                <span className="ml-auto tabular-nums font-black text-slate-900 dark:text-white">{row.points}</span>
+                            </div>
+                        ))}
+                    </div>
+                    <div className="border-l border-slate-900/10 dark:border-white/10">
+                        <p className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-gray-500">Predicted</p>
+                        {predictedStandings.map(row => {
+                            const actualPosition = actualPositionByTeam[row.teamId]
+                            const delta = actualPosition != null ? row.position - actualPosition : undefined
+                            return (
+                                <div key={row.teamId} className={`flex items-center gap-1.5 border-t border-slate-900/5 px-3 py-2 dark:border-white/5 ${positionAccent(row.position)}`}>
+                                    <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${positionDot(row.position)}`}/>
+                                    <span className="w-3 shrink-0 text-xs font-semibold text-slate-500 dark:text-gray-400">{row.position}</span>
+                                    {delta != null && <CallDelta delta={delta}/>}
+                                    <FlagImage code={row.flagCode} name={row.teamName} size={20}/>
+                                    <span className="ml-auto tabular-nums font-black text-slate-900 dark:text-white">{row.points}</span>
+                                </div>
+                            )
+                        })}
+                    </div>
+                </div>
             </div>
         </div>
     )
