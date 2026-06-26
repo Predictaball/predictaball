@@ -6,53 +6,19 @@ import {FlagImage} from "@/app/components/predictions/flag-image"
  * Background tint for a row based on where the team sits. Top two qualify for
  * the knockouts directly; third place may still go through as a best third.
  */
-function positionAccent(position: number): string {
+export function positionAccent(position: number): string {
     if (position <= 2) return "bg-emerald-500/10 dark:bg-emerald-400/10"
     if (position === 3) return "bg-amber-500/10 dark:bg-amber-400/10"
     return ""
 }
 
-function positionDot(position: number): string {
+export function positionDot(position: number): string {
     if (position <= 2) return "bg-emerald-500"
     if (position === 3) return "bg-amber-500"
     return "bg-slate-300 dark:bg-white/20"
 }
 
-/**
- * Small arrow showing how a team's real finish differs from where it sits in
- * this table. `delta` is `thisTablePosition - actualPosition`, so a positive
- * value means the team actually finished higher (a smaller position number)
- * than shown here — an up arrow.
- */
-function PositionDelta({delta}: {delta: number}): React.JSX.Element {
-    if (delta === 0) {
-        return (
-            <span title="Exactly as you predicted" className="shrink-0 text-[11px] font-bold leading-none text-slate-400 dark:text-gray-500">=</span>
-        )
-    }
-    const up = delta > 0
-    return (
-        <span
-            title={`Actually finished ${Math.abs(delta)} place${Math.abs(delta) === 1 ? "" : "s"} ${up ? "higher" : "lower"}`}
-            className={`inline-flex shrink-0 items-center gap-px text-[11px] font-bold leading-none tabular-nums ${
-                up ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"
-            }`}
-        >
-            <span aria-hidden>{up ? "▲" : "▼"}</span>{Math.abs(delta)}
-        </span>
-    )
-}
-
-interface GroupTableProps {
-    group: string
-    standings: GroupStandingRow[]
-    /** Show country flags next to team names (default true). */
-    showFlags?: boolean
-    /** Per-team `thisTablePosition - actualPosition`, rendered as a diff arrow. */
-    positionDeltas?: Record<string, number>
-}
-
-export default function GroupTable({group, standings, showFlags = true, positionDeltas}: GroupTableProps): React.JSX.Element {
+export default function GroupTable({group, standings}: {group: string; standings: GroupStandingRow[]}): React.JSX.Element {
     return (
         <div className="relative rounded-3xl bg-gradient-to-br from-slate-900/15 to-slate-900/5 dark:from-white/15 dark:to-white/5 p-[1px] shadow-xl shadow-slate-900/5 dark:shadow-cyan-500/5">
             <div className="rounded-3xl bg-white/70 dark:bg-white/[0.03] backdrop-blur-sm overflow-hidden">
@@ -86,9 +52,8 @@ export default function GroupTable({group, standings, showFlags = true, position
                                 </td>
                                 <td className="py-2 px-1">
                                     <span className="flex items-center gap-2 min-w-0">
-                                        {showFlags && <FlagImage code={row.flagCode} name={row.teamName} size={22}/>}
+                                        <FlagImage code={row.flagCode} name={row.teamName} size={22}/>
                                         <span className="truncate font-semibold text-slate-800 dark:text-gray-100">{row.teamName}</span>
-                                        {positionDeltas && <PositionDelta delta={positionDeltas[row.teamId] ?? 0}/>}
                                     </span>
                                 </td>
                                 <td className="py-2 px-1 text-center tabular-nums text-slate-600 dark:text-gray-300">{row.played}</td>

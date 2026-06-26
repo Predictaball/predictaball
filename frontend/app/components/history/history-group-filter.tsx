@@ -3,7 +3,7 @@
 import React, {useState} from "react"
 import {GroupStandingRow, Match} from "@/client"
 import HistoryMatchCard from "@/app/components/history/history-match-card"
-import GroupTable from "@/app/components/standings/group-table"
+import PredictionComparisonTable from "@/app/components/history/prediction-comparison-table"
 import {KNOCKOUT_GROUP} from "@/app/util/group-matches"
 import {SECTION_EYEBROW} from "@/app/util/css-classes"
 
@@ -20,16 +20,6 @@ export default function HistoryGroupFilter({matchesByGroup, groupOrder, initialG
     const matches = matchesByGroup[active] ?? []
     const predictedStandings = predictedStandingsByGroup[active]
     const actualStandings = actualStandingsByGroup[active]
-
-    // For each team, how its real finish compares to where you predicted it:
-    // positive = it actually finished higher (smaller position) than predicted.
-    const actualPositionByTeam: Record<string, number> = {}
-    for (const row of actualStandings ?? []) actualPositionByTeam[row.teamId] = row.position
-    const predictedDeltas: Record<string, number> = {}
-    for (const row of predictedStandings ?? []) {
-        const actualPosition = actualPositionByTeam[row.teamId]
-        if (actualPosition != null) predictedDeltas[row.teamId] = row.position - actualPosition
-    }
 
     return (
         <div className="space-y-4">
@@ -58,21 +48,13 @@ export default function HistoryGroupFilter({matchesByGroup, groupOrder, initialG
 
             {active !== KNOCKOUT_GROUP && predictedStandings && actualStandings && (
                 <div className="space-y-2">
-                    <div className="grid gap-4 sm:grid-cols-2">
-                        <div className="space-y-2">
-                            <p className={SECTION_EYEBROW + " text-center"}>Your predicted table</p>
-                            <GroupTable group={active} standings={predictedStandings} positionDeltas={predictedDeltas}/>
-                        </div>
-                        <div className="space-y-2">
-                            <p className={SECTION_EYEBROW + " text-center"}>Actual table</p>
-                            <GroupTable group={active} standings={actualStandings} showFlags={false}/>
-                        </div>
-                    </div>
+                    <p className={SECTION_EYEBROW + " text-center"}>Final table vs your prediction</p>
+                    <PredictionComparisonTable group={active} actualStandings={actualStandings} predictedStandings={predictedStandings}/>
                     <p className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-center text-[11px] text-slate-500 dark:text-gray-400">
-                        <span>Arrows show each team&apos;s real finish vs your prediction:</span>
+                        <span><span className="font-semibold text-slate-600 dark:text-gray-300">Your call</span> = where you predicted each team.</span>
                         <span className="inline-flex items-center gap-1"><span className="font-bold text-emerald-600 dark:text-emerald-400">▲</span> finished higher</span>
                         <span className="inline-flex items-center gap-1"><span className="font-bold text-rose-600 dark:text-rose-400">▼</span> finished lower</span>
-                        <span className="inline-flex items-center gap-1"><span className="font-bold text-slate-400 dark:text-gray-500">=</span> spot on</span>
+                        <span className="inline-flex items-center gap-1"><span className="font-bold text-emerald-600 dark:text-emerald-400">✓</span> spot on</span>
                     </p>
                 </div>
             )}
