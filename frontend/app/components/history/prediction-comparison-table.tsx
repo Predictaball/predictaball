@@ -57,13 +57,11 @@ export default function PredictionComparisonTable({group, actualStandings, predi
                         <tr className="text-[11px] uppercase tracking-wider text-slate-400 dark:text-gray-500">
                             <th className="py-1.5 pl-4 pr-1 text-left font-semibold">#</th>
                             <th className="py-1.5 px-1 text-left font-semibold">Team</th>
-                            <th className="py-1.5 px-1 text-center font-semibold">Your call</th>
-                            <th className="py-1.5 px-1 text-center font-semibold w-7">P</th>
                             <th className="py-1.5 px-1 text-center font-semibold w-7 hidden sm:table-cell">W</th>
                             <th className="py-1.5 px-1 text-center font-semibold w-7 hidden sm:table-cell">D</th>
                             <th className="py-1.5 px-1 text-center font-semibold w-7 hidden sm:table-cell">L</th>
-                            <th className="py-1.5 px-1 text-center font-semibold w-9">GD</th>
-                            <th className="py-1.5 pl-1 pr-4 text-center font-semibold w-9">Pts</th>
+                            <th className="py-1.5 px-1 text-center font-semibold w-9">Pts</th>
+                            <th className="py-1.5 pl-1 pr-4 text-center font-semibold">Your call</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -84,7 +82,11 @@ export default function PredictionComparisonTable({group, actualStandings, predi
                                             <span className="truncate font-semibold text-slate-800 dark:text-gray-100">{row.teamName}</span>
                                         </span>
                                     </td>
-                                    <td className="py-2 px-1">
+                                    <td className="py-2 px-1 text-center tabular-nums text-slate-600 dark:text-gray-300 hidden sm:table-cell">{row.won}</td>
+                                    <td className="py-2 px-1 text-center tabular-nums text-slate-600 dark:text-gray-300 hidden sm:table-cell">{row.drawn}</td>
+                                    <td className="py-2 px-1 text-center tabular-nums text-slate-600 dark:text-gray-300 hidden sm:table-cell">{row.lost}</td>
+                                    <td className="py-2 px-1 text-center tabular-nums font-black text-slate-900 dark:text-white">{row.points}</td>
+                                    <td className="py-2 pl-1 pr-4">
                                         <span className="flex items-center justify-center gap-1.5">
                                             <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-md bg-slate-900/5 px-1 text-xs font-bold tabular-nums text-slate-600 dark:bg-white/10 dark:text-gray-300">
                                                 {predicted ?? "–"}
@@ -92,12 +94,6 @@ export default function PredictionComparisonTable({group, actualStandings, predi
                                             {delta != null && <CallDelta delta={delta}/>}
                                         </span>
                                     </td>
-                                    <td className="py-2 px-1 text-center tabular-nums text-slate-600 dark:text-gray-300">{row.played}</td>
-                                    <td className="py-2 px-1 text-center tabular-nums text-slate-600 dark:text-gray-300 hidden sm:table-cell">{row.won}</td>
-                                    <td className="py-2 px-1 text-center tabular-nums text-slate-600 dark:text-gray-300 hidden sm:table-cell">{row.drawn}</td>
-                                    <td className="py-2 px-1 text-center tabular-nums text-slate-600 dark:text-gray-300 hidden sm:table-cell">{row.lost}</td>
-                                    <td className="py-2 px-1 text-center tabular-nums text-slate-600 dark:text-gray-300">{row.goalDifference > 0 ? `+${row.goalDifference}` : row.goalDifference}</td>
-                                    <td className="py-2 pl-1 pr-4 text-center tabular-nums font-black text-slate-900 dark:text-white">{row.points}</td>
                                 </tr>
                             )
                         })}
