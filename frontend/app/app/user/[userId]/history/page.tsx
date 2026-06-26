@@ -1,5 +1,6 @@
 import {getConfigWithAuthHeader} from "@/app/api/client-config"
 import HistoryGroupFilter from "@/app/components/history/history-group-filter"
+import HistoryMatchCard from "@/app/components/history/history-match-card"
 import {LeaderboardInner, LeagueApi, ListMatchesFilterTypeEnum, Match, MatchApi, Standings, StandingsApi} from "@/client"
 import BackButton from "@/app/components/back-button";
 import Link from "next/link";
@@ -78,6 +79,9 @@ export default async function Home({
     const initialGroup = mostRecentMatch
         ? groupOrder.find(group => matchesByGroup[group]?.some(m => m.matchId === mostRecentMatch.matchId))
         : undefined
+    const recentMatches = [...games]
+        .sort((a, b) => b.datetime.valueOf() - a.datetime.valueOf())
+        .slice(0, 3)
     const user = leaderboardEntry?.user
     const fullName = user ? `${user.firstName} ${user.familyName}` : "Player"
     const initials = user ? `${user.firstName.charAt(0)}${user.familyName.charAt(0)}` : "?"
@@ -155,6 +159,17 @@ export default async function Home({
                 </section>
 
                 <StreakBadges stats={streaks} />
+
+                {recentMatches.length > 0 && (
+                    <section className="space-y-4">
+                        <h2 className={SECTION_EYEBROW + " text-center"}>Recent matches</h2>
+                        <div className="flex flex-col items-center gap-3">
+                            {recentMatches.map(match => (
+                                <HistoryMatchCard match={match} key={match.matchId}/>
+                            ))}
+                        </div>
+                    </section>
+                )}
 
                 <section className="space-y-4">
                     <h2 className={SECTION_EYEBROW + " text-center"}>Match history</h2>
