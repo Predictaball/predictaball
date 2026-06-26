@@ -6,13 +6,13 @@ import {FlagImage} from "@/app/components/predictions/flag-image"
  * Background tint for a row based on where the team sits. Top two qualify for
  * the knockouts directly; third place may still go through as a best third.
  */
-function positionAccent(position: number): string {
+export function positionAccent(position: number): string {
     if (position <= 2) return "bg-emerald-500/10 dark:bg-emerald-400/10"
     if (position === 3) return "bg-amber-500/10 dark:bg-amber-400/10"
     return ""
 }
 
-function positionDot(position: number): string {
+export function positionDot(position: number): string {
     if (position <= 2) return "bg-emerald-500"
     if (position === 3) return "bg-amber-500"
     return "bg-slate-300 dark:bg-white/20"
