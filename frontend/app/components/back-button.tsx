@@ -11,7 +11,7 @@ export default function BackButton(): React.JSX.Element {
     const router = useRouter()
 
     return (
-        <Button isIconOnly radius="full" className={BRAND_GHOST_BUTTON_CLASS} onPress={() => router.push("/app")}>
+        <Button isIconOnly aria-label="Back to app" radius="full" className={BRAND_GHOST_BUTTON_CLASS} onPress={() => router.push("/app")}>
             <BackIcon/>
         </Button>
     )

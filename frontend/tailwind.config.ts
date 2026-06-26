@@ -28,12 +28,20 @@ const config: Config = {
                 fastpulse: 'pulsing 1s linear infinite',
                 scroll: 'scroll 55s linear infinite',
                 scrollReverse: 'scrollReverse 45s linear infinite',
-                gradient: 'gradient 6s ease infinite'
+                gradient: 'gradient 6s ease infinite',
+                // Section entrance: fade up into place. `both` fill keeps the
+                // element hidden through any animation-delay (no flash) and
+                // pinned in place once it lands.
+                'fade-rise': 'fade-rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) both',
             },
             keyframes: {
                 wiggle: {
                     '0%, 100%': {transform: 'rotate(-3deg)'},
                     '50%': {transform: 'rotate(3deg)'},
+                },
+                'fade-rise': {
+                    '0%': {opacity: '0', transform: 'translateY(14px)'},
+                    '100%': {opacity: '1', transform: 'translateY(0)'},
                 },
                 slide: {
                     '0%': {

@@ -1,6 +1,5 @@
 import React from "react"
-import Link from "next/link"
-import BackButton from "@/app/components/back-button"
+import PageHeader from "@/app/components/page-header"
 import {getConfigWithAuthHeader} from "@/app/api/client-config"
 import {ListMatchesFilterTypeEnum, Match, MatchApi, MatchRoundEnum, Standings, StandingsApi} from "@/client"
 import {PitchPerspective} from "@/app/components/atmosphere"
@@ -67,22 +66,14 @@ export default async function StandingsPage(
     const matchesByGroup = bucketMatchesByGroup(standings.groups, [...liveMatches, ...upcomingMatches, ...completedMatches])
 
     return (
-        <main className="relative min-h-svh bg-slate-50 text-slate-900 dark:bg-gray-900 dark:text-white overflow-x-hidden">
+        <main className="relative min-h-svh bg-slate-50 text-slate-900 dark:bg-gray-900 dark:text-white overflow-x-clip">
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(59,130,246,0.08),transparent_55%),radial-gradient(ellipse_at_bottom,rgba(34,197,94,0.05),transparent_60%)] dark:bg-[radial-gradient(ellipse_at_top,rgba(59,130,246,0.15),transparent_55%),radial-gradient(ellipse_at_bottom,rgba(34,197,94,0.10),transparent_60%)]"/>
             <div className="pointer-events-none absolute inset-x-0 top-0 h-svh"><PitchPerspective/></div>
 
             {hasLiveMatch && <StandingsRefresher/>}
 
             <div className="relative w-full max-w-5xl mx-auto px-4 sm:px-6 py-6 space-y-6">
-                <header className="relative flex items-center justify-between gap-3">
-                    <BackButton/>
-                    <Link href="/" className="hidden sm:flex items-baseline font-black tracking-tight text-lg absolute left-1/2 -translate-x-1/2">
-                        <span className="bg-gradient-to-r from-blue-500 via-cyan-300 to-teal-300 bg-clip-text text-transparent">predicta</span>
-                        <span className="text-slate-900 dark:text-white">ball</span>
-                        <span className="ml-0.5 text-[10px] font-medium tracking-[0.2em] text-slate-500 dark:text-gray-400">.LIVE</span>
-                    </Link>
-                    <div className="w-10"/>
-                </header>
+                <PageHeader/>
 
                 <div className="flex flex-col items-center text-center">
                     <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 via-cyan-400 to-teal-300 shadow-lg shadow-cyan-500/30">
