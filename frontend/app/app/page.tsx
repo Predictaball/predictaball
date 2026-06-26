@@ -11,6 +11,8 @@ import { Toaster } from "react-hot-toast";
 import AdminButton from "@/app/components/admin-button";
 import ThemeToggle from "@/app/components/theme-toggle";
 import SectionHeading from "@/app/components/section-heading";
+import Wordmark from "@/app/components/wordmark";
+import SurfaceCard from "@/app/components/surface-card";
 import {PitchPerspective} from "@/app/components/atmosphere";
 import LeaguesHelp from "@/app/components/leaderboard/leagues-help";
 import MatchesHelp from "@/app/components/predictions/matches-help";
@@ -65,19 +67,13 @@ const Home = async ({searchParams}: {searchParams: Promise<Record<string, string
     const firstMatchId = (liveMatches[0] ?? firstUnpredictedUpcoming ?? upcomingMatches[0])?.matchId
 
     return (
-        <main className="relative min-h-screen bg-slate-50 text-slate-900 dark:bg-gray-900 dark:text-white overflow-x-hidden">
+        <main className="relative min-h-screen bg-slate-50 text-slate-900 dark:bg-gray-900 dark:text-white overflow-x-clip">
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(59,130,246,0.08),transparent_55%),radial-gradient(ellipse_at_bottom,rgba(34,197,94,0.05),transparent_60%)] dark:bg-[radial-gradient(ellipse_at_top,rgba(59,130,246,0.15),transparent_55%),radial-gradient(ellipse_at_bottom,rgba(34,197,94,0.10),transparent_60%)]"/>
             <div className="pointer-events-none absolute inset-x-0 bottom-0 h-svh"><PitchPerspective/></div>
 
             <div className="relative w-full max-w-screen-lg mx-auto px-4 sm:px-6 py-6 space-y-10">
-                <Toaster />
-
-                <header className="flex items-center justify-between">
-                    <Link href="/" className="flex items-baseline font-black tracking-tight text-lg">
-                        <span className="bg-gradient-to-r from-blue-500 via-cyan-300 to-teal-300 bg-clip-text text-transparent">predicta</span>
-                        <span className="text-slate-900 dark:text-white">ball</span>
-                        <span className="ml-0.5 text-[10px] font-medium tracking-[0.2em] text-slate-500 dark:text-gray-400">.LIVE</span>
-                    </Link>
+                <header className="sticky top-0 z-40 -mx-4 sm:-mx-6 -mt-6 px-4 sm:px-6 py-3 flex items-center justify-between border-b border-slate-200/60 bg-slate-50/75 backdrop-blur-md dark:border-white/5 dark:bg-gray-900/75">
+                    <Wordmark/>
                     <div className="flex items-center gap-2">
                         <ThemeToggle sizeClassName="h-8 w-8" />
                         <AdminButton />
@@ -95,12 +91,16 @@ const Home = async ({searchParams}: {searchParams: Promise<Record<string, string
                     </div>
                 </header>
 
+                <Toaster />
+
                 <MatchSelectionProvider initialId={firstMatchId}>
                     <PredictNowBanner upcomingMatches={upcomingMatches} />
 
-                    <HeadlineSuspense tournamentStarted={tournamentStarted} nextKickoff={tournamentState?.nextKickoff} hasLiveMatch={liveMatches.length > 0} supportedTeamId={profile?.supportedTeamId} streaks={streaks} />
+                    <div className="animate-fade-rise motion-reduce:animate-none">
+                        <HeadlineSuspense tournamentStarted={tournamentStarted} nextKickoff={tournamentState?.nextKickoff} hasLiveMatch={liveMatches.length > 0} supportedTeamId={profile?.supportedTeamId} streaks={streaks} />
+                    </div>
 
-                    <section id="matches" className="space-y-4">
+                    <section id="matches" className="space-y-4 animate-fade-rise animation-delay-75 motion-reduce:animate-none">
                         <SectionHeading
                             title="Matches"
                             count={liveMatches.length + upcomingMatches.length}
@@ -116,16 +116,14 @@ const Home = async ({searchParams}: {searchParams: Promise<Record<string, string
                     <PredictionPanel liveMatches={liveMatches} upcomingMatches={upcomingMatches} completedMatches={recentCompleted} historyHref={historyHref} userChips={userChips} streaks={streaks} />
                 </section>
 
-                <section className="space-y-4">
+                <section className="space-y-4 animate-fade-rise animation-delay-150 motion-reduce:animate-none">
                     <SectionHeading title="Your Leagues" count={leagues.length} action={<LeaguesHelp/>}/>
-                    <div className="relative rounded-3xl bg-gradient-to-br from-slate-900/15 to-slate-900/5 dark:from-white/15 dark:to-white/5 p-[1px] shadow-xl shadow-slate-900/5 dark:shadow-cyan-500/5">
-                        <div className="rounded-3xl bg-white/60 dark:bg-white/[0.03] backdrop-blur-sm p-5 sm:p-6">
-                            <Dashboard initialLeagues={leagues} />
-                        </div>
-                    </div>
+                    <SurfaceCard>
+                        <Dashboard initialLeagues={leagues} />
+                    </SurfaceCard>
                 </section>
 
-                <section className="space-y-4">
+                <section className="space-y-4 animate-fade-rise animation-delay-300 motion-reduce:animate-none">
                     <SectionHeading
                         title="Global standing"
                         action={
@@ -134,14 +132,12 @@ const Home = async ({searchParams}: {searchParams: Promise<Record<string, string
                             </Link>
                         }
                     />
-                    <div className="relative rounded-3xl bg-gradient-to-br from-slate-900/15 to-slate-900/5 dark:from-white/15 dark:to-white/5 p-[1px] shadow-xl shadow-slate-900/5 dark:shadow-cyan-500/5">
-                        <div className="rounded-3xl bg-white/60 dark:bg-white/[0.03] backdrop-blur-sm p-5 sm:p-6">
-                            <Leaderboard shouldPaginate={false} leagueId={"global"} limit={true} />
-                        </div>
-                    </div>
+                    <SurfaceCard>
+                        <Leaderboard shouldPaginate={false} leagueId={"global"} limit={true} />
+                    </SurfaceCard>
                 </section>
 
-                <section className="space-y-4 pb-10">
+                <section className="space-y-4 pb-10 animate-fade-rise animation-delay-500 motion-reduce:animate-none">
                     <SectionHeading
                         title="Country rankings"
                         action={
@@ -150,13 +146,11 @@ const Home = async ({searchParams}: {searchParams: Promise<Record<string, string
                             </Link>
                         }
                     />
-                    <div className="relative rounded-3xl bg-gradient-to-br from-slate-900/15 to-slate-900/5 dark:from-white/15 dark:to-white/5 p-[1px] shadow-xl shadow-slate-900/5 dark:shadow-cyan-500/5">
-                        <div className="rounded-3xl bg-white/60 dark:bg-white/[0.03] backdrop-blur-sm p-5 sm:p-6">
-                            <Suspense fallback={<LeaderboardSkeleton/>}>
-                                <CountryRankingsPreview limit={5}/>
-                            </Suspense>
-                        </div>
-                    </div>
+                    <SurfaceCard>
+                        <Suspense fallback={<LeaderboardSkeleton/>}>
+                            <CountryRankingsPreview limit={5}/>
+                        </Suspense>
+                    </SurfaceCard>
                 </section>
                 </MatchSelectionProvider>
             </div>

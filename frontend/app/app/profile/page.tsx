@@ -1,10 +1,9 @@
 import React from "react"
-import Link from "next/link"
 import { Toaster } from "react-hot-toast"
 import { getConfigWithAuthHeader } from "@/app/api/client-config"
 import { UserApi } from "@/client"
 import { FlagImage } from "@/app/components/predictions/flag-image"
-import BackButton from "@/app/components/back-button"
+import PageHeader from "@/app/components/page-header"
 import RemindersToggle from "@/app/components/profile/reminders-toggle"
 import EditProfileButton from "@/app/components/profile/edit-profile-button"
 import { SECTION_EYEBROW } from "@/app/util/css-classes"
@@ -14,21 +13,13 @@ export default async function ProfilePage(): Promise<React.JSX.Element> {
     const profile = await userApi.getUserProfile().catch(() => null)
 
     return (
-        <main className="relative min-h-screen bg-slate-50 text-slate-900 dark:bg-gray-900 dark:text-white overflow-x-hidden">
+        <main className="relative min-h-screen bg-slate-50 text-slate-900 dark:bg-gray-900 dark:text-white overflow-x-clip">
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(59,130,246,0.08),transparent_55%),radial-gradient(ellipse_at_bottom,rgba(34,197,94,0.05),transparent_60%)] dark:bg-[radial-gradient(ellipse_at_top,rgba(59,130,246,0.15),transparent_55%),radial-gradient(ellipse_at_bottom,rgba(34,197,94,0.10),transparent_60%)]"/>
 
             <div className="relative w-full max-w-lg mx-auto px-4 sm:px-6 py-6 space-y-8">
                 <Toaster />
 
-                <header className="relative flex items-center justify-between">
-                    <BackButton/>
-                    <Link href="/" className="hidden sm:flex items-baseline font-black tracking-tight text-lg absolute left-1/2 -translate-x-1/2">
-                        <span className="bg-gradient-to-r from-blue-500 via-cyan-300 to-teal-300 bg-clip-text text-transparent">predicta</span>
-                        <span className="text-slate-900 dark:text-white">ball</span>
-                        <span className="ml-0.5 text-[10px] font-medium tracking-[0.2em] text-slate-500 dark:text-gray-400">.LIVE</span>
-                    </Link>
-                    <div className="w-10"/>
-                </header>
+                <PageHeader/>
 
                 {!profile && (
                     <p className="text-sm text-slate-600 dark:text-gray-300">

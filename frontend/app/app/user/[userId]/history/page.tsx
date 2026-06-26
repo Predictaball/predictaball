@@ -2,8 +2,7 @@ import {getConfigWithAuthHeader} from "@/app/api/client-config"
 import HistoryGroupFilter from "@/app/components/history/history-group-filter"
 import HistoryMatchCard from "@/app/components/history/history-match-card"
 import {LeaderboardInner, LeagueApi, ListMatchesFilterTypeEnum, Match, MatchApi, Standings, StandingsApi} from "@/client"
-import BackButton from "@/app/components/back-button";
-import Link from "next/link";
+import PageHeader from "@/app/components/page-header";
 import React from "react";
 import {getUserForm} from "@/app/components/leaderboard/get-user-form";
 import {FlagImage} from "@/app/components/predictions/flag-image";
@@ -88,19 +87,11 @@ export default async function Home({
     const totalPoints = user ? user.fixedPoints + user.livePoints : undefined
 
     return (
-        <main className="relative min-h-svh bg-slate-50 text-slate-900 dark:bg-gray-900 dark:text-white overflow-x-hidden">
+        <main className="relative min-h-svh bg-slate-50 text-slate-900 dark:bg-gray-900 dark:text-white overflow-x-clip">
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(59,130,246,0.08),transparent_55%),radial-gradient(ellipse_at_bottom,rgba(34,197,94,0.05),transparent_60%)] dark:bg-[radial-gradient(ellipse_at_top,rgba(59,130,246,0.15),transparent_55%),radial-gradient(ellipse_at_bottom,rgba(34,197,94,0.10),transparent_60%)]"/>
 
             <div className="relative w-full max-w-3xl mx-auto px-4 sm:px-6 py-6 space-y-8">
-                <header className="relative flex items-center justify-between">
-                    <BackButton/>
-                    <Link href="/" className="hidden sm:flex items-baseline font-black tracking-tight text-lg absolute left-1/2 -translate-x-1/2">
-                        <span className="bg-gradient-to-r from-blue-500 via-cyan-300 to-teal-300 bg-clip-text text-transparent">predicta</span>
-                        <span className="text-slate-900 dark:text-white">ball</span>
-                        <span className="ml-0.5 text-[10px] font-medium tracking-[0.2em] text-slate-500 dark:text-gray-400">.LIVE</span>
-                    </Link>
-                    <div className="w-10"/>
-                </header>
+                <PageHeader/>
 
                 <section className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
                     <div className="flex items-center gap-4">
