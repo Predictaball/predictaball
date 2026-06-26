@@ -7,6 +7,7 @@ import org.jetbrains.exposed.v1.core.sum
 import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.openapitools.server.models.Match
+import scorcerer.server.db.tables.MatchRound
 import scorcerer.server.db.tables.MatchTable
 import scorcerer.server.db.tables.PredictionTable
 
@@ -27,4 +28,16 @@ fun livePointsForUser(userId: String): Int {
         .select(PredictionTable.points.sum())
         .where { (PredictionTable.matchId inList liveMatchIds) and (PredictionTable.memberId eq userId) }
         .firstOrNull()?.get(PredictionTable.points.sum()) ?: 0
+}
+
+// Points earned across matches in the given rounds, live or completed (prediction.points
+// is written as soon as a match is scored, regardless of its state).
+fun pointsByUserForRounds(rounds: List<MatchRound>): Map<String, Int> {
+    val matchIds = MatchTable.selectAll().where { MatchTable.round inList rounds }.map { it[MatchTable.id] }
+    if (matchIds.isEmpty()) return emptyMap()
+    return PredictionTable
+        .select(PredictionTable.memberId, PredictionTable.points.sum())
+        .where { PredictionTable.matchId inList matchIds }
+        .groupBy(PredictionTable.memberId)
+        .associate { it[PredictionTable.memberId] to (it[PredictionTable.points.sum()] ?: 0) }
 }

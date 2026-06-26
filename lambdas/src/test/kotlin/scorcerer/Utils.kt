@@ -38,6 +38,7 @@ fun givenMatchExists(
     matchDay: Int = 1,
     homeScore: Int? = null,
     awayScore: Int? = null,
+    round: MatchRound = MatchRound.GROUP_STAGE,
 ): String {
     return (
         transaction {
@@ -48,7 +49,7 @@ fun givenMatchExists(
                 it[this.state] = matchState
                 it[this.venue] = "Test Venue"
                 it[this.matchDay] = matchDay
-                it[this.round] = MatchRound.GROUP_STAGE
+                it[this.round] = round
                 if (homeScore != null) it[this.homeScore] = homeScore
                 if (awayScore != null) it[this.awayScore] = awayScore
             }

@@ -51,25 +51,33 @@ data class OAuthSignupRequest(val userId: String, val email: String, val firstNa
 
 data class OAuthSignupResponse(val idToken: String, val refreshToken: String, val userId: String, val isAdmin: Boolean)
 
-private fun addToGlobalLeague(userId: String) {
+// Auto-create (if needed) and join a tournament-wide league that every member belongs to,
+// e.g. "global", "group-stage", "knockout".
+private fun addToStandingLeague(userId: String, leagueId: String, leagueName: String) {
     try {
         transaction {
-            val globalLeagueExists = LeagueTable.selectAll().where { LeagueTable.id eq "global" }.count() > 0
-            if (!globalLeagueExists) {
+            val leagueExists = LeagueTable.selectAll().where { LeagueTable.id eq leagueId }.count() > 0
+            if (!leagueExists) {
                 LeagueTable.insert {
-                    it[name] = "Global"
-                    it[id] = "global"
+                    it[name] = leagueName
+                    it[id] = leagueId
                     it[kind] = LeagueKind.GLOBAL
                 }
             }
             LeagueMembershipTable.insert {
                 it[memberId] = userId
-                it[leagueId] = "global"
+                it[this.leagueId] = leagueId
             }
         }
     } catch (_: Exception) {
-        // Already in global league
+        // Already a member
     }
+}
+
+private fun addToGlobalLeague(userId: String) {
+    addToStandingLeague(userId, "global", "Global")
+    addToStandingLeague(userId, "group-stage", "Group Stage")
+    addToStandingLeague(userId, "knockout", "Knockout")
 }
 
 // Auto-create (if needed) and join the league for the team a user supports.

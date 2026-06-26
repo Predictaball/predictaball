@@ -1,18 +1,27 @@
 import React, { Suspense } from "react";
 import Link from "next/link";
 import Leaderboard from "@/app/components/leaderboard/leaderboard";
+import StageTabs from "@/app/components/leaderboard/stage-tabs";
 import Share from "./share";
 import Leave from "./leave";
 import JustCreatedModal from "./just-created-modal";
 import InvitePrompt from "./invite-prompt";
 import BackButton from "@/app/components/back-button";
 import {getConfigWithAuthHeader} from "@/app/api/client-config";
-import {LeagueApi, LeagueKindEnum} from "@/client";
+import {GetLeagueLeaderboardStageEnum, LeagueApi, LeagueKindEnum} from "@/client";
 import {PitchPerspective} from "@/app/components/atmosphere";
 
+function parseStage(stageParam: string | string[] | undefined): GetLeagueLeaderboardStageEnum {
+    const value = typeof stageParam === "string" ? stageParam : undefined
+    return Object.values(GetLeagueLeaderboardStageEnum).find(stage => stage === value)
+        ?? GetLeagueLeaderboardStageEnum.All
+}
 
-export default async function Home({ params }: { params: Promise<{ leagueId: string }> }): Promise<React.JSX.Element> {
+export default async function Home(
+    { params, searchParams }: { params: Promise<{ leagueId: string }>, searchParams: Promise<{ [key: string]: string | string[] | undefined }> }
+): Promise<React.JSX.Element> {
     const { leagueId } = await params
+    const stage = parseStage((await searchParams)["stage"])
 
     const league = await new LeagueApi(await getConfigWithAuthHeader())
         .getLeague({ leagueId })
@@ -40,8 +49,9 @@ export default async function Home({ params }: { params: Promise<{ leagueId: str
                     </div>
                 </header>
 
-                <section className="flex flex-col items-center">
-                    <Leaderboard shouldPaginate={true} leagueId={leagueId} limit={false} />
+                <section className="flex flex-col items-center space-y-5">
+                    <StageTabs leagueId={leagueId} activeStage={stage} />
+                    <Leaderboard shouldPaginate={true} leagueId={leagueId} limit={false} stage={stage} />
                     {showInvitePrompt && league && (
                         <InvitePrompt leagueId={leagueId} leagueName={league.name}/>
                     )}

@@ -14,12 +14,18 @@ import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.openapitools.server.models.CreateLeague200Response
+import org.openapitools.server.models.GetLeagueLeaderboard200Response
 import org.openapitools.server.models.League
+import org.openapitools.server.models.Match
 import scorcerer.DatabaseTest
 import scorcerer.givenLeagueExists
+import scorcerer.givenMatchExists
+import scorcerer.givenPredictionExists
+import scorcerer.givenTeamExists
 import scorcerer.givenUserExists
 import scorcerer.givenUserInLeague
 import scorcerer.server.db.tables.LeagueMembershipTable
+import scorcerer.server.db.tables.MatchRound
 import scorcerer.server.fromJson
 import scorcerer.server.resources.leagueRoutes
 import scorcerer.utils.LeaderboardS3Service
@@ -102,6 +108,54 @@ class LeagueTest : DatabaseTest() {
         givenLeagueExists("test-league", "Test League")
         val response = handler(Request(Method.POST, "/league/test-league/join"))
         response.status shouldBe Status.OK
+    }
+
+    @Test
+    fun leaderboardFilteredToGroupStageOnlyCountsGroupStagePoints() {
+        givenLeagueExists("test-league", "Test League")
+        givenUserInLeague("test-user", "test-league")
+        givenUserExists("another-user", "Another")
+        givenUserInLeague("another-user", "test-league")
+        val home = givenTeamExists("Home")
+        val away = givenTeamExists("Away")
+        val groupStageMatch = givenMatchExists(home, away, matchState = Match.State.COMPLETED, round = MatchRound.GROUP_STAGE)
+        val knockoutMatch = givenMatchExists(home, away, matchState = Match.State.COMPLETED, round = MatchRound.FINAL)
+        givenPredictionExists(groupStageMatch, "test-user", 1, 0, points = 3)
+        givenPredictionExists(knockoutMatch, "test-user", 1, 0, points = 5)
+        givenPredictionExists(groupStageMatch, "another-user", 1, 0, points = 1)
+
+        val response = handler(Request(Method.GET, "/league/test-league/leaderboard?stage=GROUP_STAGE"))
+        response.status shouldBe Status.OK
+        val body: GetLeagueLeaderboard200Response = response.bodyString().fromJson()
+        val testUserEntry = body.leaderboard.find { it.user.userId == "test-user" }!!
+        val anotherUserEntry = body.leaderboard.find { it.user.userId == "another-user" }!!
+        testUserEntry.user.livePoints shouldBe 3
+        anotherUserEntry.user.livePoints shouldBe 1
+        testUserEntry.position shouldBe 1
+    }
+
+    @Test
+    fun leaderboardFilteredToKnockoutOnlyCountsKnockoutPoints() {
+        givenLeagueExists("test-league", "Test League")
+        givenUserInLeague("test-user", "test-league")
+        val home = givenTeamExists("Home")
+        val away = givenTeamExists("Away")
+        val groupStageMatch = givenMatchExists(home, away, matchState = Match.State.COMPLETED, round = MatchRound.GROUP_STAGE)
+        val knockoutMatch = givenMatchExists(home, away, matchState = Match.State.COMPLETED, round = MatchRound.SEMI_FINAL)
+        givenPredictionExists(groupStageMatch, "test-user", 1, 0, points = 3)
+        givenPredictionExists(knockoutMatch, "test-user", 1, 0, points = 5)
+
+        val response = handler(Request(Method.GET, "/league/test-league/leaderboard?stage=KNOCKOUT"))
+        response.status shouldBe Status.OK
+        val body: GetLeagueLeaderboard200Response = response.bodyString().fromJson()
+        body.leaderboard.find { it.user.userId == "test-user" }!!.user.livePoints shouldBe 5
+    }
+
+    @Test
+    fun leaderboardRejectsInvalidStage() {
+        givenLeagueExists("test-league", "Test League")
+        val response = handler(Request(Method.GET, "/league/test-league/leaderboard?stage=NOT_A_STAGE"))
+        response.status shouldBe Status.BAD_REQUEST
     }
 
     @Test
