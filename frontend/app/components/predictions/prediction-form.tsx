@@ -49,11 +49,13 @@ interface PredictionFormProps {
     onStatusChange?: (status: {saved: boolean; hasChanges: boolean}) => void
     /** Onboarding: draw attention to the power-up selector with an explainer. */
     coachPowerUps?: boolean
+    /** Knockout explainer: draw attention to the split submit button on a draw. */
+    coachKnockoutSide?: boolean
     /** Onboarding: confirm with a modal if the user submits without changing the default 0-0 score. */
     confirmIfUntouched?: boolean
 }
 
-export default function PredictionForm({match, onPredictionSaved, userChips, onChipsChanged, onStatusChange, coachPowerUps, confirmIfUntouched}: PredictionFormProps): React.JSX.Element {
+export default function PredictionForm({match, onPredictionSaved, userChips, onChipsChanged, onStatusChange, coachPowerUps, coachKnockoutSide, confirmIfUntouched}: PredictionFormProps): React.JSX.Element {
     const isUpcoming = match.state === MatchStateEnum.Upcoming
     const [homeScore, setHomeScore] = useState<number>(match.prediction?.homeScore ?? 0)
     const [awayScore, setAwayScore] = useState<number>(match.prediction?.awayScore ?? 0)
@@ -233,6 +235,14 @@ export default function PredictionForm({match, onPredictionSaved, userChips, onC
 
             {isUpcoming && (
                 <div className="mt-4">
+                    {coachKnockoutSide && isKnockout && isDraw && chip !== Chip.Crowd && !justSaved && (
+                        <div className="mb-2 flex items-start gap-2 rounded-xl border border-cyan-500/30 bg-cyan-500/10 px-3 py-2 text-xs text-cyan-700 dark:border-cyan-400/30 dark:bg-cyan-400/10 dark:text-cyan-200">
+                            <span aria-hidden>👇</span>
+                            <span>
+                                <span className="font-bold">It&apos;s a draw</span> — the button below splits in two. Tap the team you back to go through; it submits your prediction. This pick is for a new bracket game — more soon.
+                            </span>
+                        </div>
+                    )}
                     {/* Reserve a fixed-height prompt row on knockout matches so the
                         button stays put when the "who goes through?" text toggles. */}
                     {isKnockout && (
