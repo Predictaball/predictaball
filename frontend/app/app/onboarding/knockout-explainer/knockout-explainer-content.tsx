@@ -66,14 +66,14 @@ export default function KnockoutExplainerContent({continueHref, match, userChips
                     <ExplainerCard
                         accent="from-blue-600/30 to-cyan-400/20 ring-cyan-400/30"
                         glyph={<span aria-hidden>&#9917;</span>}
-                        title="Call the 90 minutes"
-                        body="Predict the full-time score exactly like you always have — the same 5 points for the exact score, 2 for the right result."
+                        title="Call the final score"
+                        body="Predict the score after extra time, if it's played — penalties don't change it. Same scoring as the group stage: 5 points for the exact score, 2 for the right result."
                     />
                     <ExplainerCard
                         accent="from-cyan-500/30 to-teal-400/20 ring-cyan-400/30"
                         glyph={<span className="font-black text-cyan-600 dark:text-cyan-300" aria-hidden>&rsaquo;</span>}
                         title="Pick who goes through"
-                        body="If you call a draw, the match can't end level — so tap the team you think edges it in extra time or on penalties."
+                        body="If you call a draw, tap the team you back to advance. This pick powers a brand-new bracket game we're building — more info coming soon!"
                     />
                     <ExplainerCard
                         accent="from-green-500/30 to-emerald-400/20 ring-green-400/30"
@@ -89,7 +89,7 @@ export default function KnockoutExplainerContent({continueHref, match, userChips
                             <span className="text-xs font-semibold tracking-[0.3em] text-cyan-600/90 dark:text-cyan-300/80 uppercase">Try it now</span>
                             <h2 className="mt-2 text-2xl font-black tracking-tight">Make a knockout prediction</h2>
                             <p className="mt-2 text-sm text-slate-500 dark:text-gray-400">
-                                Call the score below. Land on a draw and you&apos;ll pick the team you back to go through.
+                                Call the score after extra time below. Land on a draw and you&apos;ll back a team to go through — part of a new bracket game, more soon.
                             </p>
                         </div>
 

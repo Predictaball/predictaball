@@ -239,7 +239,7 @@ export default function PredictionForm({match, onPredictionSaved, userChips, onC
                         <div className="mb-2 flex items-start gap-2 rounded-xl border border-cyan-500/30 bg-cyan-500/10 px-3 py-2 text-xs text-cyan-700 dark:border-cyan-400/30 dark:bg-cyan-400/10 dark:text-cyan-200">
                             <span aria-hidden>👇</span>
                             <span>
-                                <span className="font-bold">It&apos;s a draw</span> — the match can&apos;t end level, so the button below splits in two. Tap the team you back to go through and it submits your prediction.
+                                <span className="font-bold">It&apos;s a draw</span> — the button below splits in two. Tap the team you back to go through; it submits your prediction. This pick is for a new bracket game — more soon.
                             </span>
                         </div>
                     )}
