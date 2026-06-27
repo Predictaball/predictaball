@@ -1,16 +1,16 @@
 'use client'
 
-import React, {useEffect, useState} from "react"
-import Link from "next/link"
-import {useRouter} from "next/navigation"
-import {Toaster} from "react-hot-toast"
-import {Match, MatchRoundEnum} from "@/client"
-import {ACTION_BUTTON_CLASS} from "@/app/util/css-classes"
-import {markKnockoutExplainerSeen} from "@/app/components/predictions/knockout-explainer"
-import PredictionForm from "@/app/components/predictions/prediction-form"
 import FocusedGlobeClient from "@/app/components/flags/focused-globe-client"
-import {LocalTime} from "@/app/components/predictions/local-time"
-import type {UserChips} from "@/app/components/predictions/get-user-chips"
+import type { UserChips } from "@/app/components/predictions/get-user-chips"
+import { markKnockoutExplainerSeen } from "@/app/components/predictions/knockout-explainer"
+import { LocalTime } from "@/app/components/predictions/local-time"
+import PredictionForm from "@/app/components/predictions/prediction-form"
+import { ACTION_BUTTON_CLASS } from "@/app/util/css-classes"
+import { Match, MatchRoundEnum } from "@/client"
+import Link from "next/link"
+import { useRouter } from "next/navigation"
+import React, { useEffect, useState } from "react"
+import { Toaster } from "react-hot-toast"
 
 const ROUND_LABEL: Record<MatchRoundEnum, string> = {
     GROUP_STAGE: "Group Stage",
@@ -53,8 +53,8 @@ export default function KnockoutExplainerContent({continueHref, match, userChips
                     </span>
                     <span className="text-xs font-semibold tracking-[0.3em] text-cyan-600/90 dark:text-cyan-300/80 uppercase">Knockouts are here</span>
                     <h1 className="mt-3 text-3xl sm:text-4xl font-black tracking-tight">
-                        <span className="text-slate-900 dark:text-white">There&apos;s no </span>
-                        <span className="bg-gradient-to-r from-blue-500 via-cyan-300 to-teal-300 bg-clip-text text-transparent">draws</span>
+                        <span className="text-slate-900 dark:text-white">There has to be a</span>
+                        <span className="bg-gradient-to-r from-blue-500 via-cyan-300 to-teal-300 bg-clip-text text-transparent">winner</span>
                         <span className="text-slate-900 dark:text-white"> from here</span>
                     </h1>
                     <p className="mt-3 max-w-xl text-slate-500 dark:text-gray-400">
@@ -67,7 +67,7 @@ export default function KnockoutExplainerContent({continueHref, match, userChips
                         accent="from-blue-600/30 to-cyan-400/20 ring-cyan-400/30"
                         glyph={<span aria-hidden>&#9917;</span>}
                         title="Call the final score"
-                        body="Predict the score after extra time, if it's played — penalties don't change it. Same scoring as the group stage: 5 points for the exact score, 2 for the right result."
+                        body={<>Predict the score <strong className="font-bold text-cyan-600 dark:text-cyan-300">after extra time</strong>, if it&apos;s played — penalties don&apos;t change it. Same scoring as the group stage: 5 points for the exact score, 2 for the right result.</>}
                     />
                     <ExplainerCard
                         accent="from-cyan-500/30 to-teal-400/20 ring-cyan-400/30"
@@ -79,7 +79,7 @@ export default function KnockoutExplainerContent({continueHref, match, userChips
                         accent="from-green-500/30 to-emerald-400/20 ring-green-400/30"
                         glyph={<span className="font-black text-cyan-600 dark:text-cyan-300" aria-hidden>2&times;</span>}
                         title="Power-ups still count"
-                        body="Your remaining Double Points, Off by One and Follow the Crowd chips all work in the knockouts. Now's the time to spend them."
+                        body={<>Your remaining Double Points, Off by One and Follow the Crowd chips all work in the knockouts — and you get <strong className="font-bold text-cyan-600 dark:text-cyan-300">1 more of each</strong>.</>}
                     />
                 </div>
 
@@ -89,7 +89,7 @@ export default function KnockoutExplainerContent({continueHref, match, userChips
                             <span className="text-xs font-semibold tracking-[0.3em] text-cyan-600/90 dark:text-cyan-300/80 uppercase">Try it now</span>
                             <h2 className="mt-2 text-2xl font-black tracking-tight">Make a knockout prediction</h2>
                             <p className="mt-2 text-sm text-slate-500 dark:text-gray-400">
-                                Call the score after extra time below. Land on a draw and you&apos;ll back a team to go through — part of a new bracket game, more soon.
+                                Call the score after extra time, if played, below. Land on a draw and you&apos;ll back a team to go through — part of a new bracket game, more soon.
                             </p>
                         </div>
 
@@ -140,7 +140,7 @@ function ExplainerCard({accent, glyph, title, body}: {
     accent: string
     glyph: React.ReactNode
     title: string
-    body: string
+    body: React.ReactNode
 }): React.JSX.Element {
     return (
         <div className="group relative rounded-2xl bg-gradient-to-br from-slate-900/10 to-slate-900/5 dark:from-white/10 dark:to-white/5 p-[1px] transition-transform hover:-translate-y-1">
