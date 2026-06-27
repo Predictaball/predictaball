@@ -79,6 +79,14 @@ jobs:
           CDK_FRONTEND_DOMAIN: predictaball.live
           CDK_VERCEL_CNAME: ${{ secrets.PROD_VERCEL_CNAME }}
           CDK_CERT_ARN: ${{ secrets.PROD_CERT_ARN }}
+          # Optional Next.js Fargate frontend. Flip the GitHub repo variable
+          # DEPLOY_FRONTEND_PROD between "true" and "false" (or unset) and
+          # re-run the prod deploy to provision/tear down.
+          CDK_DEPLOY_FRONTEND: ${{ vars.DEPLOY_FRONTEND_PROD }}
+          CDK_FRONTEND_FARGATE_HOST: frontend.predictaball.live
+          CDK_AUTH_GOOGLE_ID: ${{ secrets.AUTH_GOOGLE_ID }}
+          CDK_AUTH_GOOGLE_SECRET: ${{ secrets.AUTH_GOOGLE_SECRET }}
+          CDK_SENTRY_DSN: ${{ vars.SENTRY_DSN }}
       - name: Health check
         run: |
           sleep 30

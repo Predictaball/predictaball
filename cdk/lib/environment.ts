@@ -20,11 +20,25 @@ export const vercelCname: string | undefined = process.env["CDK_VERCEL_CNAME"]
 export const rootDomain: string = process.env["CDK_ROOT_DOMAIN"] || "predictaball.live"
 export const certArn: string | undefined = process.env["CDK_CERT_ARN"]
 
+// Build-time arg + runtime secret pair for the optional frontend service.
+// Empty strings keep CDK happy when deployFrontend is false.
+export const authGoogleId: string = process.env["CDK_AUTH_GOOGLE_ID"] || ""
+export const authGoogleSecret: string = process.env["CDK_AUTH_GOOGLE_SECRET"] || ""
+export const sentryDsn: string = process.env["CDK_SENTRY_DSN"] || ""
+export const frontendPublicEnv: string = process.env["CDK_FRONTEND_PUBLIC_ENV"] || envName
+// Hostname for the Fargate-hosted Next.js frontend. Different per env:
+// dev uses frontend.dev.predictaball.live, prod will use frontend.predictaball.live.
+export const frontendFargateHost: string | undefined = process.env["CDK_FRONTEND_FARGATE_HOST"]
+
 interface EnvConfig {
   stackName: string
   managesDns: boolean
   removalPolicy: RemovalPolicy
   defaultDesiredCount: number
+  // Whether to provision the Next.js Fargate service. Off by default in dev
+  // to conserve credits; flip on temporarily to validate, then back off. Prod
+  // will set this to true permanently when we decommission Vercel.
+  deployFrontend: boolean
 }
 
 const ENV_CONFIG: Record<EnvName, EnvConfig> = {
@@ -33,12 +47,14 @@ const ENV_CONFIG: Record<EnvName, EnvConfig> = {
     managesDns: true,
     removalPolicy: RemovalPolicy.DESTROY,
     defaultDesiredCount: 1,
+    deployFrontend: process.env["CDK_DEPLOY_FRONTEND"] === "true",
   },
   prod: {
     stackName: "PredictaballProd",
     managesDns: false,
     removalPolicy: RemovalPolicy.RETAIN,
     defaultDesiredCount: 1,
+    deployFrontend: process.env["CDK_DEPLOY_FRONTEND"] === "true",
   },
 }
 

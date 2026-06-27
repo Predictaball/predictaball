@@ -1,4 +1,4 @@
-import { App, Duration, RemovalPolicy, SecretValue, Stack, StackProps } from "aws-cdk-lib"
+import { App, CfnOutput, Duration, RemovalPolicy, SecretValue, Stack, StackProps } from "aws-cdk-lib"
 import { Certificate, CertificateValidation } from "aws-cdk-lib/aws-certificatemanager"
 import {
   GatewayVpcEndpointAwsService,
@@ -10,13 +10,34 @@ import {
   Vpc
 } from "aws-cdk-lib/aws-ec2"
 import { Credentials, DatabaseInstance, DatabaseInstanceEngine, StorageType } from "aws-cdk-lib/aws-rds"
-import { adminApiKey, apiDomain, certArn, config, dbPassword, frontendDomain, rootDomain, vercelCname } from "../environment"
+import {
+  adminApiKey,
+  apiDomain,
+  authGoogleId,
+  authGoogleSecret,
+  certArn,
+  config,
+  dbPassword,
+  frontendDomain,
+  frontendFargateHost,
+  frontendPublicEnv,
+  rootDomain,
+  sentryDsn,
+  vercelCname,
+} from "../environment"
 import { ICertificate } from "aws-cdk-lib/aws-certificatemanager"
 import { AnyPrincipal, PolicyStatement } from "aws-cdk-lib/aws-iam"
 import { BlockPublicAccess, Bucket, BucketEncryption } from "aws-cdk-lib/aws-s3"
-import { Cluster, ContainerImage, LogDrivers } from "aws-cdk-lib/aws-ecs"
+import { Cluster, ContainerImage, FargateService, FargateTaskDefinition, LogDrivers } from "aws-cdk-lib/aws-ecs"
 import { ApplicationLoadBalancedFargateService } from "aws-cdk-lib/aws-ecs-patterns"
-import { ApplicationProtocol } from "aws-cdk-lib/aws-elasticloadbalancingv2"
+import {
+  ApplicationListenerRule,
+  ApplicationProtocol,
+  ApplicationTargetGroup,
+  ListenerCondition,
+  TargetType,
+} from "aws-cdk-lib/aws-elasticloadbalancingv2"
+import { DockerImageAsset, Platform } from "aws-cdk-lib/aws-ecr-assets"
 import {
   ApiDestination,
   Authorization,
@@ -133,11 +154,91 @@ export class Predictaball extends Stack {
     // Allow ECS tasks to connect to RDS
     db.connections.allowFrom(ecsService.service, Port.tcp(dbPort))
 
+    // --- Optional Next.js frontend Fargate service ---
+    // Gated by config.deployFrontend so dev can spin it up for validation and
+    // tear it down to save credits. Container talks to the backend over the
+    // VPC internal network; users hit it via a Host-routed ALB listener rule.
+    let frontendService: FargateService | undefined
+    let frontendTargetGroup: ApplicationTargetGroup | undefined
+    if (config.deployFrontend) {
+      if (!apiDomain) {
+        throw new Error("CDK_API_DOMAIN must be set when deployFrontend is true (we share the API's ALB)")
+      }
+      if (!frontendFargateHost) {
+        throw new Error("CDK_FRONTEND_FARGATE_HOST must be set when deployFrontend is true (e.g. frontend.dev.predictaball.live)")
+      }
+      const frontendPublicUrl = `https://${frontendFargateHost}`
+
+      // Build args are inlined into the client bundle. Runtime secrets are
+      // injected via task env vars (below) and not baked into the image.
+      const frontendImage = new DockerImageAsset(this, "frontendImage", {
+        directory: "..",
+        file: "frontend/Dockerfile",
+        platform: Platform.LINUX_AMD64,
+        buildArgs: {
+          NEXT_PUBLIC_API_URL: `https://${apiDomain}`,
+          NEXT_PUBLIC_FRONTEND_URL: frontendPublicUrl,
+          NEXT_PUBLIC_SENTRY_DSN: sentryDsn,
+          NEXT_PUBLIC_ENV: frontendPublicEnv,
+        },
+      })
+
+      const frontendTaskDef = new FargateTaskDefinition(this, "frontendTaskDef", {
+        cpu: 512,
+        memoryLimitMiB: 1024,
+      })
+      frontendTaskDef.addContainer("nextjs", {
+        image: ContainerImage.fromDockerImageAsset(frontendImage),
+        portMappings: [{ containerPort: 3000 }],
+        environment: {
+          NEXTAUTH_URL: frontendPublicUrl,
+          NEXTAUTH_SECRET: process.env["CDK_NEXTAUTH_SECRET"] || "",
+          ADMIN_API_KEY: adminApiKey || "",
+          AUTH_GOOGLE_ID: authGoogleId,
+          AUTH_GOOGLE_SECRET: authGoogleSecret,
+          // Same backend URL for both server-side and browser, since both go
+          // through the public ALB. Could be optimised later with an internal
+          // service discovery endpoint, but the latency cost (sub-ms inside
+          // the same region) isn't worth the complexity yet.
+          API_URL: `https://${apiDomain}`,
+        },
+        logging: LogDrivers.awsLogs({
+          logGroup: new LogGroup(this, "frontendLogs"),
+          streamPrefix: "ecs",
+        }),
+      })
+
+      frontendService = new FargateService(this, "frontendService", {
+        cluster,
+        taskDefinition: frontendTaskDef,
+        desiredCount: 1,
+        assignPublicIp: true,
+        vpcSubnets: { subnetType: SubnetType.PUBLIC },
+        enableExecuteCommand: true,
+      })
+
+      frontendTargetGroup = new ApplicationTargetGroup(this, "frontendTargetGroup", {
+        vpc,
+        port: 3000,
+        protocol: ApplicationProtocol.HTTP,
+        targetType: TargetType.IP,
+        targets: [frontendService],
+        healthCheck: {
+          path: "/",
+          healthyHttpCodes: "200",
+          interval: Duration.seconds(30),
+        },
+      })
+
+      new CfnOutput(this, "frontendUrl", { value: frontendPublicUrl })
+    }
+
     // Domain + HTTPS (when CDK_API_DOMAIN is set)
     if (apiDomain) {
       let certificate: ICertificate
+      let hostedZone: HostedZone | undefined
       if (config.managesDns) {
-        const hostedZone = new HostedZone(this, "hostedZone", {
+        hostedZone = new HostedZone(this, "hostedZone", {
           zoneName: rootDomain,
         })
 
@@ -165,12 +266,31 @@ export class Predictaball extends Stack {
         certificate = Certificate.fromCertificateArn(this, "certificate", certArn)
       }
 
-      ecsService.loadBalancer.addListener("httpsListener", {
+      const httpsListener = ecsService.loadBalancer.addListener("httpsListener", {
         port: 443,
         protocol: ApplicationProtocol.HTTPS,
         certificates: [certificate],
         defaultTargetGroups: [ecsService.targetGroup],
       })
+
+      // Route the frontend hostname to the frontend target group. Backend
+      // traffic falls through to the listener's default target group.
+      if (frontendTargetGroup && frontendService && frontendFargateHost) {
+        new ApplicationListenerRule(this, "frontendListenerRule", {
+          listener: httpsListener,
+          priority: 10,
+          conditions: [ListenerCondition.hostHeaders([frontendFargateHost])],
+          targetGroups: [frontendTargetGroup],
+        })
+
+        if (hostedZone) {
+          new ARecord(this, "frontendFargateDnsRecord", {
+            zone: hostedZone,
+            recordName: frontendFargateHost,
+            target: RecordTarget.fromAlias(new LoadBalancerTarget(ecsService.loadBalancer)),
+          })
+        }
+      }
 
       // EventBridge scheduled tasks (replaces in-process schedulers)
       if (adminApiKey) {
