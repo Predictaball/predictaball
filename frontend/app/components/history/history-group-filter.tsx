@@ -48,7 +48,7 @@ export default function HistoryGroupFilter({matchesByGroup, groupOrder, initialG
 
             {active !== KNOCKOUT_GROUP && predictedStandings && actualStandings && (
                 <div className="space-y-2">
-                    <p className={SECTION_EYEBROW + " text-center"}>Table vs your prediction</p>
+                    <p className={SECTION_EYEBROW + " text-center"}>Predicted vs actual table</p>
                     <PredictionComparisonTable group={active} actualStandings={actualStandings} predictedStandings={predictedStandings}/>
                 </div>
             )}

@@ -6,19 +6,19 @@ import {positionAccent, positionDot} from "@/app/components/standings/group-tabl
 /**
  * Diff arrow showing how a team's predicted position compares to where it
  * really finished. `delta` is `actualPosition - predictedPosition`, so a
- * positive value means you predicted the team higher (a smaller position
+ * positive value means the team was predicted higher (a smaller position
  * number) than it actually finished — an up arrow.
  */
 function CallDelta({delta}: {delta: number}): React.JSX.Element {
     if (delta === 0) {
         return (
-            <span title="Exactly as you predicted" className="shrink-0 text-[11px] font-bold leading-none text-emerald-600 dark:text-emerald-400">✓</span>
+            <span title="Finished exactly as predicted" className="shrink-0 text-[11px] font-bold leading-none text-emerald-600 dark:text-emerald-400">✓</span>
         )
     }
     const up = delta > 0
     return (
         <span
-            title={`You predicted ${Math.abs(delta)} place${Math.abs(delta) === 1 ? "" : "s"} ${up ? "higher" : "lower"} than they finished`}
+            title={`Predicted ${Math.abs(delta)} place${Math.abs(delta) === 1 ? "" : "s"} ${up ? "higher" : "lower"} than they finished`}
             className={`inline-flex shrink-0 items-center gap-px text-[11px] font-bold leading-none tabular-nums ${
                 up ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"
             }`}
@@ -38,7 +38,7 @@ interface PredictionComparisonTableProps {
  * Compares a user's predicted group table with the real one.
  *
  * On wider screens it renders a single table that follows the actual final
- * standings, with a "Your call" column showing the predicted position and an
+ * standings, with a "Predicted" column showing the predicted position and an
  * arrow for how far reality differed. On mobile it splits into two compact
  * flag-only mini-tables — actual on the left, predicted on the right — with the
  * diff arrows on the predicted side.
@@ -57,10 +57,10 @@ export default function PredictionComparisonTable({group, actualStandings, predi
                         {group}
                     </span>
                     <span className="text-sm font-bold text-slate-700 dark:text-gray-200">Group {group}</span>
-                    <span className="ml-auto text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-gray-500">Final vs your call</span>
+                    <span className="ml-auto text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-gray-500">Final vs predicted</span>
                 </div>
 
-                {/* Desktop: single actual-anchored table with a "Your call" column */}
+                {/* Desktop: single actual-anchored table with a "Predicted" column */}
                 <table className="hidden w-full text-sm sm:table">
                     <thead>
                         <tr className="text-[11px] uppercase tracking-wider text-slate-400 dark:text-gray-500">
@@ -70,7 +70,7 @@ export default function PredictionComparisonTable({group, actualStandings, predi
                             <th className="py-1.5 px-1 text-center font-semibold w-7">D</th>
                             <th className="py-1.5 px-1 text-center font-semibold w-7">L</th>
                             <th className="py-1.5 px-1 text-center font-semibold w-9">Pts</th>
-                            <th className="py-1.5 pl-1 pr-4 text-center font-semibold">Your call</th>
+                            <th className="py-1.5 pl-1 pr-4 text-center font-semibold">Predicted</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -136,6 +136,12 @@ export default function PredictionComparisonTable({group, actualStandings, predi
                             )
                         })}
                     </div>
+                </div>
+
+                <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 border-t border-slate-900/5 px-4 py-2.5 text-[10px] font-semibold text-slate-400 dark:border-white/5 dark:text-gray-500">
+                    <span className="inline-flex items-center gap-1"><span className="text-emerald-600 dark:text-emerald-400">▲</span> predicted higher</span>
+                    <span className="inline-flex items-center gap-1"><span className="text-rose-600 dark:text-rose-400">▼</span> predicted lower</span>
+                    <span className="inline-flex items-center gap-1"><span className="text-emerald-600 dark:text-emerald-400">✓</span> spot on</span>
                 </div>
             </div>
         </div>
