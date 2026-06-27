@@ -68,23 +68,25 @@ export default function PredictionPanel({liveMatches, upcomingMatches, completed
     }
 
     function advanceToNext() {
-        // Cycle forward through unpredicted matches: scan from current+1, wrap
-        // to the start of the list. If everything's predicted, fall back to the
-        // first match overall (soonest kickoff) so the user always lands
-        // somewhere predictable rather than lingering on the one they just
-        // saved.
-        const idx = allMatches.findIndex(m => m.matchId === selected.matchId)
-        if (idx === -1) return
-        for (let offset = 1; offset < allMatches.length; offset++) {
-            const candidate = allMatches[(idx + offset) % allMatches.length]
-            if (!candidate.prediction) {
-                setSelectedId(candidate.matchId)
-                return
+        // Walk through every upcoming match still needing a prediction (in
+        // kickoff order, wrapping past the end to catch any earlier ones) before
+        // moving on. Only once they're all predicted do we fall back to a live
+        // match if one's in play, otherwise the soonest upcoming — so the user
+        // always lands somewhere predictable rather than lingering on the one
+        // they just saved.
+        const idx = upcomingMatches.findIndex(m => m.matchId === selected.matchId)
+        if (idx !== -1) {
+            for (let offset = 1; offset < upcomingMatches.length; offset++) {
+                const candidate = upcomingMatches[(idx + offset) % upcomingMatches.length]
+                if (!candidate.prediction) {
+                    setSelectedId(candidate.matchId)
+                    return
+                }
             }
         }
-        const first = allMatches[0]
-        if (first && first.matchId !== selected.matchId) {
-            setSelectedId(first.matchId)
+        const fallback = liveMatches[0] ?? upcomingMatches[0]
+        if (fallback && fallback.matchId !== selected.matchId) {
+            setSelectedId(fallback.matchId)
         }
     }
 
