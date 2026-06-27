@@ -31,6 +31,7 @@ import scorcerer.server.services.setScore
 import scorcerer.server.toJson
 import scorcerer.utils.LeaderboardService
 import scorcerer.utils.toTitleCase
+import scorcerer.utils.toToGoThrough
 import scorcerer.utils.toUser
 
 fun matchRoutes(
@@ -57,7 +58,7 @@ fun matchRoutes(
                 (predictions innerJoin LeagueMembershipTable).selectAll().where { (PredictionTable.matchId eq matchId.toInt()).and(LeagueMembershipTable.leagueId eq leagueId) }
             }.map { row ->
                 PredictionWithUser(
-                    Prediction(row[PredictionTable.homeScore], row[PredictionTable.chip], row[PredictionTable.awayScore], row[PredictionTable.matchId].toString(), row[PredictionTable.id].toString(), row[PredictionTable.memberId], row[PredictionTable.points]),
+                    Prediction(row[PredictionTable.homeScore], row[PredictionTable.chip], row[PredictionTable.awayScore], row[PredictionTable.matchId].toString(), row[PredictionTable.id].toString(), row[PredictionTable.memberId], row[PredictionTable.points], row[PredictionTable.result].toToGoThrough()),
                     row.toUser(),
                 )
             }
@@ -151,7 +152,7 @@ private fun listMatches(requesterUserId: String, filterType: String?, userId: St
                 row[homeTeamTable[TeamTable.ranking]], row[awayTeamTable[TeamTable.ranking]],
                 row[MatchTable.homeScore], row[MatchTable.awayScore],
                 row.getOrNull(predictions[PredictionTable.id])?.let {
-                    Prediction(row[predictions[PredictionTable.homeScore]], row[predictions[PredictionTable.chip]], row[predictions[PredictionTable.awayScore]], row[MatchTable.id].toString(), row[predictions[PredictionTable.id]].toString(), row[predictions[PredictionTable.memberId]], row[predictions[PredictionTable.points]])
+                    Prediction(row[predictions[PredictionTable.homeScore]], row[predictions[PredictionTable.chip]], row[predictions[PredictionTable.awayScore]], row[MatchTable.id].toString(), row[predictions[PredictionTable.id]].toString(), row[predictions[PredictionTable.memberId]], row[predictions[PredictionTable.points]], row[predictions[PredictionTable.result]].toToGoThrough())
                 },
                 predictionDistributionFromRow(row),
             )
