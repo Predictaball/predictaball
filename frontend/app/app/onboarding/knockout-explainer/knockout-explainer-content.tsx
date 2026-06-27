@@ -53,7 +53,7 @@ export default function KnockoutExplainerContent({continueHref, match, userChips
                     </span>
                     <span className="text-xs font-semibold tracking-[0.3em] text-cyan-600/90 dark:text-cyan-300/80 uppercase">Knockouts are here</span>
                     <h1 className="mt-3 text-3xl sm:text-4xl font-black tracking-tight">
-                        <span className="text-slate-900 dark:text-white">There has to be a</span>
+                        <span className="text-slate-900 dark:text-white">There has to be a </span>
                         <span className="bg-gradient-to-r from-blue-500 via-cyan-300 to-teal-300 bg-clip-text text-transparent">winner</span>
                         <span className="text-slate-900 dark:text-white"> from here</span>
                     </h1>
