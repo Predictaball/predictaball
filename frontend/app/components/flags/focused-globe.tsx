@@ -59,32 +59,34 @@ function visibleArc(
 ): THREE.Vector3[] {
     const aN = aDir.clone().normalize()
     const bN = bDir.clone().normalize()
-
-    const mid = aN.clone().add(bN)
-    if (mid.lengthSq() < 1e-4) {
-        const fallback = new THREE.Vector3().crossVectors(aN, new THREE.Vector3(0, 1, 0))
-        if (fallback.lengthSq() < 1e-4) fallback.set(1, 0, 0)
-        mid.copy(fallback)
-    }
-    mid.normalize()
-
     const angle = aN.angleTo(bN)
+
     // Bulge clears the raised country tops so the arc never dives into an
     // extruded landmass, even on a short host-country-to-its-own-venue hop.
-    const bulge = Math.max(aRadius, bRadius) - GLOBE_RADIUS + 0.2 + angle * 0.55
-    const control = mid.clone().multiplyScalar(GLOBE_RADIUS + bulge)
-    const aPos = aN.clone().multiplyScalar(aRadius)
-    const bPos = bN.clone().multiplyScalar(bRadius)
+    // For long arcs we use a flatter coefficient so the curve doesn't balloon
+    // out into a spike — sin(πt) keeps the arch shape stable at any angle.
+    const surfaceLift = Math.max(aRadius, bRadius) - GLOBE_RADIUS
+    const bulge = surfaceLift + 0.02 + angle * 0.05
+
+    // Slerp axis (perpendicular to both endpoints). When endpoints are
+    // antipodal the axis is undefined, so fall back to a sensible default.
+    const axis = new THREE.Vector3().crossVectors(aN, bN)
+    if (axis.lengthSq() < 1e-8) {
+        const fallback = new THREE.Vector3().crossVectors(aN, new THREE.Vector3(0, 1, 0))
+        if (fallback.lengthSq() < 1e-8) fallback.set(1, 0, 0)
+        axis.copy(fallback)
+    }
+    axis.normalize()
 
     const points: THREE.Vector3[] = []
     for (let i = 0; i <= steps; i++) {
         const t = i / steps
-        const one = 1 - t
-        const p = new THREE.Vector3()
-            .addScaledVector(aPos, one * one)
-            .addScaledVector(control, 2 * one * t)
-            .addScaledVector(bPos, t * t)
-        points.push(p)
+        // Spherical interpolation between the two unit directions.
+        const dir = aN.clone().applyAxisAngle(axis, angle * t)
+        // Radius eases from aRadius at t=0 to bRadius at t=1, plus a
+        // sin(πt) bulge that peaks in the middle and meets each endpoint flush.
+        const radius = aRadius * (1 - t) + bRadius * t + bulge * Math.sin(Math.PI * t)
+        points.push(dir.multiplyScalar(radius))
     }
     return points
 }
