@@ -135,13 +135,10 @@ private fun listMatches(requesterUserId: String, filterType: String?, userId: St
             .join(homeTeamTable, JoinType.INNER, MatchTable.homeTeamId, homeTeamTable[TeamTable.id])
             .join(predictions, JoinType.LEFT, MatchTable.id, predictions[PredictionTable.matchId]).selectAll()
             .orderBy(MatchTable.datetime to SortOrder.ASC, MatchTable.id to SortOrder.ASC)
-        // Knockouts are stored but not yet exposed — scoring/penalty handling
-        // hasn't shipped. Filter at the API layer so the data is ready when
-        // we flip the switch.
         val query = if (filterType.isNullOrBlank()) {
-            matchTeamTable.where { MatchTable.round eq MatchRound.GROUP_STAGE }
+            matchTeamTable
         } else {
-            matchTeamTable.where { (MatchTable.round eq MatchRound.GROUP_STAGE) and (MatchTable.state eq Match.State.valueOf(filterType.uppercase())) }
+            matchTeamTable.where { MatchTable.state eq Match.State.valueOf(filterType.uppercase()) }
         }
         query.map { row ->
             Match(
