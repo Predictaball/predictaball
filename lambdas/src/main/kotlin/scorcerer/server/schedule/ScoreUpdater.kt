@@ -104,13 +104,17 @@ private fun isPlaceholderTeamName(name: String?): Boolean {
     return markers.any { name.contains(it, ignoreCase = true) }
 }
 
-// Currently only the group stage is exposed. Knockout slugs (round-of-32,
-// round-of-16, quarterfinals, semifinals, 3rd-place-match, final) intentionally
-// return null so ScoreUpdater skips discovering/inserting them. Flip these on
-// one round at a time once the related product work (knockout-specific
-// scoring, penalty handling, UI labels) lands.
+// ESPN's season slug for each tournament phase. We discover/store every
+// confirmed fixture; whether each round is *exposed* to users is decided at
+// the API layer (see listMatches in MatchResource).
 private fun roundFromSlug(slug: String?): MatchRound? = when (slug) {
     "group-stage" -> MatchRound.GROUP_STAGE
+    "round-of-32" -> MatchRound.ROUND_OF_THIRTY_TWO
+    "round-of-16" -> MatchRound.ROUND_OF_SIXTEEN
+    "quarterfinals" -> MatchRound.QUARTER_FINAL
+    "semifinals" -> MatchRound.SEMI_FINAL
+    "3rd-place-match" -> MatchRound.THIRD_PLACE_PLAYOFF
+    "final" -> MatchRound.FINAL
     else -> null
 }
 

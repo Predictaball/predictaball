@@ -103,6 +103,7 @@ fun predictionRoutes(contexts: RequestContexts) = routes(
                     it[homeScore] = body.homeScore
                     it[awayScore] = body.awayScore
                     it[chip] = requestedChip
+                    it[result] = body.toGoThrough?.let { v -> MatchResult.valueOf(v.value) }
                 } get PredictionTable.id
             }
         }
