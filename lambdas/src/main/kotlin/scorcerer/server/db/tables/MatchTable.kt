@@ -16,6 +16,7 @@ enum class MatchRound(val value: String) {
     ROUND_OF_SIXTEEN("ROUND_OF_SIXTEEN"),
     QUARTER_FINAL("QUARTER_FINAL"),
     SEMI_FINAL("SEMI_FINAL"),
+    THIRD_PLACE_PLAYOFF("THIRD_PLACE_PLAYOFF"),
     FINAL("FINAL"),
 }
 

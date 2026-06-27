@@ -4,15 +4,16 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import org.http4k.client.JavaHttpClient
 import org.http4k.core.Method
 import org.http4k.core.Request
-import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
-import org.jetbrains.exposed.v1.core.greaterEq
-import org.jetbrains.exposed.v1.core.less
-import org.jetbrains.exposed.v1.core.or
+import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
+import org.jetbrains.exposed.v1.jdbc.update
 import org.openapitools.server.models.Match
+import scorcerer.server.db.tables.MatchRound
 import scorcerer.server.db.tables.MatchTable
+import scorcerer.server.db.tables.TeamTable
+import scorcerer.server.emitCount
 import scorcerer.server.fromJson
 import scorcerer.server.log
 import scorcerer.server.services.TournamentStateService
@@ -20,24 +21,98 @@ import scorcerer.server.services.endMatch
 import scorcerer.server.services.getMatchDay
 import scorcerer.server.services.setScore
 import scorcerer.utils.LeaderboardService
+import java.text.Normalizer
+import java.time.Duration
 import java.time.OffsetDateTime
-import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
 
-// TheSportsDB returns scores as strings ("2") and statuses as short codes
-// (NS / 1H / HT / 2H / FT / etc). Unknown fields are ignored — they ship many.
+// ESPN's site scoreboard API. Undocumented but stable for years — powers their
+// own site. One call returns every WC fixture in the date range, with status,
+// scores, and bracket placeholder names ("Round of 32 1 Winner") for fixtures
+// whose participants aren't yet known.
 @JsonIgnoreProperties(ignoreUnknown = true)
-private data class SdbEvent(
-    val idEvent: String,
-    val strStatus: String?,
-    val intHomeScore: String?,
-    val intAwayScore: String?,
+private data class EspnTeam(val displayName: String?, val abbreviation: String?)
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+private data class EspnCompetitor(val homeAway: String?, val score: String?, val team: EspnTeam?)
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+private data class EspnStatusType(val state: String?, val name: String?, val completed: Boolean?)
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+private data class EspnStatus(val type: EspnStatusType?)
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+private data class EspnCompetition(val competitors: List<EspnCompetitor>?, val status: EspnStatus?)
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+private data class EspnSeason(val slug: String?)
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+private data class EspnEvent(
+    val id: String,
+    val date: String?,
+    val season: EspnSeason?,
+    val status: EspnStatus?,
+    val competitions: List<EspnCompetition>?,
 )
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-private data class SdbResponse(val events: List<SdbEvent>?)
+private data class EspnScoreboardResponse(val events: List<EspnEvent>?)
 
-private val LIVE_STATUSES = setOf("1H", "HT", "2H", "ET", "PT", "INT", "BT")
-private val FINISHED_STATUSES = setOf("FT", "AET", "AP", "PEN")
+// Snapshot of a row in our match table at the start of a tick.
+private data class ExistingMatch(
+    val matchId: Int,
+    val homeTeamId: Int,
+    val awayTeamId: Int,
+    val datetime: OffsetDateTime,
+    val state: Match.State,
+    val espnId: String?,
+)
+
+// ESPN team names that don't match our team table verbatim. Same alias map we
+// used for the TheSportsDB migration — names tend to vary on the same axes.
+private val TEAM_ALIASES = mapOf(
+    "usa" to "united states",
+    "czechia" to "czech republic",
+    "bosnia herzegovina" to "bosnia and herzegovina",
+    "cape verde islands" to "cape verde",
+    "cote d ivoire" to "ivory coast",
+    "congo dr" to "dr congo",
+    "turkiye" to "turkey",
+)
+
+// Strip diacritics + non-alphanumeric, lowercase, alias-map. Mirrors V11.
+private fun normalizeTeamName(s: String?): String? {
+    if (s.isNullOrBlank()) return null
+    val noDia = Normalizer.normalize(s, Normalizer.Form.NFKD)
+        .replace(Regex("\\p{InCombiningDiacriticalMarks}+"), "")
+    val cleaned = noDia.lowercase()
+        .replace(Regex("[^a-z0-9 ]+"), " ")
+        .replace(Regex("\\s+"), " ")
+        .trim()
+    return TEAM_ALIASES[cleaned] ?: cleaned
+}
+
+// ESPN uses bracket placeholder strings as team names for fixtures whose
+// participants aren't yet determined ("Group L Winner", "Round of 32 1 Winner",
+// "Third Place Group A/E/H/I/J"). Detect and skip these — they're not real
+// teams.
+private fun isPlaceholderTeamName(name: String?): Boolean {
+    if (name.isNullOrBlank()) return true
+    val markers = listOf("Winner", "Place", "Group ", "Round of", "TBD")
+    return markers.any { name.contains(it, ignoreCase = true) }
+}
+
+// Currently only the group stage is exposed. Knockout slugs (round-of-32,
+// round-of-16, quarterfinals, semifinals, 3rd-place-match, final) intentionally
+// return null so ScoreUpdater skips discovering/inserting them. Flip these on
+// one round at a time once the related product work (knockout-specific
+// scoring, penalty handling, UI labels) lands.
+private fun roundFromSlug(slug: String?): MatchRound? = when (slug) {
+    "group-stage" -> MatchRound.GROUP_STAGE
+    else -> null
+}
 
 class ScoreUpdater(
     private val leaderboardService: LeaderboardService,
@@ -45,75 +120,207 @@ class ScoreUpdater(
 ) {
     private val client = JavaHttpClient()
 
-    // Public free key `3` — no auth header required, 30 req/min.
-    private val perMatchEndpoint = "https://www.thesportsdb.com/api/v1/json/3/lookupevent.php?id="
+    // One call returns the whole tournament window. We pass a 60-day range so
+    // we get group + every knockout round in one request.
+    private val scoreboardUrl = "https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=20260601-20260801"
 
     fun run() {
-        val now = OffsetDateTime.now(ZoneOffset.UTC)
-        val imminentCutoff = now.plusHours(4)
-        val matches = transaction {
-            MatchTable.selectAll()
-                .where {
-                    (MatchTable.state eq Match.State.LIVE) or
-                        (
-                            (MatchTable.state eq Match.State.UPCOMING) and
-                                (MatchTable.datetime greaterEq now.minusHours(1)) and
-                                (MatchTable.datetime less imminentCutoff)
-                            )
-                }
-                .filter { it.getOrNull(MatchTable.externalMatchId) != null }
-                .map { Triple(it[MatchTable.id].toString(), it[MatchTable.externalMatchId]!!, it[MatchTable.state]) }
-        }
+        val started = System.currentTimeMillis()
+        val response = client(Request(Method.GET, scoreboardUrl))
+        val httpMs = System.currentTimeMillis() - started
 
-        if (matches.isEmpty()) {
-            log.info("ScoreUpdater: no live or imminent matches, skipping")
+        if (!response.status.successful) {
+            log.warn("ScoreUpdater: ESPN returned ${response.status.code} after ${httpMs}ms, skipping")
             return
         }
 
+        val events = response.bodyString().fromJson<EspnScoreboardResponse>().events ?: emptyList()
+        log.info("ScoreUpdater poll: http=${httpMs}ms events=${events.size}")
+
+        var inserted = 0
         var transitions = 0
-        matches.forEach { (matchId, externalId, currentState) ->
-            val started = System.currentTimeMillis()
-            val response = client(Request(Method.GET, perMatchEndpoint + externalId))
-            val httpMs = System.currentTimeMillis() - started
+        var skippedPlaceholder = 0
+        var unknownTeam = 0
 
-            if (!response.status.successful) {
-                log.warn("Match $matchId: TheSportsDB returned ${response.status.code} (http=${httpMs}ms)")
-                return@forEach
-            }
-
-            val event = response.bodyString().fromJson<SdbResponse>().events?.firstOrNull()
-            if (event == null) {
-                log.warn("Match $matchId: TheSportsDB returned no event for id=$externalId")
-                return@forEach
-            }
-
-            val status = event.strStatus ?: ""
-            val home = event.intHomeScore?.toIntOrNull() ?: 0
-            val away = event.intAwayScore?.toIntOrNull() ?: 0
-            log.info("Match $matchId poll: http=${httpMs}ms api.status=$status api.score=$home-$away")
-
-            when {
-                status in FINISHED_STATUSES -> {
-                    if (currentState == Match.State.UPCOMING) {
-                        val matchDay = getMatchDay(matchId) ?: return@forEach
-                        setScore(matchId, matchDay, home, away, leaderboardService, tournamentStateService)
-                    }
-                    endMatch(matchId, home, away, leaderboardService, tournamentStateService)
-                    log.info("Match $matchId: $currentState -> COMPLETED ($home-$away)")
-                    transitions++
-                }
-                status in LIVE_STATUSES -> {
-                    val matchDay = getMatchDay(matchId) ?: return@forEach
-                    setScore(matchId, matchDay, home, away, leaderboardService, tournamentStateService)
-                    log.info("Match $matchId: $currentState -> LIVE ($home-$away, api=$status)")
-                    transitions++
-                }
-                status.isNotBlank() && status != "NS" && status != "TBD" -> {
-                    log.warn("Match $matchId: api status=$status, no-op")
-                }
-                // NS / TBD / "" — match hasn't started yet, do nothing.
+        // Pre-load existing matches keyed by ESPN id, with the full row also
+        // available for team-pair fallback matching. The fallback lets us
+        // backfill espn_match_id on rows originally inserted with TheSportsDB
+        // IDs, without creating duplicates.
+        val existing: List<ExistingMatch> = transaction {
+            MatchTable.selectAll().map {
+                ExistingMatch(
+                    matchId = it[MatchTable.id],
+                    homeTeamId = it[MatchTable.homeTeamId],
+                    awayTeamId = it[MatchTable.awayTeamId],
+                    datetime = it[MatchTable.datetime],
+                    state = it[MatchTable.state],
+                    espnId = it[MatchTable.externalMatchId],
+                )
             }
         }
-        log.info("ScoreUpdater done: tracked=${matches.size} transitions=$transitions")
+        val byEspnId = existing.filter { it.espnId != null }.associateBy { it.espnId!! }
+
+        for (event in events) {
+            val competition = event.competitions?.firstOrNull() ?: continue
+            val competitors = competition.competitors ?: continue
+            val homeC = competitors.firstOrNull { it.homeAway == "home" } ?: continue
+            val awayC = competitors.firstOrNull { it.homeAway == "away" } ?: continue
+            val homeName = homeC.team?.displayName
+            val awayName = awayC.team?.displayName
+
+            // Bracket placeholders — fixture exists but participants not known
+            // yet. Skip until ESPN populates real team names.
+            if (isPlaceholderTeamName(homeName) || isPlaceholderTeamName(awayName)) {
+                skippedPlaceholder++
+                continue
+            }
+
+            // Look up team IDs in our DB.
+            val homeTeamId = findTeamId(normalizeTeamName(homeName))
+            val awayTeamId = findTeamId(normalizeTeamName(awayName))
+            if (homeTeamId == null || awayTeamId == null) {
+                log.warn("ScoreUpdater: unknown team for event ${event.id}: home=$homeName(${homeTeamId ?: "MISSING"}) away=$awayName(${awayTeamId ?: "MISSING"})")
+                emitCount("ScoreUpdater_UnknownTeam")
+                unknownTeam++
+                continue
+            }
+
+            val round = roundFromSlug(event.season?.slug)
+            if (round == null) {
+                // E.g. 3rd-place-match — deliberately not tracked. Don't log
+                // each tick to avoid spam.
+                continue
+            }
+
+            val kickoff = parseEspnDate(event.date) ?: run {
+                log.warn("ScoreUpdater: unparseable date '${event.date}' for event ${event.id}")
+                continue
+            }
+            val state = event.status?.type?.state ?: ""
+            val homeScore = homeC.score?.toIntOrNull() ?: 0
+            val awayScore = awayC.score?.toIntOrNull() ?: 0
+
+            // Find an existing match for this fixture: first by espn id, then
+            // by the team-pair + close-enough kickoff date.
+            val match = byEspnId[event.id] ?: matchByTeamsAndDate(existing, homeTeamId, awayTeamId, kickoff)
+
+            if (match == null) {
+                // Genuinely new fixture (knockout discovery, or a brand-new
+                // tournament). Insert as UPCOMING; subsequent ticks will move
+                // it to LIVE/COMPLETED as the state changes.
+                val newId = transaction {
+                    MatchTable.insert {
+                        it[MatchTable.homeTeamId] = homeTeamId
+                        it[MatchTable.awayTeamId] = awayTeamId
+                        it[MatchTable.datetime] = kickoff
+                        it[MatchTable.state] = Match.State.UPCOMING
+                        it[MatchTable.venue] = "TBD"
+                        it[MatchTable.matchDay] = matchDayFromRound(round)
+                        it[MatchTable.round] = round
+                        it[MatchTable.externalMatchId] = event.id
+                    } get MatchTable.id
+                }
+                log.info("ScoreUpdater: inserted match $newId espn=${event.id} round=$round $homeName vs $awayName kickoff=$kickoff")
+                emitCount("ScoreUpdater_Inserted")
+                inserted++
+                continue
+            }
+
+            // Existing row found via team-pair fallback rather than by id —
+            // that means the stored external id is stale (e.g. a TheSportsDB
+            // id left from a previous integration). Overwrite with the ESPN id
+            // so subsequent ticks can match by id directly.
+            if (match.espnId != event.id) {
+                transaction {
+                    MatchTable.update({ MatchTable.id eq match.matchId }) {
+                        it[MatchTable.externalMatchId] = event.id
+                    }
+                }
+                log.info("Match ${match.matchId}: set external_match_id=${event.id} (was ${match.espnId})")
+            }
+
+            // Side-swap detection: same fixture, but home/away flipped vs DB.
+            if (match.homeTeamId != homeTeamId || match.awayTeamId != awayTeamId) {
+                val sameSet = setOf(match.homeTeamId, match.awayTeamId) == setOf(homeTeamId, awayTeamId)
+                if (sameSet) {
+                    log.warn("ScoreUpdater: SIDE SWAP for match ${match.matchId} (espn=${event.id}) — db has teams ${match.homeTeamId}/${match.awayTeamId}, ESPN says $homeTeamId/$awayTeamId. Skipping score update.")
+                    emitCount("ScoreUpdater_SideSwapDetected")
+                    continue
+                } else {
+                    log.warn("ScoreUpdater: TEAM MISMATCH for match ${match.matchId} (espn=${event.id}) — db has teams ${match.homeTeamId}/${match.awayTeamId}, ESPN says $homeTeamId/$awayTeamId. Skipping score update.")
+                    emitCount("ScoreUpdater_TeamMismatch")
+                    continue
+                }
+            }
+
+            // State transitions (same shape as before).
+            when (state) {
+                "post" -> {
+                    if (match.state == Match.State.COMPLETED) continue
+                    if (match.state == Match.State.UPCOMING) {
+                        val matchDay = getMatchDay(match.matchId.toString()) ?: continue
+                        setScore(match.matchId.toString(), matchDay, homeScore, awayScore, leaderboardService, tournamentStateService)
+                    }
+                    endMatch(match.matchId.toString(), homeScore, awayScore, leaderboardService, tournamentStateService)
+                    log.info("Match ${match.matchId}: ${match.state} -> COMPLETED ($homeScore-$awayScore)")
+                    transitions++
+                }
+                "in" -> {
+                    val matchDay = getMatchDay(match.matchId.toString()) ?: continue
+                    setScore(match.matchId.toString(), matchDay, homeScore, awayScore, leaderboardService, tournamentStateService)
+                    log.info("Match ${match.matchId}: ${match.state} -> LIVE ($homeScore-$awayScore)")
+                    transitions++
+                }
+                // "pre" / anything else: do nothing.
+            }
+        }
+        log.info("ScoreUpdater done: events=${events.size} inserted=$inserted transitions=$transitions skippedPlaceholder=$skippedPlaceholder unknownTeam=$unknownTeam")
+    }
+
+    private fun findTeamId(normalizedName: String?): Int? {
+        if (normalizedName == null) return null
+        return transaction {
+            TeamTable.selectAll().firstOrNull {
+                normalizeTeamName(it[TeamTable.name]) == normalizedName
+            }?.get(TeamTable.id)
+        }
+    }
+
+    // ESPN date format: "2026-06-28T19:00Z" — note missing seconds. Java's ISO
+    // parser handles this fine but we normalize defensively.
+    private fun parseEspnDate(date: String?): OffsetDateTime? {
+        if (date.isNullOrBlank()) return null
+        return try {
+            OffsetDateTime.parse(date, DateTimeFormatter.ISO_OFFSET_DATE_TIME)
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    private fun matchByTeamsAndDate(
+        existing: List<ExistingMatch>,
+        homeTeamId: Int,
+        awayTeamId: Int,
+        kickoff: OffsetDateTime,
+    ): ExistingMatch? {
+        // Loose match: same team pair (regardless of side), kickoff within 6h.
+        // Tolerates schedule tweaks but won't conflate different fixtures.
+        val pair = setOf(homeTeamId, awayTeamId)
+        return existing.firstOrNull {
+            setOf(it.homeTeamId, it.awayTeamId) == pair &&
+                Duration.between(it.datetime, kickoff).abs() < Duration.ofHours(6)
+        }
+    }
+
+    // For knockout rounds we don't have a real "match day" — slot them in as
+    // increasing numbers past the group stage's matchdays 1/2/3.
+    private fun matchDayFromRound(round: MatchRound): Int = when (round) {
+        MatchRound.GROUP_STAGE -> 1
+        MatchRound.ROUND_OF_THIRTY_TWO -> 4
+        MatchRound.ROUND_OF_SIXTEEN -> 5
+        MatchRound.QUARTER_FINAL -> 6
+        MatchRound.SEMI_FINAL -> 7
+        MatchRound.THIRD_PLACE_PLAYOFF -> 8
+        MatchRound.FINAL -> 9
     }
 }

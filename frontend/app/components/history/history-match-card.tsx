@@ -11,6 +11,7 @@ const ROUND_LABEL: Record<MatchRoundEnum, string> = {
     ROUND_OF_SIXTEEN: "Round of 16",
     QUARTER_FINAL: "Quarter-Final",
     SEMI_FINAL: "Semi-Final",
+    THIRD_PLACE_PLAYOFF: "Third-Place Playoff",
     FINAL: "Final",
 }
 
