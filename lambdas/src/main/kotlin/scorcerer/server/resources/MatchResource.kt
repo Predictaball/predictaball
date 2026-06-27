@@ -8,6 +8,7 @@ import org.http4k.routing.bind
 import org.http4k.routing.path
 import org.http4k.routing.routes
 import org.jetbrains.exposed.v1.core.JoinType
+import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.alias
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
@@ -132,7 +133,7 @@ private fun listMatches(requesterUserId: String, filterType: String?, userId: St
         val matchTeamTable = MatchTable.join(awayTeamTable, JoinType.INNER, MatchTable.awayTeamId, awayTeamTable[TeamTable.id])
             .join(homeTeamTable, JoinType.INNER, MatchTable.homeTeamId, homeTeamTable[TeamTable.id])
             .join(predictions, JoinType.LEFT, MatchTable.id, predictions[PredictionTable.matchId]).selectAll()
-            .orderBy(MatchTable.datetime)
+            .orderBy(MatchTable.datetime to SortOrder.ASC, MatchTable.id to SortOrder.ASC)
         val query = if (filterType.isNullOrBlank()) matchTeamTable else matchTeamTable.where { MatchTable.state eq Match.State.valueOf(filterType.uppercase()) }
         query.map { row ->
             Match(
