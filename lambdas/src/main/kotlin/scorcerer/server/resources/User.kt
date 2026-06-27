@@ -45,6 +45,7 @@ import scorcerer.utils.filterLeaderboardToLeague
 import scorcerer.utils.livePointsForUser
 import scorcerer.utils.toCountryLeagueId
 import scorcerer.utils.toTitleCase
+import scorcerer.utils.toToGoThrough
 import scorcerer.utils.toUser
 
 data class OAuthSignupRequest(val userId: String, val email: String, val firstName: String, val familyName: String)
@@ -261,7 +262,7 @@ fun userRoutes(contexts: RequestContexts, leaderboardService: LeaderboardService
         val userId = req.path("userId")!!
         val predictions = transaction {
             PredictionTable.selectAll().where { PredictionTable.memberId eq userId }.map { row ->
-                Prediction(row[PredictionTable.homeScore], row[PredictionTable.chip], row[PredictionTable.awayScore], row[PredictionTable.matchId].toString(), row[PredictionTable.id].toString(), row[PredictionTable.memberId], row[PredictionTable.points])
+                Prediction(row[PredictionTable.homeScore], row[PredictionTable.chip], row[PredictionTable.awayScore], row[PredictionTable.matchId].toString(), row[PredictionTable.id].toString(), row[PredictionTable.memberId], row[PredictionTable.points], row[PredictionTable.result].toToGoThrough())
             }
         }
         Response(Status.OK).body(predictions.toJson())

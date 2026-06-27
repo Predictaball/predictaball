@@ -25,6 +25,7 @@ import scorcerer.server.db.tables.PredictionTable
 import scorcerer.server.extractUserId
 import scorcerer.server.fromJson
 import scorcerer.server.toJson
+import scorcerer.utils.toToGoThrough
 import java.time.OffsetDateTime
 
 private fun chipColumn(chip: Chip) = when (chip) {
@@ -139,6 +140,7 @@ fun predictionRoutes(contexts: RequestContexts) = routes(
                         row[PredictionTable.id].toString(),
                         row[PredictionTable.memberId],
                         row[PredictionTable.points],
+                        row[PredictionTable.result].toToGoThrough(),
                     )
                 } ?: throw ApiResponseError(Response(Status.NOT_FOUND).body("Match does not exist"))
         }

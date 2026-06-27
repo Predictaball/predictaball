@@ -49,6 +49,9 @@ components:
         userId:
           description: The user who made the prediction
           type: string
+        toGoThrough:
+          description: For knockout games, the team the user backed to go through
+          $ref: '#/components/schemas/toGoThrough'
     match:
       type: object
       required:
