@@ -1,13 +1,13 @@
 'use client'
 
+import { ChipBadge, chipDisplay, computeChipImpact } from "@/app/components/predictions/chip-impact"
 import DistributionBar from "@/app/components/predictions/distribution-bar"
 import { FlagImage } from "@/app/components/predictions/flag-image"
 import type { UserChips } from "@/app/components/predictions/get-user-chips"
 import { handlePrediction } from "@/app/components/predictions/submit-prediction"
 import { ACTION_BUTTON_CLASS } from "@/app/util/css-classes"
 import { SHORT_COUNTRY_NAMES } from "@/app/util/teams"
-import { ChipBadge, chipDisplay, computeChipImpact } from "@/app/components/predictions/chip-impact"
-import { Chip, Match, MatchStateEnum, Prediction } from "@/client"
+import { Chip, Match, MatchRoundEnum, MatchStateEnum, Prediction, ToGoThrough } from "@/client"
 import { Button, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, useDisclosure } from "@nextui-org/react"
 import React, { useEffect, useRef, useState } from "react"
 import toast from "react-hot-toast"
@@ -26,6 +26,18 @@ function vibrate(pattern: number | number[]) {
     if (typeof navigator !== "undefined" && typeof navigator.vibrate === "function") {
         navigator.vibrate(pattern)
     }
+}
+
+const isKnockoutRound = (round: MatchRoundEnum): boolean => round !== MatchRoundEnum.GroupStage
+
+// Which side a knockout prediction backs to progress. A decisive score implies
+// the winner; a draw needs the user to choose, so we can't infer it here (and
+// the API doesn't yet echo the stored choice back on the prediction).
+function savedKnockoutSide(match: Match): ToGoThrough | undefined {
+    if (!isKnockoutRound(match.round) || !match.prediction) return undefined
+    const {homeScore, awayScore} = match.prediction
+    if (homeScore === awayScore) return undefined
+    return homeScore > awayScore ? ToGoThrough.Home : ToGoThrough.Away
 }
 
 interface PredictionFormProps {
@@ -48,12 +60,35 @@ export default function PredictionForm({match, onPredictionSaved, userChips, onC
     const [isSending, setIsSending] = useState(false)
     const [justSaved, setJustSaved] = useState(false)
     const [hasTouchedScore, setHasTouchedScore] = useState(false)
+    // Knockout draw: the team the user has picked to go through (chosen via the
+    // split submit button, so it isn't known until they press a side).
+    const [toGoThrough, setToGoThrough] = useState<ToGoThrough | undefined>(undefined)
     const {isOpen: isConfirmOpen, onOpen: openConfirm, onClose: closeConfirm} = useDisclosure()
     const [savedPrediction, setSavedPrediction] = useState(
         match.prediction
-            ? {home: match.prediction.homeScore, away: match.prediction.awayScore, chip: match.prediction.chip}
+            ? {home: match.prediction.homeScore, away: match.prediction.awayScore, chip: match.prediction.chip, toGoThrough: savedKnockoutSide(match)}
             : undefined,
     )
+
+    const isKnockout = isKnockoutRound(match.round)
+    const isDraw = homeScore === awayScore
+    // The side to send: the winning team for a decisive score, or the user's
+    // explicit pick for a draw. Non-knockout matches never carry a side.
+    const selectedSide: ToGoThrough | undefined = !isKnockout
+        ? undefined
+        : isDraw
+            ? toGoThrough
+            : homeScore > awayScore ? ToGoThrough.Home : ToGoThrough.Away
+
+    // Knockout prompt shown above the submit button. A draw asks the user to pick
+    // a side; a decisive score names the team that goes through. Rendered in a
+    // fixed-height row (even when empty) so the button never jumps vertically as
+    // the score crosses the draw line.
+    const knockoutWinner = homeScore > awayScore ? match.homeTeam : match.awayTeam
+    const knockoutWinnerShort = SHORT_COUNTRY_NAMES[knockoutWinner.toLowerCase()] ?? knockoutWinner
+    const knockoutPrompt = !isKnockout || chip === Chip.Crowd || justSaved
+        ? ""
+        : isDraw ? "Who goes through?" : `${knockoutWinnerShort} to go through`
 
     const homeCode = match.homeTeamFlagCode.toLowerCase()
     const awayCode = match.awayTeamFlagCode.toLowerCase()
@@ -72,14 +107,19 @@ export default function PredictionForm({match, onPredictionSaved, userChips, onC
         ? {original: nudge.original.away, adjusted: nudge.adjusted.away}
         : undefined
 
-    async function submit() {
+    async function submit(side?: ToGoThrough) {
         const h = homeScore
         const a = awayScore
         const c = chip
+        const tgt: ToGoThrough | undefined = !isKnockout
+            ? undefined
+            : h === a
+                ? side
+                : h > a ? ToGoThrough.Home : ToGoThrough.Away
         setIsSending(true)
         try {
-            const response = await handlePrediction(h, a, match.matchId, c)
-            setSavedPrediction({home: h, away: a, chip: c})
+            const response = await handlePrediction(h, a, match.matchId, c, tgt)
+            setSavedPrediction({home: h, away: a, chip: c, toGoThrough: tgt})
             if (response) {
                 onChipsChanged({
                     doublePointsRemaining: response.doublePointsChipsRemaining,
@@ -108,6 +148,12 @@ export default function PredictionForm({match, onPredictionSaved, userChips, onC
         submit()
     }
 
+    // Knockout draw: each half of the split button submits with that team going through.
+    function handleSideSubmit(side: ToGoThrough) {
+        setToGoThrough(side)
+        submit(side)
+    }
+
     function handleHomeChange(v: number) {
         setHasTouchedScore(true)
         setHomeScore(v)
@@ -121,6 +167,7 @@ export default function PredictionForm({match, onPredictionSaved, userChips, onC
         || savedPrediction.home !== homeScore
         || savedPrediction.away !== awayScore
         || savedPrediction.chip !== chip
+        || savedPrediction.toGoThrough !== selectedSide
 
     // Surface saved/unsaved state to the panel, which renders it on the globe.
     useEffect(() => {
@@ -167,20 +214,44 @@ export default function PredictionForm({match, onPredictionSaved, userChips, onC
             )}
 
             {isUpcoming && (
-                <Button
-                    onPress={handleSubmitClick}
-                    isLoading={isSending}
-                    isDisabled={!hasChanges || justSaved}
-                    className={`mt-4 w-full h-11 rounded-xl transition-colors ${
-                        justSaved
-                            ? "bg-gradient-to-r from-cyan-400 to-teal-400 text-gray-950 font-bold shadow-lg shadow-cyan-500/25 !opacity-100"
-                            : ACTION_BUTTON_CLASS
-                    }`}
-                >
-                    {justSaved
-                        ? "Saved ✓"
-                        : savedPrediction ? "Update prediction" : "Submit prediction"}
-                </Button>
+                <div className="mt-4">
+                    {/* Reserve a fixed-height prompt row on knockout matches so the
+                        button stays put when the "who goes through?" text toggles. */}
+                    {isKnockout && (
+                        <div className="h-4 mb-1.5 truncate text-center text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500 dark:text-gray-400">
+                            {knockoutPrompt}
+                        </div>
+                    )}
+                    {/* Crowd chip locks the score at kickoff, so the 0–0 default isn't a
+                        real draw pick — keep the normal submit button in that case. */}
+                    {isKnockout && isDraw && chip !== Chip.Crowd && !justSaved ? (
+                        <KnockoutSubmit
+                            homeName={match.homeTeam}
+                            homeCode={homeCode}
+                            awayName={match.awayTeam}
+                            awayCode={awayCode}
+                            savedSide={savedPrediction?.toGoThrough}
+                            sendingSide={isSending ? toGoThrough : undefined}
+                            disabled={isSending}
+                            onSubmit={handleSideSubmit}
+                        />
+                    ) : (
+                        <Button
+                            onPress={handleSubmitClick}
+                            isLoading={isSending}
+                            isDisabled={!hasChanges || justSaved}
+                            className={`w-full h-11 rounded-xl transition-colors ${
+                                justSaved
+                                    ? "bg-gradient-to-r from-cyan-400 to-teal-400 text-gray-950 font-bold shadow-lg shadow-cyan-500/25 !opacity-100"
+                                    : ACTION_BUTTON_CLASS
+                            }`}
+                        >
+                            {justSaved
+                                ? "Saved ✓"
+                                : savedPrediction ? "Update prediction" : "Submit prediction"}
+                        </Button>
+                    )}
+                </div>
             )}
 
             <Modal isOpen={isConfirmOpen} onClose={closeConfirm} placement="center" backdrop="blur" size="sm">
@@ -221,6 +292,47 @@ export default function PredictionForm({match, onPredictionSaved, userChips, onC
             {!isUpcoming && distribution && (
                 <DistributionBar distribution={distribution} homeName={match.homeTeam} awayName={match.awayTeam}/>
             )}
+        </div>
+    )
+}
+
+// Knockout match with a predicted draw: the submit button is split in half, a
+// team in each side, so pressing one submits with that team going through.
+function KnockoutSubmit({homeName, homeCode, awayName, awayCode, savedSide, sendingSide, disabled, onSubmit}: {
+    homeName: string
+    homeCode: string
+    awayName: string
+    awayCode: string
+    savedSide?: ToGoThrough
+    sendingSide?: ToGoThrough
+    disabled: boolean
+    onSubmit: (side: ToGoThrough) => void
+}): React.JSX.Element {
+    const sides = [
+        {side: ToGoThrough.Home, code: homeCode, name: homeName, rounded: "rounded-l-xl rounded-r-none"},
+        {side: ToGoThrough.Away, code: awayCode, name: awayName, rounded: "rounded-r-xl rounded-l-none"},
+    ] as const
+    return (
+        <div className="flex gap-px">
+            {sides.map(({side, code, name, rounded}) => {
+                const short = SHORT_COUNTRY_NAMES[name.toLowerCase()] ?? name
+                return (
+                    <Button
+                        key={side}
+                        onPress={() => onSubmit(side)}
+                        isLoading={sendingSide === side}
+                        isDisabled={disabled}
+                        title={`Submit with ${short} to go through`}
+                        className={`flex-1 min-w-0 h-11 gap-2 ${rounded} ${ACTION_BUTTON_CLASS} ${
+                            savedSide === side ? "ring-2 ring-inset ring-gray-950/40" : ""
+                        }`}
+                    >
+                        <FlagImage code={code} name={short} size={20}/>
+                        <span className="truncate text-sm">{short}</span>
+                        <span aria-hidden className="font-black">›</span>
+                    </Button>
+                )
+            })}
         </div>
     )
 }
