@@ -142,8 +142,14 @@ const MatchPill = React.forwardRef<HTMLButtonElement, {match: Match; selected: b
     const needsPrediction = match.state === MatchStateEnum.Upcoming && !match.prediction
 
     function handleClick() {
+        // For live and completed matches a second click opens the dedicated
+        // page (with crowd predictions, live updates, etc). Upcoming matches
+        // have nothing extra to show there beyond what the prediction card on
+        // this page already does, so we just no-op the second click.
         if (selected) {
-            router.push(`/app/match/${match.matchId}/predictions`)
+            if (match.state !== MatchStateEnum.Upcoming) {
+                router.push(`/app/match/${match.matchId}/predictions`)
+            }
         } else {
             onSelect()
         }
