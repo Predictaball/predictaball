@@ -1,6 +1,7 @@
 'use client'
 
 import React, {useEffect, useMemo, useState} from "react"
+import {useRouter} from "next/navigation"
 import {Match, MatchRoundEnum, MatchStateEnum} from "@/client"
 import FocusedGlobeClient from "@/app/components/flags/focused-globe-client"
 import PredictionForm from "@/app/components/predictions/prediction-form"
@@ -9,6 +10,7 @@ import {MatchCountdown} from "@/app/components/predictions/match-countdown"
 import {MatchScoreOverlay} from "@/app/components/predictions/match-score-overlay"
 import {PointsPill} from "@/app/components/predictions/chip-impact"
 import {useMatchSelection} from "@/app/components/predictions/match-selection"
+import {KNOCKOUT_EXPLAINER_HREF, hasSeenKnockoutExplainer, needsKnockoutExplainer} from "@/app/components/predictions/knockout-explainer"
 import type {UserChips} from "@/app/components/predictions/get-user-chips"
 import type {StreakStats} from "@/app/util/streaks"
 
@@ -32,11 +34,23 @@ interface PredictionPanelProps {
 }
 
 export default function PredictionPanel({liveMatches, upcomingMatches, completedMatches, historyHref, userChips, streaks}: PredictionPanelProps): React.JSX.Element {
+    const router = useRouter()
     const allMatches = useMemo(() => [...liveMatches, ...upcomingMatches], [liveMatches, upcomingMatches])
     const {selectedId, setSelectedId} = useMatchSelection()
     const [chips, setChips] = useState<UserChips>(userChips)
     const [status, setStatus] = useState<{saved: boolean; hasChanges: boolean}>({saved: false, hasChanges: true})
     const selected = allMatches.find(m => m.matchId === selectedId) ?? allMatches[0]
+
+    // The first time a user lands on a knockout match they still need to predict,
+    // send them through a one-off explainer covering how knockout predictions
+    // differ (no draws, pick who goes through). Returns them here afterwards.
+    useEffect(() => {
+        if (!selected) return
+        if (!needsKnockoutExplainer(selected)) return
+        if (hasSeenKnockoutExplainer()) return
+        const next = "/app"
+        router.push(`${KNOCKOUT_EXPLAINER_HREF}?next=${encodeURIComponent(next)}`)
+    }, [selected, router])
 
     // Reset the status when switching matches so the badge never shows the
     // previous match's state before the (remounted) form reports its own.
