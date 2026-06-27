@@ -43,7 +43,14 @@ private data class EspnStatusType(val state: String?, val name: String?, val com
 private data class EspnStatus(val type: EspnStatusType?)
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-private data class EspnCompetition(val competitors: List<EspnCompetitor>?, val status: EspnStatus?)
+private data class EspnVenue(val fullName: String?)
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+private data class EspnCompetition(
+    val competitors: List<EspnCompetitor>?,
+    val status: EspnStatus?,
+    val venue: EspnVenue?,
+)
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 private data class EspnSeason(val slug: String?)
@@ -68,6 +75,7 @@ private data class ExistingMatch(
     val datetime: OffsetDateTime,
     val state: Match.State,
     val espnId: String?,
+    val venue: String,
 )
 
 // ESPN team names that don't match our team table verbatim. Same alias map we
@@ -81,6 +89,24 @@ private val TEAM_ALIASES = mapOf(
     "congo dr" to "dr congo",
     "turkiye" to "turkey",
 )
+
+// ESPN venue names that don't match the canonical name we use in our DB and
+// the frontend's stadium-coords table. Keys are lowercased substrings to match
+// against ESPN's fullName; values are what we store. Add new aliases here
+// when ESPN reports a stadium under a sponsored/renamed banner.
+private val VENUE_ALIASES = mapOf(
+    // Estadio Azteca was renamed Estadio Banorte for the 2026 World Cup.
+    "banorte" to "Estadio Azteca",
+)
+
+private fun canonicalVenue(fullName: String?): String? {
+    if (fullName.isNullOrBlank()) return null
+    val lower = fullName.lowercase()
+    for ((alias, canonical) in VENUE_ALIASES) {
+        if (lower.contains(alias)) return canonical
+    }
+    return fullName
+}
 
 // Strip diacritics + non-alphanumeric, lowercase, alias-map. Mirrors V11.
 private fun normalizeTeamName(s: String?): String? {
@@ -159,6 +185,7 @@ class ScoreUpdater(
                     datetime = it[MatchTable.datetime],
                     state = it[MatchTable.state],
                     espnId = it[MatchTable.externalMatchId],
+                    venue = it[MatchTable.venue],
                 )
             }
         }
@@ -203,6 +230,7 @@ class ScoreUpdater(
             val state = event.status?.type?.state ?: ""
             val homeScore = homeC.score?.toIntOrNull() ?: 0
             val awayScore = awayC.score?.toIntOrNull() ?: 0
+            val venueName = canonicalVenue(competition.venue?.fullName)
 
             // Find an existing match for this fixture: first by espn id, then
             // by the team-pair + close-enough kickoff date.
@@ -218,7 +246,7 @@ class ScoreUpdater(
                         it[MatchTable.awayTeamId] = awayTeamId
                         it[MatchTable.datetime] = kickoff
                         it[MatchTable.state] = Match.State.UPCOMING
-                        it[MatchTable.venue] = "TBD"
+                        it[MatchTable.venue] = venueName ?: "TBD"
                         it[MatchTable.matchDay] = matchDayFromRound(round)
                         it[MatchTable.round] = round
                         it[MatchTable.externalMatchId] = event.id
@@ -241,6 +269,18 @@ class ScoreUpdater(
                     }
                 }
                 log.info("Match ${match.matchId}: set external_match_id=${event.id} (was ${match.espnId})")
+            }
+
+            // Backfill venue for fixtures that were inserted before the venue
+            // was known (knockouts go in as "TBD"). Only overwrite the TBD
+            // placeholder — never touch a venue that was set explicitly.
+            if (venueName != null && match.venue == "TBD") {
+                transaction {
+                    MatchTable.update({ MatchTable.id eq match.matchId }) {
+                        it[MatchTable.venue] = venueName
+                    }
+                }
+                log.info("Match ${match.matchId}: backfilled venue=$venueName")
             }
 
             // Side-swap detection: same fixture, but home/away flipped vs DB.
