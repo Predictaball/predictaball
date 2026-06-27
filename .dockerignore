@@ -1,0 +1,44 @@
+# Repo-root .dockerignore. We build with the repo root as the context so the
+# Dockerfile can COPY both `frontend/` and `contract/`. Everything else stays
+# out to keep the build context small.
+
+**/node_modules
+**/.next
+**/.git
+**/.gitignore
+**/.env
+**/.env.local
+**/.env.*.local
+**/Dockerfile
+**/.dockerignore
+**/.DS_Store
+
+# Backend — not part of the frontend image.
+lambdas/
+infra/
+
+# CDK output — excludes cdk.out so that when CDK uses the repo root as the
+# Docker context (DockerImageAsset directory: "..") it doesn't recurse into
+# its own output and produce nested paths exceeding the OS path limit.
+cdk/
+**/cdk.out/
+
+# Local-only directories.
+backups/
+.parked/
+
+# Editor / IDE.
+.idea/
+.vscode/
+*.iml
+
+# Build artifacts.
+**/build/
+**/dist/
+**/.turbo/
+**/coverage/
+**/.cache/
+
+# Tooling output that doesn't belong in the image.
+**/*.log
+**/npm-debug.log*

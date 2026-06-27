@@ -2,6 +2,10 @@ import { withSentryConfig } from "@sentry/nextjs"
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+    // Self-contained build output for running in a container: copies only the
+    // production dependencies the app actually uses into .next/standalone, so
+    // the runtime image doesn't need the full node_modules tree.
+    output: "standalone",
     images: {
         domains: ["flagcdn.com"]
     },

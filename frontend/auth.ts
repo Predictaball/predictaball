@@ -12,6 +12,10 @@ export const authConfig = {
         signIn: "/login",
         error: "/login",
     },
+    // We run behind a load balancer in non-Vercel environments (Docker/Fargate),
+    // so NextAuth needs to trust the X-Forwarded-Host header to construct
+    // callback URLs from the incoming request rather than its hardcoded default.
+    trustHost: true,
     session: {
         strategy: "jwt",
     },
