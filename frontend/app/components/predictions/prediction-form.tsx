@@ -30,11 +30,12 @@ function vibrate(pattern: number | number[]) {
 
 const isKnockoutRound = (round: MatchRoundEnum): boolean => round !== MatchRoundEnum.GroupStage
 
-// Which side a knockout prediction backs to progress. A decisive score implies
-// the winner; a draw needs the user to choose, so we can't infer it here (and
-// the API doesn't yet echo the stored choice back on the prediction).
+// Which side a knockout prediction backs to progress. The API now echoes the
+// stored choice on the prediction, so prefer it; fall back to deriving it from a
+// decisive score for older predictions saved before a side was captured.
 function savedKnockoutSide(match: Match): ToGoThrough | undefined {
     if (!isKnockoutRound(match.round) || !match.prediction) return undefined
+    if (match.prediction.toGoThrough) return match.prediction.toGoThrough
     const {homeScore, awayScore} = match.prediction
     if (homeScore === awayScore) return undefined
     return homeScore > awayScore ? ToGoThrough.Home : ToGoThrough.Away
@@ -60,9 +61,10 @@ export default function PredictionForm({match, onPredictionSaved, userChips, onC
     const [isSending, setIsSending] = useState(false)
     const [justSaved, setJustSaved] = useState(false)
     const [hasTouchedScore, setHasTouchedScore] = useState(false)
-    // Knockout draw: the team the user has picked to go through (chosen via the
-    // split submit button, so it isn't known until they press a side).
-    const [toGoThrough, setToGoThrough] = useState<ToGoThrough | undefined>(undefined)
+    // Knockout draw: the team the user has picked to go through. Seeded from the
+    // saved prediction so the pick shows on the card on load (and on live/finished
+    // matches); updated when they press a side on the split submit button.
+    const [toGoThrough, setToGoThrough] = useState<ToGoThrough | undefined>(() => savedKnockoutSide(match))
     const {isOpen: isConfirmOpen, onOpen: openConfirm, onClose: closeConfirm} = useDisclosure()
     const [savedPrediction, setSavedPrediction] = useState(
         match.prediction
@@ -97,6 +99,12 @@ export default function PredictionForm({match, onPredictionSaved, userChips, onC
     // Live/completed matches with no prediction should read as "no pick" (–),
     // not a misleading 0–0 in the score boxes.
     const predictionMissing = !isUpcoming && match.prediction === undefined
+    // The backed team to spotlight on the card. Only for a knockout draw, where
+    // the score alone (e.g. 1–1) doesn't reveal the pick. Hidden under the Crowd
+    // chip (its score is locked at kickoff, so there's no real pick yet) and when
+    // a live/finished match carries no prediction.
+    const drawPickSide: ToGoThrough | undefined =
+        isKnockout && isDraw && chip !== Chip.Crowd && !predictionMissing ? selectedSide : undefined
     // ±1 chip that paid off: surface the nudge inside the score boxes — the
     // changed side shows the new number, a ±1 marker, and the original struck out.
     const nudge = !isUpcoming ? chipDisplay(match.prediction, match).nudge : undefined
@@ -181,14 +189,24 @@ export default function PredictionForm({match, onPredictionSaved, userChips, onC
             </div>
 
             <div className="flex items-center justify-between gap-2">
-                <TeamSide code={homeCode} name={match.homeTeam} ranking={match.homeTeamRanking}/>
+                <TeamSide code={homeCode} name={match.homeTeam} ranking={match.homeTeamRanking} picked={drawPickSide === ToGoThrough.Home} dimmed={drawPickSide === ToGoThrough.Away}/>
                 <div className="flex items-center gap-2">
                     <ScoreInput value={homeScore} onChange={handleHomeChange} disabled={!isUpcoming || chip === Chip.Crowd} readOnly={!isUpcoming} displayOverride={predictionMissing ? "–" : chip === Chip.Crowd ? "?" : undefined} nudge={homeNudge}/>
                     <span className="text-3xl font-black text-slate-400 dark:text-gray-500">:</span>
                     <ScoreInput value={awayScore} onChange={handleAwayChange} disabled={!isUpcoming || chip === Chip.Crowd} readOnly={!isUpcoming} displayOverride={predictionMissing ? "–" : chip === Chip.Crowd ? "?" : undefined} nudge={awayNudge}/>
                 </div>
-                <TeamSide code={awayCode} name={match.awayTeam} ranking={match.awayTeamRanking} reverse/>
+                <TeamSide code={awayCode} name={match.awayTeam} ranking={match.awayTeamRanking} reverse picked={drawPickSide === ToGoThrough.Away} dimmed={drawPickSide === ToGoThrough.Home}/>
             </div>
+
+            {/* Confirmation of the backed side on a knockout draw. Upcoming matches
+                convey the same thing through the split submit button below, so the
+                bar is reserved for live/finished cards that have no submit UI. */}
+            {!isUpcoming && drawPickSide && (
+                <ThroughBar
+                    code={drawPickSide === ToGoThrough.Home ? homeCode : awayCode}
+                    name={drawPickSide === ToGoThrough.Home ? match.homeTeam : match.awayTeam}
+                />
+            )}
 
             {isLive && (
                 <LiveChipStatus prediction={match.prediction} match={match}/>
@@ -363,13 +381,18 @@ function LiveChipStatus({prediction, match}: {prediction?: Prediction; match: Ma
     )
 }
 
-function TeamSide({code, name, reverse, ranking}: {code: string; name: string; reverse?: boolean; ranking?: number}) {
+// One team in the header row. On a knockout draw the backed team is `picked`
+// (cyan ring + bolder name) and the other is `dimmed`, so the card shows who the
+// user sent through even though the score is level.
+function TeamSide({code, name, reverse, ranking, picked, dimmed}: {code: string; name: string; reverse?: boolean; ranking?: number; picked?: boolean; dimmed?: boolean}) {
     const displayName = SHORT_COUNTRY_NAMES[name.toLowerCase()] ?? name
     return (
-        <div className={`flex flex-col items-center gap-2 w-20 ${reverse ? "order-last" : ""}`}>
-            <FlagImage code={code} name={name} size={48}/>
+        <div className={`flex flex-col items-center gap-2 w-20 transition-opacity ${reverse ? "order-last" : ""} ${dimmed ? "opacity-40" : ""}`}>
+            <div className={picked ? "rounded-full ring-2 ring-cyan-500 ring-offset-2 ring-offset-white dark:ring-cyan-400 dark:ring-offset-gray-900" : ""}>
+                <FlagImage code={code} name={name} size={48}/>
+            </div>
             <div className="w-full text-center leading-tight">
-                <span className="block text-xs font-semibold tracking-wide text-slate-700 dark:text-gray-200 break-words">
+                <span className={`block text-xs tracking-wide break-words ${picked ? "font-bold text-slate-900 dark:text-white" : "font-semibold text-slate-700 dark:text-gray-200"}`}>
                     {displayName}
                 </span>
                 {ranking !== undefined && (
@@ -378,6 +401,20 @@ function TeamSide({code, name, reverse, ranking}: {code: string; name: string; r
                     </span>
                 )}
             </div>
+        </div>
+    )
+}
+
+// Centered confirmation chip naming the team backed to progress, shown beneath
+// the scores on a live/finished knockout draw.
+function ThroughBar({code, name}: {code: string; name: string}): React.JSX.Element {
+    const short = SHORT_COUNTRY_NAMES[name.toLowerCase()] ?? name
+    return (
+        <div className="mt-4 flex justify-center">
+            <span className="inline-flex items-center gap-2 rounded-full border border-cyan-500/20 bg-cyan-500/10 px-3 py-1 text-xs font-bold text-cyan-700 dark:border-cyan-400/20 dark:bg-cyan-400/10 dark:text-cyan-300">
+                <FlagImage code={code} name={short} size={16}/>
+                {short} to go through
+            </span>
         </div>
     )
 }
