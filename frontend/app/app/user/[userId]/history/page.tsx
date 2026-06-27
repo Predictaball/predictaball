@@ -10,7 +10,7 @@ import FormBadge from "@/app/components/leaderboard/form-badge";
 import {SECTION_EYEBROW} from "@/app/util/css-classes";
 import StreakBadges from "@/app/components/points/streak-badges";
 import {computeStreakStats} from "@/app/util/streaks";
-import {bucketMatchesByGroupLetter, KNOCKOUT_GROUP} from "@/app/util/group-matches";
+import {bucketMatchesByGroupLetter, groupMatchesByDay, KNOCKOUT_GROUP} from "@/app/util/group-matches";
 import {computePredictedStandings} from "@/app/util/predicted-standings";
 
 export default async function Home({
@@ -78,9 +78,7 @@ export default async function Home({
     const initialGroup = mostRecentMatch
         ? groupOrder.find(group => matchesByGroup[group]?.some(m => m.matchId === mostRecentMatch.matchId))
         : undefined
-    const recentMatches = [...games]
-        .sort((a, b) => b.datetime.valueOf() - a.datetime.valueOf())
-        .slice(0, 3)
+    const recentDayGroups = groupMatchesByDay(games).slice(0, 2)
     const user = leaderboardEntry?.user
     const fullName = user ? `${user.firstName} ${user.familyName}` : "Player"
     const initials = user ? `${user.firstName.charAt(0)}${user.familyName.charAt(0)}` : "?"
@@ -151,12 +149,29 @@ export default async function Home({
 
                 <StreakBadges stats={streaks} />
 
-                {recentMatches.length > 0 && (
+                {recentDayGroups.length > 0 && (
                     <section className="space-y-4">
                         <h2 className={SECTION_EYEBROW + " text-center"}>Recent matches</h2>
-                        <div className="flex flex-col items-center gap-3">
-                            {recentMatches.map(match => (
-                                <HistoryMatchCard match={match} key={match.matchId}/>
+                        <div className="flex flex-col gap-6">
+                            {recentDayGroups.map(group => (
+                                <div key={group.key} className="flex gap-3 sm:gap-4">
+                                    <div className="w-12 shrink-0 pt-3.5 sm:w-16 text-right">
+                                        <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400 dark:text-gray-500">
+                                            {group.date.toLocaleDateString("en-GB", {weekday: "short"})}
+                                        </p>
+                                        <p className="text-xl font-black leading-none tabular-nums text-slate-900 dark:text-white">
+                                            {group.date.toLocaleDateString("en-GB", {day: "numeric"})}
+                                        </p>
+                                        <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400 dark:text-gray-500">
+                                            {group.date.toLocaleDateString("en-GB", {month: "short"})}
+                                        </p>
+                                    </div>
+                                    <div className="flex min-w-0 flex-1 flex-col gap-3">
+                                        {group.matches.map(match => (
+                                            <HistoryMatchCard match={match} key={match.matchId}/>
+                                        ))}
+                                    </div>
+                                </div>
                             ))}
                         </div>
                     </section>

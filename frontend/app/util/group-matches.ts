@@ -26,3 +26,26 @@ export function bucketMatchesByGroupLetter(groups: Standings["groups"], matches:
     }
     return byGroup
 }
+
+export interface MatchDayGroup {
+    key: string
+    date: Date
+    matches: Match[]
+}
+
+// Group matches into calendar-day buckets, most recent day first and matches
+// within each day ordered latest-to-earliest.
+export function groupMatchesByDay(matches: Match[]): MatchDayGroup[] {
+    const byDay = new Map<string, Match[]>()
+    for (const m of matches) {
+        const d = m.datetime
+        const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`
+        ;(byDay.get(key) ?? byDay.set(key, []).get(key)!).push(m)
+    }
+    return [...byDay.entries()]
+        .map(([key, dayMatches]) => {
+            const sorted = [...dayMatches].sort((a, b) => b.datetime.valueOf() - a.datetime.valueOf())
+            return {key, date: sorted[0].datetime, matches: sorted}
+        })
+        .sort((a, b) => b.date.valueOf() - a.date.valueOf())
+}
