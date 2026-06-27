@@ -1,6 +1,7 @@
 import React from "react";
 import {CountryLeaderboardInner, LeagueApi} from "@/client";
 import {getConfigWithAuthHeader} from "@/app/api/client-config";
+import {SHARED_DATA_REVALIDATE_SECONDS} from "@/app/api/constants";
 import CountryRankingEntry from "@/app/components/leaderboard/country-ranking-entry";
 
 interface CountryRankingsPreviewProps {
@@ -9,7 +10,7 @@ interface CountryRankingsPreviewProps {
 
 export default async function CountryRankingsPreview({limit = 5}: CountryRankingsPreviewProps): Promise<React.JSX.Element> {
     const rankings: CountryLeaderboardInner[] = await new LeagueApi(await getConfigWithAuthHeader())
-        .getCountryRankings()
+        .getCountryRankings({next: {revalidate: SHARED_DATA_REVALIDATE_SECONDS}})
         .then(response => response.rankings)
         .catch(() => [])
 

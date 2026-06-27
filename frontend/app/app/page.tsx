@@ -19,6 +19,7 @@ import MatchesHelp from "@/app/components/predictions/matches-help";
 import {FlagImage} from "@/app/components/predictions/flag-image";
 import {redirect} from "next/navigation";
 import {getConfigWithAuthHeader} from "@/app/api/client-config";
+import {SHARED_DATA_REVALIDATE_SECONDS} from "@/app/api/constants";
 import {GetTournamentState200ResponseStateEnum, League, ListMatchesFilterTypeEnum, MatchApi, TournamentApi, UserApi} from "@/client";
 import PredictionPanel from "@/app/components/predictions/prediction-panel";
 import PredictNowBanner from "@/app/components/predictions/predict-now-banner";
@@ -36,21 +37,25 @@ const Home = async ({searchParams}: {searchParams: Promise<Record<string, string
     const userApi = new UserApi(config)
     const tournamentApi = new TournamentApi(config)
 
-    // Members who haven't picked a team yet (e.g. Google sign-ups) must do so first.
-    const profile = await userApi.getUserProfile().catch(() => null)
-    if (profile && !profile.supportedTeamId) {
-        redirect("/app/onboarding")
-    }
-
-    const [liveMatches, upcomingMatches, completedMatches, userChips, leagues, tournamentState, userId] = await Promise.all([
+    // Fetch the profile alongside the rest of the dashboard data rather than
+    // serially before it: the onboarding redirect below only fires for the rare
+    // team-less account (e.g. Google sign-ups), so it isn't worth blocking every
+    // load on an extra serial round-trip.
+    const [profile, liveMatches, upcomingMatches, completedMatches, userChips, leagues, tournamentState, userId] = await Promise.all([
+        userApi.getUserProfile().catch(() => null),
         matchApi.listMatches({filterType: ListMatchesFilterTypeEnum.Live}).catch(() => []),
         matchApi.listMatches({filterType: ListMatchesFilterTypeEnum.Upcoming}).catch(() => []),
         matchApi.listMatches({filterType: ListMatchesFilterTypeEnum.Completed}).catch(() => []),
         getUserChips(),
         userApi.getUserLeagues().catch((): League[] => []),
-        tournamentApi.getTournamentState().catch(() => null),
+        tournamentApi.getTournamentState({next: {revalidate: SHARED_DATA_REVALIDATE_SECONDS}}).catch(() => null),
         getUserId(),
     ])
+
+    // Members who haven't picked a team yet must do so before seeing the dashboard.
+    if (profile && !profile.supportedTeamId) {
+        redirect("/app/onboarding")
+    }
     // Show only the few most-recent completed matches in the strip; "View all"
     // links to the full history.
     const recentCompleted = [...completedMatches]

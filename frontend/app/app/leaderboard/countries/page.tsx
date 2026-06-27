@@ -2,6 +2,7 @@ import React from "react";
 import Link from "next/link";
 import BackButton from "@/app/components/back-button";
 import {getConfigWithAuthHeader} from "@/app/api/client-config";
+import {SHARED_DATA_REVALIDATE_SECONDS} from "@/app/api/constants";
 import {CountryLeaderboardInner, LeagueApi} from "@/client";
 import {PitchPerspective} from "@/app/components/atmosphere";
 import CountryRankingEntry from "@/app/components/leaderboard/country-ranking-entry";
@@ -18,7 +19,7 @@ function GlobeIcon({className}: {className?: string}): React.JSX.Element {
 
 export default async function CountryRankingsPage(): Promise<React.JSX.Element> {
     const rankings: CountryLeaderboardInner[] = await new LeagueApi(await getConfigWithAuthHeader())
-        .getCountryRankings()
+        .getCountryRankings({next: {revalidate: SHARED_DATA_REVALIDATE_SECONDS}})
         .then(response => response.rankings)
         .catch(() => [])
 

@@ -4,6 +4,11 @@ import { withSentryConfig } from "@sentry/nextjs"
 const nextConfig = {
     images: {
         domains: ["flagcdn.com"]
+    },
+    experimental: {
+        // Rewrite barrel imports from @nextui-org/react into direct submodule
+        // imports so only the components we use get bundled, not the whole lib.
+        optimizePackageImports: ["@nextui-org/react"]
     }
 };
 

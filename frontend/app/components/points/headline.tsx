@@ -3,6 +3,7 @@ import Link from "next/link";
 import CountUpWrapped from "@/app/components/points/count-up-wrapper";
 import { CountryLeaderboardInner, GetUserPoints200Response, LeagueApi, UserApi } from "@/client";
 import { getConfigWithAuthHeader } from "@/app/api/client-config";
+import { SHARED_DATA_REVALIDATE_SECONDS } from "@/app/api/constants";
 import { getUserId } from "@/app/auth/jwt-handler";
 import { getPositionForLeague } from "@/app/app/league/get-position-for-league";
 import { FlagImage } from "@/app/components/predictions/flag-image";
@@ -48,7 +49,7 @@ export default async function Headline({ hasLiveMatch, supportedTeamId, streaks 
 
     async function fetchCountryRankings(): Promise<CountryLeaderboardInner[]> {
         try {
-            return await new LeagueApi(config).getCountryRankings().then(response => response.rankings)
+            return await new LeagueApi(config).getCountryRankings({next: {revalidate: SHARED_DATA_REVALIDATE_SECONDS}}).then(response => response.rankings)
         } catch (error) {
             console.log(error)
             return []
