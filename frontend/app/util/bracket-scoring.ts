@@ -70,28 +70,35 @@ export interface RunMatch {
 /** Points a single match contributed; `correct` is undefined while pending. */
 export interface MatchScore {
     basePoints: number
+    bonusPoints: number
     correct?: boolean
 }
 
 export interface RunResult {
     totalPoints: number
+    currentStreak: number
     perMatch: MatchScore[]
 }
 
 /**
  * Replay a user's knockout matches into a running score.
+ * Each consecutive correct pick earns an extra +1 (uncapped streak bonus).
  * Matches that are not yet decided (`actual` undefined) are pending and score nothing.
  */
 export function scoreRun(matches: RunMatch[]): RunResult {
     let totalPoints = 0
+    let streak = 0
     const perMatch = matches.map((match): MatchScore => {
         const base = ROUND_BASE[match.round] ?? 0
-        if (match.actual == null) return { basePoints: 0, correct: undefined }
+        if (match.actual == null) return { basePoints: 0, bonusPoints: 0, correct: undefined }
         if (match.pick != null && match.pick === match.actual) {
-            totalPoints += base
-            return { basePoints: base, correct: true }
+            streak += 1
+            const bonus = Math.min(streak - 1, 5)
+            totalPoints += base + bonus
+            return { basePoints: base, bonusPoints: bonus, correct: true }
         }
-        return { basePoints: 0, correct: false }
+        streak = 0
+        return { basePoints: 0, bonusPoints: 0, correct: false }
     })
-    return { totalPoints, perMatch }
+    return { totalPoints, currentStreak: streak, perMatch }
 }

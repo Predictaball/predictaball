@@ -53,12 +53,27 @@ export default async function BracketPage({ searchParams }: {
                     </h1>
                     <p className="mx-auto max-w-md text-sm text-slate-600 dark:text-gray-400">
                         A side-game over the knockouts: every team you back to go through scores points that
-                        climb each round. Top of your league lifts the cup.
+                        climb each round. Call matches right in a row to build a streak bonus on top.
+                        Top of your league lifts the cup.
                     </p>
+                    <div className="mx-auto flex max-w-xs justify-center gap-3 pt-1">
+                        {[
+                            { label: "R32", pts: 1 },
+                            { label: "R16", pts: 3 },
+                            { label: "QF", pts: 5 },
+                            { label: "SF", pts: 8 },
+                            { label: "Final", pts: 12 },
+                        ].map(({ label, pts }) => (
+                            <div key={label} className="flex flex-col items-center gap-0.5">
+                                <span className="text-base font-black tabular-nums text-slate-900 dark:text-white">+{pts}</span>
+                                <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-gray-500">{label}</span>
+                            </div>
+                        ))}
+                    </div>
                 </section>
 
                 {bracket && (
-                    <ScoreHeader totalPoints={bracket.totalPoints} />
+                    <ScoreHeader totalPoints={bracket.totalPoints} currentStreak={bracket.currentStreak} />
                 )}
 
                 <section className="space-y-3">

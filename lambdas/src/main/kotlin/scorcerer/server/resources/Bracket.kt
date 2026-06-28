@@ -53,12 +53,13 @@ fun bracketRoutes(contexts: RequestContexts) = routes(
                 kickoff = row.kickoff,
                 state = BracketMatch.State.valueOf(row.state.value),
                 basePoints = score.basePoints,
+                bonusPoints = score.bonusPoints,
                 userPick = row.pick.toToGoThrough(),
                 actualGoThrough = row.actual.toToGoThrough(),
                 correct = score.correct,
             )
         }
-        Response(Status.OK).body(Bracket(matches, run.totalPoints).toJson())
+        Response(Status.OK).body(Bracket(matches, run.totalPoints, run.currentStreak).toJson())
     },
     "/league/{leagueId}/bracket-leaderboard" bind Method.GET to { req ->
         val leagueId = req.path("leagueId")!!

@@ -436,6 +436,7 @@ components:
         - kickoff
         - state
         - basePoints
+        - bonusPoints
       properties:
         matchId:
           description: Unique matchId
@@ -480,12 +481,17 @@ components:
           description: Base points earned for this match (0 unless correct)
           type: integer
           format: int32
+        bonusPoints:
+          description: Streak bonus points earned for this match (0 unless correct)
+          type: integer
+          format: int32
     bracket:
       description: The requesting user's Knockout Cup run and running score.
       type: object
       required:
         - matches
         - totalPoints
+        - currentStreak
       properties:
         matches:
           description: The user's knockout matches in kickoff order
@@ -493,6 +499,10 @@ components:
           items:
             $ref: '#/components/schemas/bracketMatch'
         totalPoints:
+          type: integer
+          format: int32
+        currentStreak:
+          description: Current run of consecutive correct picks (kickoff order)
           type: integer
           format: int32
     bracketLeaderboardRow:
