@@ -1,5 +1,6 @@
 package scorcerer.server.resources
 
+import kotlinx.coroutines.runBlocking
 import org.http4k.core.Filter
 import org.http4k.core.Method
 import org.http4k.core.Response
@@ -43,6 +44,27 @@ fun adminRoutes(
             runCatching { recalculateAllFixedPoints() }
                 .onFailure { log.error(it.stackTraceToString()) }
             Response(Status.OK)
+        },
+        "/admin/rebuild-leaderboard" bind Method.POST to { req ->
+            // Rebuilds the S3 leaderboard snapshot for a given match_day from
+            // the current state of MemberTable.fixedPoints + live points.
+            // Used to recover from a writeLeaderboard that wrote to the wrong
+            // matchDay key (e.g. our R32 fixtures briefly collided with
+            // group-stage matchdays 4-9). Caller passes ?matchDay=18.
+            val matchDay = req.query("matchDay")?.toIntOrNull()
+            if (matchDay == null) {
+                Response(Status.BAD_REQUEST).body("matchDay query param required")
+            } else {
+                log.info("Admin: rebuild-leaderboard matchDay=$matchDay triggered")
+                runCatching {
+                    runBlocking {
+                        leaderboardService.updateGlobalLeaderboard(matchDay)
+                        leaderboardService.updateCountryRankings()
+                    }
+                    tournamentStateService.invalidateCache()
+                }.onFailure { log.error(it.stackTraceToString()) }
+                Response(Status.OK)
+            }
         },
         "/admin/send-reminders" bind Method.POST to {
             // Sending reminders for the full opted-in list can take 10+

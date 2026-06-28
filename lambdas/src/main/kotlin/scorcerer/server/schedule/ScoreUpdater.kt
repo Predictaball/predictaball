@@ -23,8 +23,11 @@ import scorcerer.server.services.setScore
 import scorcerer.utils.LeaderboardService
 import java.text.Normalizer
 import java.time.Duration
+import java.time.LocalDate
 import java.time.OffsetDateTime
+import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoUnit
 
 // ESPN's site scoreboard API. Undocumented but stable for years — powers their
 // own site. One call returns every WC fixture in the date range, with status,
@@ -247,7 +250,7 @@ class ScoreUpdater(
                         it[MatchTable.datetime] = kickoff
                         it[MatchTable.state] = Match.State.UPCOMING
                         it[MatchTable.venue] = venueName ?: "TBD"
-                        it[MatchTable.matchDay] = matchDayFromRound(round)
+                        it[MatchTable.matchDay] = matchDayForKickoff(kickoff)
                         it[MatchTable.round] = round
                         it[MatchTable.externalMatchId] = event.id
                     } get MatchTable.id
@@ -356,15 +359,23 @@ class ScoreUpdater(
         }
     }
 
-    // For knockout rounds we don't have a real "match day" — slot them in as
-    // increasing numbers past the group stage's matchdays 1/2/3.
-    private fun matchDayFromRound(round: MatchRound): Int = when (round) {
-        MatchRound.GROUP_STAGE -> 1
-        MatchRound.ROUND_OF_THIRTY_TWO -> 4
-        MatchRound.ROUND_OF_SIXTEEN -> 5
-        MatchRound.QUARTER_FINAL -> 6
-        MatchRound.SEMI_FINAL -> 7
-        MatchRound.THIRD_PLACE_PLAYOFF -> 8
-        MatchRound.FINAL -> 9
+    // match_day numbers each session of fixtures in the tournament. The seed
+    // assigns 1..17 to the group stage, with a session boundary that follows
+    // the host country's local calendar (i.e. late-night UTC kickoffs share
+    // the same match_day as the prior evening's games). Compute the same way
+    // for knockout fixtures: number of days since the tournament started in
+    // LA time, plus one. Used as the S3 leaderboard snapshot key and for
+    // computing position movement against the previous day's snapshot.
+    private fun matchDayForKickoff(kickoff: OffsetDateTime): Int {
+        val localDate = kickoff.atZoneSameInstant(MATCH_DAY_ZONE).toLocalDate()
+        return ChronoUnit.DAYS.between(TOURNAMENT_START_DATE, localDate).toInt() + 1
+    }
+
+    companion object {
+        // Anchors for match_day derivation. The group-stage seed used these
+        // same boundaries; we hardcode them so newly-discovered fixtures slot
+        // into the same numbering scheme.
+        private val TOURNAMENT_START_DATE: LocalDate = LocalDate.of(2026, 6, 11)
+        private val MATCH_DAY_ZONE: ZoneId = ZoneId.of("America/Los_Angeles")
     }
 }
