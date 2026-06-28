@@ -75,29 +75,102 @@ export default function BracketTree({ matches }: BracketTreeProps): React.JSX.El
         : <DesktopTree rounds={rounds} isLocked={isLocked} />
 }
 
-/** Phone layout: swipe round-to-round, each round a bounded scrollable column. */
+// Mobile bracket geometry
+const M_CARD_H = 56
+const M_V_GAP = 12
+const M_SLOT = M_CARD_H + M_V_GAP
+const M_CONNECTOR_W = 28
+const M_HEADER_H = 28
+
+/** Returns the vertical centre of each cell in a round column given its match count. */
+function mobileCenters(matchCount: number, totalSlots: number): number[] {
+    // Cells are evenly distributed over the same total height as the first round.
+    return Array.from({ length: matchCount }, (_, i) =>
+        (totalSlots * M_SLOT * (i + 0.5)) / matchCount
+    )
+}
+
+/** Phone layout: snap-scroll carousel with proper bracket connector lines. */
 function MobileCarousel({ rounds, isLocked }: { rounds: RoundColumn[]; isLocked: (r: number) => boolean }): React.JSX.Element {
-    const dims: CellDims = { width: "100%", height: 52, compact: true }
+    const firstRoundCount = rounds[0].matches.length
+    // Total height is driven by the first (largest) round
+    const totalH = firstRoundCount * M_SLOT - M_V_GAP
+
+    // Pre-compute vertical centres per round
+    const centersByRound: number[][] = rounds.map((col) =>
+        mobileCenters(col.matches.length, firstRoundCount)
+    )
+
     return (
-        <div className="-mx-4 flex h-[62vh] snap-x snap-mandatory gap-3 overflow-x-auto overflow-y-hidden px-4" style={{ WebkitOverflowScrolling: "touch" }}>
+        <div
+            className="-mx-4 flex snap-x snap-mandatory overflow-x-auto overflow-y-hidden px-4"
+            style={{ WebkitOverflowScrolling: "touch", gap: 0 }}
+        >
             {rounds.map((column, r) => {
                 const locked = isLocked(r)
+                const centers = centersByRound[r]
+                const prevCenters = r > 0 ? centersByRound[r - 1] : null
+                const dims: CellDims = { width: "100%", height: M_CARD_H, compact: true }
+
                 return (
-                    <section key={column.round} className="flex h-full w-[82vw] max-w-sm shrink-0 snap-center flex-col">
-                        <header className="flex shrink-0 items-center justify-center gap-1.5 pb-2 text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-gray-400">
-                            {ROUND_LABELS[column.round]}
-                            {locked && <LockIcon className="h-3 w-3 text-slate-400 dark:text-gray-500" />}
-                        </header>
-                        <div className="flex-1 overflow-y-auto pr-1" style={{ WebkitOverflowScrolling: "touch" }}>
-                            <div className="flex flex-col gap-2 pb-1">
-                                {column.matches.map((match) => (
-                                    <BracketCell key={match.matchId} match={match} locked={locked} dims={dims} />
+                    <React.Fragment key={column.round}>
+                        {/* Connector SVG strip between rounds */}
+                        {prevCenters && (
+                            <div className="shrink-0 self-start" style={{ width: M_CONNECTOR_W, paddingTop: M_HEADER_H }}>
+                                <svg
+                                    width={M_CONNECTOR_W}
+                                    height={totalH}
+                                    fill="none"
+                                    aria-hidden
+                                    className="pointer-events-none"
+                                >
+                                    {centers.map((cy, j) => {
+                                        const f1 = prevCenters[2 * j]
+                                        const f2 = prevCenters[2 * j + 1]
+                                        if (f1 == null || f2 == null) return null
+                                        const midY = (f1 + f2) / 2
+                                        // horizontal from right edge of prev card, then vertical to merge, then horizontal to left edge of next card
+                                        return (
+                                            <path
+                                                key={j}
+                                                d={`M 0 ${f1} H ${M_CONNECTOR_W / 2} V ${f2} M ${M_CONNECTOR_W / 2} ${midY} H ${M_CONNECTOR_W}`}
+                                                className="stroke-slate-300 dark:stroke-white/20"
+                                                strokeWidth={1.5}
+                                            />
+                                        )
+                                    })}
+                                </svg>
+                            </div>
+                        )}
+
+                        {/* Round column */}
+                        <section
+                            className="flex shrink-0 snap-center flex-col"
+                            style={{ width: "72vw", maxWidth: 300 }}
+                        >
+                            <header className="flex shrink-0 items-center justify-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-gray-400" style={{ height: M_HEADER_H }}>
+                                {ROUND_LABELS[column.round]}
+                                {locked && <LockIcon className="h-3 w-3 text-slate-400 dark:text-gray-500" />}
+                            </header>
+
+                            {/* Matches pinned at their bracket positions */}
+                            <div className="relative" style={{ height: totalH }}>
+                                {column.matches.map((match, j) => (
+                                    <div
+                                        key={match.matchId}
+                                        className="absolute w-full"
+                                        style={{ top: centers[j] - M_CARD_H / 2 }}
+                                    >
+                                        <BracketCell match={match} locked={locked} dims={dims} />
+                                    </div>
                                 ))}
                             </div>
-                        </div>
-                    </section>
+                        </section>
+                    </React.Fragment>
                 )
             })}
+            {/* Right padding sentinel */}
+            <div className="shrink-0" style={{ width: 16 }} />
         </div>
     )
 }
