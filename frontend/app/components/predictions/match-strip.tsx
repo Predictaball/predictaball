@@ -181,6 +181,7 @@ function PillBody({match}: {match: Match}): React.JSX.Element {
     const awayCode = match.awayTeamFlagCode.toLowerCase()
     const predicted = match.prediction
     const isCompleted = match.state === MatchStateEnum.Completed
+    const isLive = match.state === MatchStateEnum.Live
     const hasScore = match.homeScore !== undefined && match.awayScore !== undefined
     // Follow-the-Crowd predictions are only locked in at kickoff, so the user's
     // stored score is a placeholder until the match starts — show ?-? until then.
@@ -192,8 +193,8 @@ function PillBody({match}: {match: Match}): React.JSX.Element {
         <div className="rounded-2xl bg-white dark:bg-gray-900/90 px-4 py-3 min-w-[200px] text-left">
             <div className="flex items-center justify-between gap-3">
                 <PillFlag code={homeCode} name={match.homeTeam}/>
-                {isCompleted && hasScore ? (
-                    <span className="text-sm font-black tabular-nums text-slate-700 dark:text-gray-200">{match.homeScore} - {match.awayScore}</span>
+                {(isCompleted || isLive) && hasScore ? (
+                    <span className={`text-sm font-black tabular-nums ${isLive ? "text-red-500 dark:text-red-400" : "text-slate-700 dark:text-gray-200"}`}>{match.homeScore} - {match.awayScore}</span>
                 ) : (
                     <span className="text-xs font-semibold text-slate-400 dark:text-gray-500">vs</span>
                 )}
