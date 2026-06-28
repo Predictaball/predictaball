@@ -4,9 +4,12 @@ import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.greaterEq
 import org.jetbrains.exposed.v1.core.inList
+import org.jetbrains.exposed.v1.core.isNull
 import org.jetbrains.exposed.v1.core.less
+import org.jetbrains.exposed.v1.core.or
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
+import org.jetbrains.exposed.v1.jdbc.update
 import org.openapitools.server.models.Match
 import scorcerer.server.db.tables.MatchTable
 import scorcerer.server.db.tables.MemberTable
@@ -23,6 +26,11 @@ object ReminderService {
 
     fun sendReminders(now: OffsetDateTime = OffsetDateTime.now(ZoneOffset.UTC)) {
         val cutoff = now.plusHours(30)
+        // EventBridge API destinations time out after ~5s and retry on
+        // timeout — historically that caused us to re-send the whole batch
+        // each retry. Skip any user already reminded today (UTC) so retries
+        // are idempotent.
+        val startOfDay = now.toLocalDate().atStartOfDay().atOffset(ZoneOffset.UTC)
 
         val upcomingMatchIds = transaction {
             MatchTable.selectAll().where {
@@ -38,7 +46,10 @@ object ReminderService {
         }
 
         val (optedInUsers, predictionsForUpcoming) = transaction {
-            val users = MemberTable.selectAll().where { MemberTable.emailReminders eq true }
+            val users = MemberTable.selectAll().where {
+                (MemberTable.emailReminders eq true) and
+                    ((MemberTable.lastReminderAt.isNull()) or (MemberTable.lastReminderAt less startOfDay))
+            }
                 .map { UserToRemind(it[MemberTable.id], it[MemberTable.email], it[MemberTable.firstName]) }
 
             val predictions = if (users.isEmpty()) {
@@ -54,7 +65,7 @@ object ReminderService {
         }
 
         if (optedInUsers.isEmpty()) {
-            log.info("No users with reminders enabled")
+            log.info("No users with reminders enabled (or all already reminded today)")
             return
         }
 
@@ -68,6 +79,15 @@ object ReminderService {
             val predicted = predictedByUser[user.userId] ?: emptySet()
             val unpredictedCount = upcomingSet.count { it !in predicted }
             if (unpredictedCount > 0) {
+                // Stamp the user as reminded BEFORE the email goes out, so a
+                // concurrent retry that races us won't double-send. If Resend
+                // fails after the stamp the user just misses today's reminder
+                // — less bad than spamming them with three copies.
+                transaction {
+                    MemberTable.update({ MemberTable.id eq user.userId }) {
+                        it[lastReminderAt] = now
+                    }
+                }
                 EmailService.send(
                     to = user.email,
                     subject = "You have $unpredictedCount match${if (unpredictedCount > 1) "es" else ""} to predict!",

@@ -1,6 +1,7 @@
 package scorcerer.server.db.tables
 
 import org.jetbrains.exposed.v1.core.Table
+import org.jetbrains.exposed.v1.datetime.timestampWithTimeZone
 
 object MemberTable : Table("member") {
     val id = varchar("id", 40).uniqueIndex()
@@ -14,6 +15,7 @@ object MemberTable : Table("member") {
     val passwordHash = varchar("password_hash", 255).nullable()
     val authProvider = varchar("auth_provider", 20).default("email")
     val emailReminders = bool("email_reminders").default(false)
+    val lastReminderAt = timestampWithTimeZone("last_reminder_at").nullable()
     val supportedTeamId = integer("supported_team_id").references(TeamTable.id).nullable()
     override val primaryKey = PrimaryKey(id)
 }

@@ -13,6 +13,7 @@ import scorcerer.server.services.ReminderService
 import scorcerer.server.services.TournamentStateService
 import scorcerer.server.services.recalculateAllFixedPoints
 import scorcerer.utils.LeaderboardService
+import kotlin.concurrent.thread
 
 private val adminApiKey = System.getenv("ADMIN_API_KEY")
 
@@ -44,10 +45,18 @@ fun adminRoutes(
             Response(Status.OK)
         },
         "/admin/send-reminders" bind Method.POST to {
-            log.info("Admin: send-reminders triggered")
-            runCatching { ReminderService.sendReminders() }
-                .onFailure { log.error(it.stackTraceToString()) }
-            Response(Status.OK)
+            // Sending reminders for the full opted-in list can take 10+
+            // seconds via Resend's API. EventBridge API destinations time out
+            // after ~5s and retry on timeout, so we kick the work onto a
+            // background thread and return immediately. The idempotency
+            // check inside ReminderService (last_reminder_at) protects us
+            // against any duplicate triggers that still slip through.
+            log.info("Admin: send-reminders triggered, dispatching async")
+            thread(name = "send-reminders", isDaemon = true) {
+                runCatching { ReminderService.sendReminders() }
+                    .onFailure { log.error(it.stackTraceToString()) }
+            }
+            Response(Status.ACCEPTED)
         },
     ),
 )
