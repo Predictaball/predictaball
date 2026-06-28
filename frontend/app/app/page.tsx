@@ -1,5 +1,6 @@
 import React, { Suspense } from "react";
 import WelcomeModal from "@/app/components/onboarding/welcome-modal";
+import KnockoutChipBonusModal from "@/app/components/predictions/knockout-chip-bonus-modal";
 import Link from "next/link";
 import Leaderboard from "@/app/components/leaderboard/leaderboard";
 import SignOutButton from "@/app/components/sign-out-button";
@@ -168,6 +169,8 @@ const Home = async ({searchParams}: {searchParams: Promise<Record<string, string
                     </Suspense>
                 ) : null
             })()}
+
+            <KnockoutChipBonusModal/>
         </main>
     );
 }
