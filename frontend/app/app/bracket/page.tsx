@@ -70,6 +70,9 @@ export default async function BracketPage({ searchParams }: {
                             </div>
                         ))}
                     </div>
+                    <p className="text-xs text-slate-400 dark:text-gray-500">
+                        🔥 Each correct pick in a row adds a streak bonus: <span className="font-semibold text-slate-500 dark:text-gray-400">+0, +1, +2 … up to +3</span>
+                    </p>
                 </section>
 
                 {bracket && (
