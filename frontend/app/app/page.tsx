@@ -14,6 +14,7 @@ import ThemeToggle from "@/app/components/theme-toggle";
 import SectionHeading from "@/app/components/section-heading";
 import Wordmark from "@/app/components/wordmark";
 import SurfaceCard from "@/app/components/surface-card";
+import CupBanner from "@/app/components/bracket/cup-banner";
 import {PitchPerspective} from "@/app/components/atmosphere";
 import LeaguesHelp from "@/app/components/leaderboard/leagues-help";
 import MatchesHelp from "@/app/components/predictions/matches-help";
@@ -127,6 +128,10 @@ const Home = async ({searchParams}: {searchParams: Promise<Record<string, string
                     <SurfaceCard>
                         <Dashboard initialLeagues={leagues} />
                     </SurfaceCard>
+                </section>
+
+                <section className="animate-fade-rise animation-delay-200 motion-reduce:animate-none">
+                    <CupBanner/>
                 </section>
 
                 <section className="space-y-4 animate-fade-rise animation-delay-300 motion-reduce:animate-none">
