@@ -16,7 +16,7 @@ export default function CupBanner(): React.JSX.Element {
                 <div className="min-w-0 flex-1">
                     <div className="font-display text-lg font-black tracking-tight">Knockout Cup</div>
                     <p className="text-sm text-slate-600 dark:text-gray-400">
-                        Back teams to go through, build a streak, and lift your league&apos;s cup.
+                        Back teams to go through and lift your league&apos;s cup.
                     </p>
                 </div>
                 <span aria-hidden className="text-lg font-bold text-amber-600 transition-transform group-hover:translate-x-0.5 dark:text-amber-400">

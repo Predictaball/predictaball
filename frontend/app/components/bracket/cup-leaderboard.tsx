@@ -41,9 +41,6 @@ export default function CupLeaderboard({ rows, currentUserId }: CupLeaderboardPr
                                     <span title="Knockout Cup holder" aria-label="Knockout Cup holder">🏆</span>
                                 )}
                             </span>
-                            <span className="text-xs text-slate-500 dark:text-gray-400" title="Best streak">
-                                🔥 {row.bestStreak}
-                            </span>
                             <span className="font-display text-lg font-black tabular-nums text-slate-900 dark:text-white">
                                 {row.totalPoints}
                             </span>

@@ -53,17 +53,12 @@ export default async function BracketPage({ searchParams }: {
                     </h1>
                     <p className="mx-auto max-w-md text-sm text-slate-600 dark:text-gray-400">
                         A side-game over the knockouts: every team you back to go through scores points that
-                        climb each round, and calling matches right <strong>in a row</strong> stacks a streak bonus.
-                        Top of your league lifts the cup.
+                        climb each round. Top of your league lifts the cup.
                     </p>
                 </section>
 
                 {bracket && (
-                    <ScoreHeader
-                        totalPoints={bracket.totalPoints}
-                        currentStreak={bracket.currentStreak}
-                        bestStreak={bracket.bestStreak}
-                    />
+                    <ScoreHeader totalPoints={bracket.totalPoints} />
                 )}
 
                 <section className="space-y-3">

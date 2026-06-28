@@ -53,13 +53,12 @@ fun bracketRoutes(contexts: RequestContexts) = routes(
                 kickoff = row.kickoff,
                 state = BracketMatch.State.valueOf(row.state.value),
                 basePoints = score.basePoints,
-                bonusPoints = score.bonusPoints,
                 userPick = row.pick.toToGoThrough(),
                 actualGoThrough = row.actual.toToGoThrough(),
                 correct = score.correct,
             )
         }
-        Response(Status.OK).body(Bracket(matches, run.totalPoints, run.currentStreak, run.bestStreak).toJson())
+        Response(Status.OK).body(Bracket(matches, run.totalPoints).toJson())
     },
     "/league/{leagueId}/bracket-leaderboard" bind Method.GET to { req ->
         val leagueId = req.path("leagueId")!!
@@ -75,7 +74,6 @@ fun bracketRoutes(contexts: RequestContexts) = routes(
     },
 )
 
-/** One knockout match in a user's run, joined with their pick and the real outcome. */
 private data class RunRow(
     val matchId: String,
     val round: MatchRound,
@@ -94,10 +92,8 @@ private data class ScoredMember(
     val firstName: String,
     val familyName: String,
     val totalPoints: Int,
-    val bestStreak: Int,
 )
 
-/** A user's knockout matches in kickoff order, with their backed side and the real progression. */
 private fun loadUserRun(userId: String): List<RunRow> = transaction {
     val awayTeamTable = TeamTable.alias("awayTeam")
     val homeTeamTable = TeamTable.alias("homeTeam")
@@ -126,10 +122,6 @@ private fun loadUserRun(userId: String): List<RunRow> = transaction {
         }
 }
 
-/**
- * Score every member's run and rank them for the Knockout Cup. A null [leagueId]
- * ranks everyone (the global cup); otherwise only that league's members.
- */
 private fun buildBracketLeaderboard(leagueId: String?): List<BracketLeaderboardRow> = transaction {
     val members = if (leagueId == null) {
         MemberTable.select(MemberTable.id, MemberTable.firstName, MemberTable.familyName)
@@ -142,7 +134,6 @@ private fun buildBracketLeaderboard(leagueId: String?): List<BracketLeaderboardR
     }
     if (members.isEmpty()) return@transaction emptyList()
 
-    // Load the knockout fixtures once, in kickoff order, with their real outcomes.
     val knockoutMatches = MatchTable
         .select(MatchTable.id, MatchTable.round, MatchTable.state, MatchTable.result, MatchTable.datetime)
         .where { MatchTable.round inList BracketScoring.KNOCKOUT_ROUNDS }
@@ -152,7 +143,6 @@ private fun buildBracketLeaderboard(leagueId: String?): List<BracketLeaderboardR
             Triple(row[MatchTable.id], row[MatchTable.round], if (completed) row[MatchTable.result] else null)
         }
 
-    // Load every member's picks once: (memberId, matchId) -> backed side.
     val picks = HashMap<Pair<String, Int>, MatchResult?>()
     PredictionTable
         .select(PredictionTable.memberId, PredictionTable.matchId, PredictionTable.result)
@@ -164,31 +154,27 @@ private fun buildBracketLeaderboard(leagueId: String?): List<BracketLeaderboardR
             BracketScoring.RunMatch(round, picks[id to matchId], actual)
         }
         val result = BracketScoring.scoreRun(run)
-        ScoredMember(id, firstName, familyName, result.totalPoints, result.bestStreak)
+        ScoredMember(id, firstName, familyName, result.totalPoints)
     }.sortedWith(
         compareByDescending<ScoredMember> { it.totalPoints }
-            .thenByDescending { it.bestStreak }
             .thenBy { it.familyName }
             .thenBy { it.firstName }
             .thenBy { it.userId },
     )
 
     val topTotal = scored.first().totalPoints
-    val topBest = scored.first().bestStreak
-    var previousKey: Pair<Int, Int>? = null
+    var previousPoints = -1
     var previousPosition = 0
     scored.mapIndexed { index, member ->
-        val key = member.totalPoints to member.bestStreak
-        val position = if (key == previousKey) previousPosition else (index + 1).also { previousPosition = it }
-        previousKey = key
+        val position = if (member.totalPoints == previousPoints) previousPosition else (index + 1).also { previousPosition = it }
+        previousPoints = member.totalPoints
         BracketLeaderboardRow(
             position = position,
             userId = member.userId,
             firstName = member.firstName,
             familyName = member.familyName,
             totalPoints = member.totalPoints,
-            bestStreak = member.bestStreak,
-            isCupHolder = topTotal > 0 && member.totalPoints == topTotal && member.bestStreak == topBest,
+            isCupHolder = topTotal > 0 && member.totalPoints == topTotal,
         )
     }
 }

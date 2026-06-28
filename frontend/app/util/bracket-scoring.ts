@@ -58,16 +58,6 @@ export const ROUND_SHORT_LABELS: Record<BracketRound, string> = {
     FINAL: "Final",
 }
 
-export const MAX_STREAK_BONUS = 5
-
-/**
- * Bonus for the nth consecutive correct pick (1-indexed): the 1st in a streak
- * adds 0, the 2nd +1, the 3rd +2 … capped at {@link MAX_STREAK_BONUS}.
- */
-export function streakBonus(streak: number): number {
-    return Math.min(Math.max(streak - 1, 0), MAX_STREAK_BONUS)
-}
-
 /** One knockout match in a user's run, already in kickoff order. */
 export interface RunMatch {
     round: BracketRound
@@ -80,40 +70,28 @@ export interface RunMatch {
 /** Points a single match contributed; `correct` is undefined while pending. */
 export interface MatchScore {
     basePoints: number
-    bonusPoints: number
     correct?: boolean
 }
 
 export interface RunResult {
     totalPoints: number
-    currentStreak: number
-    bestStreak: number
     perMatch: MatchScore[]
 }
 
 /**
- * Replay a user's knockout matches (in kickoff order) into a running score.
- * Matches that are not yet decided (`actual` undefined) are pending: they
- * neither score nor affect the streak.
+ * Replay a user's knockout matches into a running score.
+ * Matches that are not yet decided (`actual` undefined) are pending and score nothing.
  */
 export function scoreRun(matches: RunMatch[]): RunResult {
     let totalPoints = 0
-    let streak = 0
-    let bestStreak = 0
     const perMatch = matches.map((match): MatchScore => {
         const base = ROUND_BASE[match.round] ?? 0
-        if (match.actual == null) {
-            return { basePoints: 0, bonusPoints: 0, correct: undefined }
-        }
+        if (match.actual == null) return { basePoints: 0, correct: undefined }
         if (match.pick != null && match.pick === match.actual) {
-            streak += 1
-            const bonus = streakBonus(streak)
-            totalPoints += base + bonus
-            bestStreak = Math.max(bestStreak, streak)
-            return { basePoints: base, bonusPoints: bonus, correct: true }
+            totalPoints += base
+            return { basePoints: base, correct: true }
         }
-        streak = 0
-        return { basePoints: 0, bonusPoints: 0, correct: false }
+        return { basePoints: 0, correct: false }
     })
-    return { totalPoints, currentStreak: streak, bestStreak, perMatch }
+    return { totalPoints, perMatch }
 }
