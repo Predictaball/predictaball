@@ -1,4 +1,5 @@
 import React from "react"
+import Link from "next/link"
 import { FlagImage } from "@/app/components/predictions/flag-image"
 import { BracketMatch, ToGoThrough } from "@/client"
 
@@ -28,7 +29,7 @@ export default function BracketCell({ match, locked, dims }: BracketCellProps): 
     const flagSize = dims.compact ? 15 : 18
     const nameClass = dims.compact ? "text-[11px]" : "text-[12px]"
 
-    return (
+    const inner = (
         <div
             className={`relative flex flex-col overflow-hidden rounded-xl border shadow-sm backdrop-blur-sm ${
                 locked
@@ -61,6 +62,10 @@ export default function BracketCell({ match, locked, dims }: BracketCellProps): 
             )}
         </div>
     )
+
+    return completed
+        ? <Link href={`/app/match/${match.matchId}/predictions`}>{inner}</Link>
+        : inner
 }
 
 function TeamLine({ side, name, flag, userPick, actual, correct, points, locked, flagSize, nameClass }: {
