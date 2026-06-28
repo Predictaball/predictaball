@@ -100,6 +100,10 @@ private val TEAM_ALIASES = mapOf(
 private val VENUE_ALIASES = mapOf(
     // Estadio Azteca was renamed Estadio Banorte for the 2026 World Cup.
     "banorte" to "Estadio Azteca",
+    // ESPN reports the Kansas City stadium under its sponsored name
+    // ("GEHA Field at Arrowhead Stadium") which exceeds our venue column
+    // length and doesn't match other historical rows.
+    "arrowhead" to "Arrowhead Stadium",
 )
 
 private fun canonicalVenue(fullName: String?): String? {
