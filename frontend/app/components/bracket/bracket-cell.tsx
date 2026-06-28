@@ -24,7 +24,7 @@ interface BracketCellProps {
  */
 export default function BracketCell({ match, locked, dims }: BracketCellProps): React.JSX.Element {
     const completed = !locked && match.state === "COMPLETED" && match.actualGoThrough != null
-    const points = match.basePoints + match.bonusPoints
+    const points = match.basePoints
     const flagSize = dims.compact ? 15 : 18
     const nameClass = dims.compact ? "text-[11px]" : "text-[12px]"
 
@@ -40,14 +40,14 @@ export default function BracketCell({ match, locked, dims }: BracketCellProps): 
             <TeamLine
                 side="HOME" name={match.homeTeam} flag={match.homeTeamFlagCode}
                 userPick={match.userPick} actual={completed ? match.actualGoThrough : undefined}
-                correct={match.correct} points={points} bonus={match.bonusPoints}
+                correct={match.correct} points={points}
                 locked={locked} flagSize={flagSize} nameClass={nameClass}
             />
             <div className="h-px bg-slate-900/10 dark:bg-white/10" />
             <TeamLine
                 side="AWAY" name={match.awayTeam} flag={match.awayTeamFlagCode}
                 userPick={match.userPick} actual={completed ? match.actualGoThrough : undefined}
-                correct={match.correct} points={points} bonus={match.bonusPoints}
+                correct={match.correct} points={points}
                 locked={locked} flagSize={flagSize} nameClass={nameClass}
             />
             {locked && (
@@ -63,7 +63,7 @@ export default function BracketCell({ match, locked, dims }: BracketCellProps): 
     )
 }
 
-function TeamLine({ side, name, flag, userPick, actual, correct, points, bonus, locked, flagSize, nameClass }: {
+function TeamLine({ side, name, flag, userPick, actual, correct, points, locked, flagSize, nameClass }: {
     side: ToGoThrough
     name: string
     flag: string
@@ -71,7 +71,6 @@ function TeamLine({ side, name, flag, userPick, actual, correct, points, bonus, 
     actual?: ToGoThrough
     correct?: boolean
     points: number
-    bonus: number
     locked: boolean
     flagSize: number
     nameClass: string
@@ -109,7 +108,7 @@ function TeamLine({ side, name, flag, userPick, actual, correct, points, bonus, 
             {picked && correct
                 ? (
                     <span className="shrink-0 text-[11px] font-black tabular-nums text-emerald-600 dark:text-emerald-400">
-                        +{points}{bonus > 0 && <span aria-label="streak bonus">🔥</span>}
+                        +{points}
                     </span>
                 )
                 : through

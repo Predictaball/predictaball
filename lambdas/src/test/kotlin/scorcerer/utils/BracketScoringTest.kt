@@ -17,17 +17,10 @@ internal class BracketScoringTest {
     private val r16 = MatchRound.ROUND_OF_SIXTEEN
 
     @Test
-    fun streakBonusEscalatesAndCaps() {
-        (0..7).map { BracketScoring.streakBonus(it) } shouldBe listOf(0, 0, 1, 2, 3, 4, 5, 5)
-    }
-
-    @Test
-    fun perfectR32RunOfSixScoresBasesPlusEscalatingBonus() {
-        // 6 correct R32 picks: base 6, bonuses 0+1+2+3+4+5 = 15 -> 21.
-        val result = BracketScoring.scoreRun((1..6).map { RunMatch(r32, home, home) })
-        result.totalPoints shouldBe 21
-        result.currentStreak shouldBe 6
-        result.bestStreak shouldBe 6
+    fun correctR32PickScoresOnePoint() {
+        val result = BracketScoring.scoreRun(listOf(RunMatch(r32, home, home)))
+        result.totalPoints shouldBe 1
+        result.perMatch[0] shouldBe BracketScoring.MatchScore(1, true)
     }
 
     @Test
@@ -39,27 +32,15 @@ internal class BracketScoringTest {
             RunMatch(MatchRound.SEMI_FINAL, home, home),
             RunMatch(MatchRound.FINAL, home, home),
         )
-        // bases 1+3+5+8+12 = 29, bonuses 0+1+2+3+4 = 10 -> 39.
-        val result = BracketScoring.scoreRun(run)
-        result.totalPoints shouldBe 39
-        result.currentStreak shouldBe 5
-        result.bestStreak shouldBe 5
+        // 1 + 3 + 5 + 8 + 12 = 29
+        BracketScoring.scoreRun(run).totalPoints shouldBe 29
     }
 
     @Test
-    fun aMissResetsTheStreak() {
-        val run = listOf(
-            RunMatch(r32, home, home),
-            RunMatch(r32, home, home),
-            RunMatch(r32, home, away),
-            RunMatch(r16, away, away),
-            RunMatch(r16, home, home),
-        )
-        // 1 + 2 + 0 + 3 + 4 = 10.
-        val result = BracketScoring.scoreRun(run)
-        result.totalPoints shouldBe 10
-        result.currentStreak shouldBe 2
-        result.bestStreak shouldBe 2
+    fun wrongPickScoresZero() {
+        val result = BracketScoring.scoreRun(listOf(RunMatch(r32, home, away)))
+        result.totalPoints shouldBe 0
+        result.perMatch[0] shouldBe BracketScoring.MatchScore(0, false)
     }
 
     @Test
@@ -69,23 +50,29 @@ internal class BracketScoringTest {
             RunMatch(r32, null, away),
             RunMatch(r32, away, away),
         )
-        val result = BracketScoring.scoreRun(run)
-        result.totalPoints shouldBe 2
-        result.currentStreak shouldBe 1
-        result.bestStreak shouldBe 1
+        BracketScoring.scoreRun(run).totalPoints shouldBe 2
     }
 
     @Test
-    fun pendingMatchesNeitherScoreNorBreakTheStreak() {
+    fun pendingMatchesDoNotScore() {
         val run = listOf(
             RunMatch(r32, home, home),
             RunMatch(MatchRound.SEMI_FINAL, home, null),
             RunMatch(r32, home, home),
         )
         val result = BracketScoring.scoreRun(run)
-        result.totalPoints shouldBe 3
-        result.currentStreak shouldBe 2
-        result.bestStreak shouldBe 2
+        result.totalPoints shouldBe 2
         result.perMatch[1].correct shouldBe null
+    }
+
+    @Test
+    fun sumsMultipleCorrectPicksAcrossRounds() {
+        val run = listOf(
+            RunMatch(r32, home, home),
+            RunMatch(r32, home, away),
+            RunMatch(r16, away, away),
+        )
+        // 1 + 0 + 3 = 4
+        BracketScoring.scoreRun(run).totalPoints shouldBe 4
     }
 }
