@@ -19,12 +19,12 @@ describe("bracket-scoring", () => {
         expect(result.currentStreak).toBe(1)
     })
 
-    it("consecutive correct picks earn escalating streak bonus, capped at +5", () => {
-        // 7 correct R32 picks: bases 7, bonuses 0+1+2+3+4+5+5=20 -> 27
-        const run: RunMatch[] = Array.from({ length: 7 }, () => ({ round: r32, pick: home, actual: home }))
+    it("consecutive correct picks earn escalating streak bonus, capped at +3", () => {
+        // 5 correct R32 picks: bases 5, bonuses 0+1+2+3+3=9 -> 14
+        const run: RunMatch[] = Array.from({ length: 5 }, () => ({ round: r32, pick: home, actual: home }))
         const result = scoreRun(run)
-        expect(result.totalPoints).toBe(27)
-        expect(result.currentStreak).toBe(7)
+        expect(result.totalPoints).toBe(14)
+        expect(result.currentStreak).toBe(5)
     })
 
     it("escalates base points through the rounds with streak bonus", () => {
@@ -35,8 +35,8 @@ describe("bracket-scoring", () => {
             { round: "SEMI_FINAL", pick: home, actual: home },
             { round: "FINAL", pick: home, actual: home },
         ]
-        // bases 1+3+5+8+12=29, bonuses 0+1+2+3+4=10 -> 39
-        expect(scoreRun(run).totalPoints).toBe(39)
+        // bases 1+3+5+8+12=29, bonuses 0+1+2+3+3=9 -> 38
+        expect(scoreRun(run).totalPoints).toBe(38)
     })
 
     it("resets the streak on a miss", () => {
@@ -68,9 +68,9 @@ describe("bracket-scoring", () => {
             { round: "SEMI_FINAL", pick: home, actual: undefined },
             { round: r32, pick: home, actual: home },
         ]
-        // (1+0) + pending + (1+1) = 4; streak continues through pending
+        // (1+0) + pending + (1+1) = 3; streak continues through pending
         const result = scoreRun(run)
-        expect(result.totalPoints).toBe(4)
+        expect(result.totalPoints).toBe(3)
         expect(result.currentStreak).toBe(2)
         expect(result.perMatch[1].correct).toBeUndefined()
     })

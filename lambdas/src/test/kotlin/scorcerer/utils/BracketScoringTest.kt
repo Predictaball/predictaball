@@ -25,11 +25,11 @@ internal class BracketScoringTest {
     }
 
     @Test
-    fun consecutiveCorrectPicksEarnEscalatingStreakBonusCappedAtFive() {
-        // 7 correct R32: bases 7, bonuses 0+1+2+3+4+5+5=20 -> 27
-        val result = BracketScoring.scoreRun((1..7).map { RunMatch(r32, home, home) })
-        result.totalPoints shouldBe 27
-        result.currentStreak shouldBe 7
+    fun consecutiveCorrectPicksEarnEscalatingStreakBonusCappedAtThree() {
+        // 5 correct R32: bases 5, bonuses 0+1+2+3+3=9 -> 14
+        val result = BracketScoring.scoreRun((1..5).map { RunMatch(r32, home, home) })
+        result.totalPoints shouldBe 14
+        result.currentStreak shouldBe 5
     }
 
     @Test
@@ -41,8 +41,8 @@ internal class BracketScoringTest {
             RunMatch(MatchRound.SEMI_FINAL, home, home),
             RunMatch(MatchRound.FINAL, home, home),
         )
-        // bases 1+3+5+8+12=29, bonuses 0+1+2+3+4=10 -> 39
-        BracketScoring.scoreRun(run).totalPoints shouldBe 39
+        // bases 1+3+5+8+12=29, bonuses 0+1+2+3+3=9 -> 38
+        BracketScoring.scoreRun(run).totalPoints shouldBe 38
     }
 
     @Test
@@ -77,9 +77,9 @@ internal class BracketScoringTest {
             RunMatch(MatchRound.SEMI_FINAL, home, null),
             RunMatch(r32, home, home),
         )
-        // (1+0) + pending + (1+1) = 4; streak continues through pending
+        // (1+0) + pending + (1+1) = 3; streak continues through pending
         val result = BracketScoring.scoreRun(run)
-        result.totalPoints shouldBe 4
+        result.totalPoints shouldBe 3
         result.currentStreak shouldBe 2
         result.perMatch[1].correct shouldBe null
     }

@@ -93,7 +93,7 @@ export function scoreRun(matches: RunMatch[]): RunResult {
         if (match.actual == null) return { basePoints: 0, bonusPoints: 0, correct: undefined }
         if (match.pick != null && match.pick === match.actual) {
             streak += 1
-            const bonus = Math.min(streak - 1, 5)
+            const bonus = Math.min(streak - 1, 3)
             totalPoints += base + bonus
             return { basePoints: base, bonusPoints: bonus, correct: true }
         }

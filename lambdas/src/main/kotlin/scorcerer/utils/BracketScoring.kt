@@ -46,7 +46,7 @@ object BracketScoring {
                 match.actual == null -> MatchScore(0, 0, null)
                 match.pick != null && match.pick == match.actual -> {
                     streak += 1
-                    val bonus = (streak - 1).coerceAtMost(5)
+                    val bonus = (streak - 1).coerceAtMost(3)
                     total += base + bonus
                     MatchScore(base, bonus, true)
                 }
