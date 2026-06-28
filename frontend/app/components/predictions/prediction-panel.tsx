@@ -68,25 +68,21 @@ export default function PredictionPanel({liveMatches, upcomingMatches, completed
     }
 
     function advanceToNext() {
-        // Walk through every upcoming match still needing a prediction (in
-        // kickoff order, wrapping past the end to catch any earlier ones) before
-        // moving on. Only once they're all predicted do we fall back to a live
-        // match if one's in play, otherwise the soonest upcoming — so the user
-        // always lands somewhere predictable rather than lingering on the one
-        // they just saved.
+        // Step to the next upcoming match in kickoff order so saving walks the
+        // user through the whole list one at a time — including matches they've
+        // already predicted, so nothing gets skipped. The backend returns
+        // upcoming matches sorted by kickoff, so array order is kickoff order.
         const idx = upcomingMatches.findIndex(m => m.matchId === selected.matchId)
-        if (idx !== -1) {
-            for (let offset = 1; offset < upcomingMatches.length; offset++) {
-                const candidate = upcomingMatches[(idx + offset) % upcomingMatches.length]
-                if (!candidate.prediction) {
-                    setSelectedId(candidate.matchId)
-                    return
-                }
-            }
+        if (idx !== -1 && idx + 1 < upcomingMatches.length) {
+            setSelectedId(upcomingMatches[idx + 1].matchId)
+            return
         }
-        const fallback = liveMatches[0] ?? upcomingMatches[0]
-        if (fallback && fallback.matchId !== selected.matchId) {
-            setSelectedId(fallback.matchId)
+        // Past the last upcoming match (or the saved match isn't upcoming): drop
+        // to a live match if one's in play, otherwise stay put rather than
+        // wrapping back to the start.
+        const live = liveMatches[0]
+        if (live && live.matchId !== selected.matchId) {
+            setSelectedId(live.matchId)
         }
     }
 
