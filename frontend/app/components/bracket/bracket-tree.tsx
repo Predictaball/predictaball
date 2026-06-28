@@ -14,18 +14,28 @@ const HEADER_H = 26
 const COL = CARD_W + COL_GAP
 const SLOT = CARD_H + V_GAP
 
+/** Expected match count per round in a standard 32-team knockout. */
+const ROUND_SIZES: Record<BracketRound, number> = {
+    ROUND_OF_THIRTY_TWO: 16,
+    ROUND_OF_SIXTEEN: 8,
+    QUARTER_FINAL: 4,
+    SEMI_FINAL: 2,
+    FINAL: 1,
+}
+
 interface BracketTreeProps {
     matches: BracketMatch[]
 }
 
+/** A real match or a TBD placeholder slot. */
+type Slot = { kind: "match"; match: BracketMatch } | { kind: "placeholder"; id: string }
+
 interface RoundColumn {
     round: BracketRound
-    matches: BracketMatch[]
+    slots: Slot[]
 }
 
 function useCompact(): boolean {
-    // Start at false so the first client render matches the server HTML, then
-    // adopt the real breakpoint on mount.
     const [compact, setCompact] = useState(false)
     useEffect(() => {
         const mq = window.matchMedia("(max-width: 640px)")
@@ -45,7 +55,25 @@ function groupRounds(matches: BracketMatch[]): RoundColumn[] {
         if (bucket) bucket.push(match)
         else byRound.set(round, [match])
     }
-    return KNOCKOUT_ROUNDS.filter((round) => byRound.has(round)).map((round) => ({ round, matches: byRound.get(round)! }))
+
+    // Only include rounds up to and including the last round that has real matches.
+    const presentRounds = KNOCKOUT_ROUNDS.filter((r) => byRound.has(r))
+    if (presentRounds.length === 0) return []
+
+    // For each present round, pad to the expected size with placeholder slots.
+    return presentRounds.map((round) => {
+        const real = byRound.get(round)!
+        const expected = ROUND_SIZES[round]
+        const placeholders: Slot[] = Array.from(
+            { length: Math.max(0, expected - real.length) },
+            (_, i) => ({ kind: "placeholder", id: `${round}-ph-${i}` } as const),
+        )
+        const slots: Slot[] = [
+            ...real.map((m): Slot => ({ kind: "match", match: m })),
+            ...placeholders,
+        ]
+        return { round, slots }
+    })
 }
 
 /**
@@ -67,12 +95,31 @@ export default function BracketTree({ matches }: BracketTreeProps): React.JSX.El
     }
 
     // The earliest round still being played is "open"; later rounds are locked.
-    const openRoundIndex = rounds.findIndex((column) => column.matches.some((m) => m.state !== "COMPLETED"))
+    const openRoundIndex = rounds.findIndex((column) =>
+        column.slots.some((s) => s.kind === "match" && s.match.state !== "COMPLETED")
+    )
     const isLocked = (r: number): boolean => openRoundIndex !== -1 && r > openRoundIndex
 
     return compact
         ? <MobileCarousel rounds={rounds} isLocked={isLocked} />
         : <DesktopTree rounds={rounds} isLocked={isLocked} />
+}
+
+/** A greyed-out TBD placeholder cell. */
+function PlaceholderCell({ dims }: { dims: CellDims }): React.JSX.Element {
+    return (
+        <div
+            className="flex items-center justify-center rounded-xl border border-dashed border-slate-900/10 bg-slate-500/[0.04] dark:border-white/10 dark:bg-white/[0.02]"
+            style={{ width: dims.width, height: dims.height }}
+        >
+            <span className="text-[11px] font-bold uppercase tracking-widest text-slate-300 dark:text-gray-600">TBD</span>
+        </div>
+    )
+}
+
+function renderSlot(slot: Slot, locked: boolean, dims: CellDims): React.JSX.Element {
+    if (slot.kind === "placeholder") return <PlaceholderCell dims={dims} />
+    return <BracketCell match={slot.match} locked={locked} dims={dims} />
 }
 
 // Mobile bracket geometry
@@ -92,13 +139,11 @@ function mobileCenters(matchCount: number, totalSlots: number): number[] {
 
 /** Phone layout: snap-scroll carousel with proper bracket connector lines. */
 function MobileCarousel({ rounds, isLocked }: { rounds: RoundColumn[]; isLocked: (r: number) => boolean }): React.JSX.Element {
-    const firstRoundCount = rounds[0].matches.length
-    // Total height is driven by the first (largest) round
+    const firstRoundCount = rounds[0].slots.length
     const totalH = firstRoundCount * M_SLOT - M_V_GAP
 
-    // Pre-compute vertical centres per round
     const centersByRound: number[][] = rounds.map((col) =>
-        mobileCenters(col.matches.length, firstRoundCount)
+        mobileCenters(col.slots.length, firstRoundCount)
     )
 
     return (
@@ -114,22 +159,14 @@ function MobileCarousel({ rounds, isLocked }: { rounds: RoundColumn[]; isLocked:
 
                 return (
                     <React.Fragment key={column.round}>
-                        {/* Connector SVG strip between rounds */}
                         {prevCenters && (
                             <div className="shrink-0 self-start" style={{ width: M_CONNECTOR_W, paddingTop: M_HEADER_H }}>
-                                <svg
-                                    width={M_CONNECTOR_W}
-                                    height={totalH}
-                                    fill="none"
-                                    aria-hidden
-                                    className="pointer-events-none"
-                                >
+                                <svg width={M_CONNECTOR_W} height={totalH} fill="none" aria-hidden className="pointer-events-none">
                                     {centers.map((cy, j) => {
                                         const f1 = prevCenters[2 * j]
                                         const f2 = prevCenters[2 * j + 1]
                                         if (f1 == null || f2 == null) return null
                                         const midY = (f1 + f2) / 2
-                                        // horizontal from right edge of prev card, then vertical to merge, then horizontal to left edge of next card
                                         return (
                                             <path
                                                 key={j}
@@ -143,25 +180,20 @@ function MobileCarousel({ rounds, isLocked }: { rounds: RoundColumn[]; isLocked:
                             </div>
                         )}
 
-                        {/* Round column */}
-                        <section
-                            className="flex shrink-0 snap-center flex-col"
-                            style={{ width: "72vw", maxWidth: 300 }}
-                        >
+                        <section className="flex shrink-0 snap-center flex-col" style={{ width: "72vw", maxWidth: 300 }}>
                             <header className="flex shrink-0 items-center justify-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-gray-400" style={{ height: M_HEADER_H }}>
                                 {ROUND_LABELS[column.round]}
                                 {locked && <LockIcon className="h-3 w-3 text-slate-400 dark:text-gray-500" />}
                             </header>
 
-                            {/* Matches pinned at their bracket positions */}
                             <div className="relative" style={{ height: totalH }}>
-                                {column.matches.map((match, j) => (
+                                {column.slots.map((slot, j) => (
                                     <div
-                                        key={match.matchId}
+                                        key={slot.kind === "match" ? slot.match.matchId : slot.id}
                                         className="absolute w-full"
                                         style={{ top: centers[j] - M_CARD_H / 2 }}
                                     >
-                                        <BracketCell match={match} locked={locked} dims={dims} />
+                                        {renderSlot(slot, locked, dims)}
                                     </div>
                                 ))}
                             </div>
@@ -169,7 +201,6 @@ function MobileCarousel({ rounds, isLocked }: { rounds: RoundColumn[]; isLocked:
                     </React.Fragment>
                 )
             })}
-            {/* Right padding sentinel */}
             <div className="shrink-0" style={{ width: 16 }} />
         </div>
     )
@@ -178,27 +209,25 @@ function MobileCarousel({ rounds, isLocked }: { rounds: RoundColumn[]; isLocked:
 /** Desktop layout: the connected bracket tree. */
 function DesktopTree({ rounds, isLocked }: { rounds: RoundColumn[]; isLocked: (r: number) => boolean }): React.JSX.Element {
     const dims: CellDims = { width: CARD_W, height: CARD_H, compact: false }
-    const totalHeight = rounds[0].matches.length * SLOT
+    const totalHeight = rounds[0].slots.length * SLOT
 
-    // Vertical centre of every cell, round by round (positional adjacency).
     const centers: number[][] = []
     rounds.forEach((column, r) => {
         if (r === 0) {
-            centers.push(column.matches.map((_, i) => i * SLOT + SLOT / 2))
+            centers.push(column.slots.map((_, i) => i * SLOT + SLOT / 2))
             return
         }
         const prev = centers[r - 1]
-        const pairs = prev.length === 2 * column.matches.length
+        const pairs = prev.length === 2 * column.slots.length
         centers.push(
-            column.matches.map((_, j) =>
-                pairs ? (prev[2 * j] + prev[2 * j + 1]) / 2 : (totalHeight * (j + 0.5)) / column.matches.length,
+            column.slots.map((_, j) =>
+                pairs ? (prev[2 * j] + prev[2 * j + 1]) / 2 : (totalHeight * (j + 0.5)) / column.slots.length,
             ),
         )
     })
 
     const width = rounds.length * COL - COL_GAP
 
-    // Elbow connectors from each pair of feeders into the next match.
     const connectors: string[] = []
     for (let r = 1; r < rounds.length; r++) {
         const prev = centers[r - 1]
@@ -236,9 +265,13 @@ function DesktopTree({ rounds, isLocked }: { rounds: RoundColumn[]; isLocked: (r
                         ))}
                     </svg>
                     {rounds.map((column, r) =>
-                        column.matches.map((match, j) => (
-                            <div key={match.matchId} className="absolute" style={{ left: r * COL, top: centers[r][j] - CARD_H / 2, width: CARD_W }}>
-                                <BracketCell match={match} locked={isLocked(r)} dims={dims} />
+                        column.slots.map((slot, j) => (
+                            <div
+                                key={slot.kind === "match" ? slot.match.matchId : slot.id}
+                                className="absolute"
+                                style={{ left: r * COL, top: centers[r][j] - CARD_H / 2, width: CARD_W }}
+                            >
+                                {renderSlot(slot, isLocked(r), dims)}
                             </div>
                         )),
                     )}

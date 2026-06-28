@@ -81,6 +81,9 @@ export default async function BracketPage({ searchParams }: {
 
                 <section className="space-y-3">
                     <SectionHeading title="Your run" />
+                    <p className="text-xs text-slate-400 dark:text-gray-500">
+                        Your bracket is automatically filled from your regular match predictions — no extra picks needed.
+                    </p>
                     {bracket
                         ? <BracketTree matches={bracket.matches} />
                         : <UnavailableNote />}
