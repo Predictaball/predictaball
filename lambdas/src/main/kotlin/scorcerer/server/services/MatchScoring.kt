@@ -43,6 +43,10 @@ fun endMatch(
         it[state] = Match.State.COMPLETED
         it[MatchTable.homeScore] = homeScore
         it[MatchTable.awayScore] = awayScore
+        // Record which side went through so the Knockout Cup can score the tie.
+        // A level score (group-stage draw, or a knockout decided on penalties we
+        // can't see) leaves it null; only knockout rounds read this column.
+        it[MatchTable.result] = goThroughFromScore(homeScore, awayScore)
     }
 
     val pointsByMember = scorePredictions(matchId, homeScore, awayScore)
@@ -169,6 +173,16 @@ fun recalculateAllFixedPoints() = transaction {
         }
     }
     log.info("Recalculated fixed points for ${totalPointsByMember.size} members across ${completedMatches.size} matches")
+}
+
+// Who progresses, derived from the final score. Null on a level score: group-stage
+// draws never go through, and a knockout decided on penalties isn't distinguishable
+// from the scoreline alone. Returns the db `MatchResult` (HOME/AWAY), distinct from
+// the `scorcerer.utils.MatchResult` scoring helper used elsewhere in this file.
+private fun goThroughFromScore(homeScore: Int, awayScore: Int): scorcerer.server.db.tables.MatchResult? = when {
+    homeScore > awayScore -> scorcerer.server.db.tables.MatchResult.HOME
+    awayScore > homeScore -> scorcerer.server.db.tables.MatchResult.AWAY
+    else -> null
 }
 
 private fun scorePredictions(matchId: String, homeScore: Int, awayScore: Int): Map<String, Int> {

@@ -212,11 +212,14 @@ class MatchLifecycleTest : PostgresTest() {
                 .first()[MatchTable.state] shouldBe Match.State.LIVE
         }
 
-        // Goes to COMPLETED
+        // Goes to COMPLETED, and the go-through side is recorded from the score
+        // (home win here) so the Knockout Cup can score the tie.
         endMatch(matchId, 1, 0, leaderboardService)
         transaction {
-            MatchTable.selectAll().where { MatchTable.id eq matchId.toInt() }
-                .first()[MatchTable.state] shouldBe Match.State.COMPLETED
+            MatchTable.selectAll().where { MatchTable.id eq matchId.toInt() }.first().let {
+                it[MatchTable.state] shouldBe Match.State.COMPLETED
+                it[MatchTable.result] shouldBe scorcerer.server.db.tables.MatchResult.HOME
+            }
         }
 
         // Can't set score on completed match
