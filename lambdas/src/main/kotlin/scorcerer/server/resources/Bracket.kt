@@ -58,6 +58,7 @@ fun bracketRoutes(contexts: RequestContexts) = routes(
                 actualGoThrough = row.actual.toToGoThrough(),
                 correct = score.correct,
                 bracketPosition = row.bracketPosition,
+                predictable = row.predictable,
             )
         }
         Response(Status.OK).body(Bracket(matches, run.totalPoints, run.currentStreak).toJson())
@@ -88,6 +89,7 @@ private data class RunRow(
     val pick: MatchResult?,
     val actual: MatchResult?,
     val bracketPosition: Int?,
+    val predictable: Boolean,
 )
 
 private data class ScoredMember(
@@ -101,6 +103,22 @@ private fun loadUserRun(userId: String): List<RunRow> = transaction {
     val awayTeamTable = TeamTable.alias("awayTeam")
     val homeTeamTable = TeamTable.alias("homeTeam")
     val predictions = PredictionTable.selectAll().where { PredictionTable.memberId eq userId }.alias("predictions")
+
+    // A knockout match can sit in the DB (teams known) before its prediction
+    // window opens. Mirror the main predictions screen: only upcoming matches in
+    // the next three match days are predictable; everything else is locked. When
+    // fewer than three upcoming match days exist, they're all open.
+    val upcomingMatchDays = MatchTable
+        .select(MatchTable.matchDay)
+        .where { MatchTable.state eq Match.State.UPCOMING }
+        .map { it[MatchTable.matchDay] }
+        .distinct()
+    val predictableMatchDays = if (upcomingMatchDays.size < 3) {
+        upcomingMatchDays.toSet()
+    } else {
+        upcomingMatchDays.sorted().take(3).toSet()
+    }
+
     MatchTable
         .join(awayTeamTable, JoinType.INNER, MatchTable.awayTeamId, awayTeamTable[TeamTable.id])
         .join(homeTeamTable, JoinType.INNER, MatchTable.homeTeamId, homeTeamTable[TeamTable.id])
@@ -122,6 +140,8 @@ private fun loadUserRun(userId: String): List<RunRow> = transaction {
                 pick = row.getOrNull(predictions[PredictionTable.id])?.let { row[predictions[PredictionTable.result]] },
                 actual = if (completed) row[MatchTable.result] else null,
                 bracketPosition = row[MatchTable.bracketPosition],
+                predictable = row[MatchTable.state] == Match.State.UPCOMING &&
+                    row[MatchTable.matchDay] in predictableMatchDays,
             )
         }
 }
