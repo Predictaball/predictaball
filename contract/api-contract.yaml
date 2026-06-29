@@ -423,6 +423,123 @@ components:
             - MaybeLaterClicked
         fromSignup:
           type: boolean
+    bracketMatch:
+      description: A single knockout match in the Knockout Cup side-game, with the user's backed side and the points it earned.
+      type: object
+      required:
+        - matchId
+        - round
+        - homeTeam
+        - homeTeamFlagCode
+        - awayTeam
+        - awayTeamFlagCode
+        - kickoff
+        - state
+        - basePoints
+        - bonusPoints
+      properties:
+        matchId:
+          description: Unique matchId
+          type: string
+        round:
+          description: Knockout round of the match
+          type: string
+          enum:
+            - ROUND_OF_THIRTY_TWO
+            - ROUND_OF_SIXTEEN
+            - QUARTER_FINAL
+            - SEMI_FINAL
+            - FINAL
+        homeTeam:
+          type: string
+        homeTeamFlagCode:
+          type: string
+        awayTeam:
+          type: string
+        awayTeamFlagCode:
+          type: string
+        kickoff:
+          description: datetime of kickoff
+          type: string
+          format: date-time
+        state:
+          type: string
+          enum:
+            - LIVE
+            - UPCOMING
+            - COMPLETED
+        userPick:
+          description: The side the user backed to go through, if they predicted this match
+          $ref: '#/components/schemas/toGoThrough'
+        actualGoThrough:
+          description: The side that actually went through, for completed matches
+          $ref: '#/components/schemas/toGoThrough'
+        correct:
+          description: Whether the user's pick matched the side that went through (completed matches only)
+          type: boolean
+        basePoints:
+          description: Base points earned for this match (0 unless correct)
+          type: integer
+          format: int32
+        bonusPoints:
+          description: Streak bonus points earned for this match (0 unless correct)
+          type: integer
+          format: int32
+        bracketPosition:
+          description: >-
+            The match's slot in the bracket. Seeded for the Round of 32 as 1..16
+            in top-to-bottom bracket order; consecutive pairs (1&2, 3&4, ...) feed
+            each Round of 16 tie, so the frontend can order the round and derive
+            the rest of the tree. Null until a round's slots are seeded.
+          type: integer
+          format: int32
+    bracket:
+      description: The requesting user's Knockout Cup run and running score.
+      type: object
+      required:
+        - matches
+        - totalPoints
+        - currentStreak
+      properties:
+        matches:
+          description: The user's knockout matches in kickoff order
+          type: array
+          items:
+            $ref: '#/components/schemas/bracketMatch'
+        totalPoints:
+          type: integer
+          format: int32
+        currentStreak:
+          description: Current run of consecutive correct picks (kickoff order)
+          type: integer
+          format: int32
+    bracketLeaderboardRow:
+      description: One member's standing in a league's Knockout Cup.
+      type: object
+      required:
+        - position
+        - userId
+        - firstName
+        - familyName
+        - totalPoints
+        - isCupHolder
+      properties:
+        position:
+          type: integer
+          format: int32
+          minimum: 1
+        userId:
+          type: string
+        firstName:
+          type: string
+        familyName:
+          type: string
+        totalPoints:
+          type: integer
+          format: int32
+        isCupHolder:
+          description: Whether this member currently holds the league's Knockout Cup
+          type: boolean
 security:
   - CognitoAuthorizer: []
 x-amazon-apigateway-gateway-responses:
@@ -1639,3 +1756,57 @@ paths:
       responses:
         '200':
           description: Successful response
+  /bracket:
+    get:
+      tags:
+        - bracket
+      operationId: getBracket
+      description: The requesting user's Knockout Cup run and running score
+      x-amazon-apigateway-integration:
+        type: "aws_proxy"
+        httpMethod: "POST"
+        uri: "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${apiHandlerArn}/invocations"
+        credentials: "${apiGatewayRoleArn}"
+        payloadFormatVersion: "1.0"
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/bracket'
+  /league/{leagueId}/bracket-leaderboard:
+    get:
+      tags:
+        - bracket
+      operationId: getBracketLeaderboard
+      description: Returns a league's Knockout Cup standings
+      x-amazon-apigateway-integration:
+        type: "aws_proxy"
+        httpMethod: "POST"
+        uri: "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${apiHandlerArn}/invocations"
+        credentials: "${apiGatewayRoleArn}"
+        payloadFormatVersion: "1.0"
+      parameters:
+        - in: path
+          name: leagueId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - leagueName
+                  - leaderboard
+                properties:
+                  leagueName:
+                    type: string
+                  leaderboard:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/bracketLeaderboardRow'
