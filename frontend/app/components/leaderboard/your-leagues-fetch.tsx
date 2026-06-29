@@ -4,6 +4,7 @@ import {League, UserApi} from "@/client";
 import React, {useEffect, useState} from "react";
 import LeagueComponent from "@/app/components/leaderboard/league";
 import {getConfigWithAuthHeaderClient} from "@/app/api/client-config-client-side";
+import {sortLeagues} from "@/app/util/leagues";
 
 export default function YourLeaguesFetch({initialLeagues}: {initialLeagues: League[]}): React.JSX.Element {
     // Seed from the server-rendered list. Only refetch when the seed is empty (e.g. the
@@ -41,7 +42,7 @@ export default function YourLeaguesFetch({initialLeagues}: {initialLeagues: Leag
 
     return (
         <div className="space-y-2.5">
-            {leagues.map(league => (
+            {sortLeagues(leagues).map(league => (
                 <LeagueComponent
                     key={league.leagueId}
                     leagueId={league.leagueId}
