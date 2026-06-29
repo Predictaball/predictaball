@@ -9,7 +9,6 @@
 **/.env
 **/.env.local
 **/.env.*.local
-**/Dockerfile
 **/.dockerignore
 **/.DS_Store
 
