@@ -40,6 +40,8 @@ import scorcerer.server.fromJson
 import scorcerer.server.log
 import scorcerer.server.toJson
 import scorcerer.utils.LeaderboardService
+import scorcerer.utils.LeaderboardStage
+import scorcerer.utils.calculateStageLeaderboard
 import scorcerer.utils.capitaliseName
 import scorcerer.utils.filterLeaderboardToLeague
 import scorcerer.utils.livePointsForUser
@@ -237,10 +239,20 @@ fun userRoutes(contexts: RequestContexts, leaderboardService: LeaderboardService
         }
 
         val leagues = leaguesByMembership.map { (leagueId, row) ->
-            val yourPosition = if (row.kind == LeagueKind.GLOBAL) {
-                globalLeaderboard?.firstOrNull { it.user.userId == requesterUserId }?.position
-            } else {
-                filterLeaderboardToLeague(globalLeaderboard, row.userIds)
+            // The "group-stage" and "knockout" standing leagues are stored as GLOBAL but
+            // are stage-scoped: their positions must come from the stage leaderboard, not
+            // the all-stages global one (which would otherwise mirror the global position).
+            val stage = when (leagueId) {
+                "group-stage" -> LeaderboardStage.GROUP_STAGE
+                "knockout" -> LeaderboardStage.KNOCKOUT
+                else -> null
+            }
+            val yourPosition = when {
+                stage != null -> calculateStageLeaderboard(leagueId, stage)
+                    .firstOrNull { it.user.userId == requesterUserId }?.position
+                row.kind == LeagueKind.GLOBAL ->
+                    globalLeaderboard?.firstOrNull { it.user.userId == requesterUserId }?.position
+                else -> filterLeaderboardToLeague(globalLeaderboard, row.userIds)
                     .firstOrNull { it.user.userId == requesterUserId }?.position
             }
             League(leagueId, row.name, row.kind.toApiKind(), row.users, yourPosition)

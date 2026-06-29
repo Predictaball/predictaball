@@ -1,9 +1,27 @@
-import { LeagueKindEnum } from "@/client"
+import { League, LeagueKindEnum } from "@/client"
 
 // Managed leagues are assigned automatically (the global league and the per-country
 // leagues) — members can't manually join or leave them.
 export function isManagedLeague(kind: LeagueKindEnum): boolean {
     return kind !== LeagueKindEnum.User
+}
+
+// The fixed display order for the tournament-wide standing leagues: Global first,
+// then the two stage-scoped boards. Anything not listed here (the user's own
+// leagues, then their country league) is ordered afterwards.
+const STANDING_LEAGUE_ORDER = ["global", "group-stage", "knockout"]
+
+function leagueSortRank(league: League): number {
+    const fixedIndex = STANDING_LEAGUE_ORDER.indexOf(league.leagueId)
+    if (fixedIndex !== -1) return fixedIndex
+    // User-created leagues come next, with the auto-assigned country league last.
+    return league.kind === LeagueKindEnum.User ? STANDING_LEAGUE_ORDER.length : STANDING_LEAGUE_ORDER.length + 1
+}
+
+// Order leagues for display: Global, Group Stage, Knockout, then the user's own
+// leagues (alphabetically), then their country league.
+export function sortLeagues(leagues: League[]): League[] {
+    return [...leagues].sort((a, b) => leagueSortRank(a) - leagueSortRank(b) || a.name.localeCompare(b.name))
 }
 
 // Leagues that don't offer the stage filter (All / Group Stage / Knockout):

@@ -12,6 +12,7 @@ import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.junit.jupiter.api.Test
 import org.openapitools.server.models.GetUserPoints200Response
+import org.openapitools.server.models.League
 import org.openapitools.server.models.Prediction
 import scorcerer.DatabaseTest
 import scorcerer.givenLeagueExists
@@ -22,6 +23,7 @@ import scorcerer.givenUserExists
 import scorcerer.givenUserInLeague
 import scorcerer.server.auth.DatabaseAuthProvider
 import scorcerer.server.db.tables.LeagueMembershipTable
+import scorcerer.server.db.tables.MatchRound
 import scorcerer.server.db.tables.MemberTable
 import scorcerer.server.fromJson
 import scorcerer.server.resources.userRoutes
@@ -79,6 +81,32 @@ class UserTest : DatabaseTest() {
 
         val response = handler(Request(Method.GET, "/user/leagues"))
         response.status shouldBe Status.OK
+    }
+
+    @Test
+    fun getUserLeaguesUsesStageLeaderboardForStandingLeagues() {
+        givenUserExists("test-user", "name0")
+        givenUserExists("user2", "name2")
+        givenLeagueExists("group-stage", "Group Stage")
+        givenUserInLeague("test-user", "group-stage")
+        givenUserInLeague("user2", "group-stage")
+
+        val homeTeamId = givenTeamExists("England")
+        val awayTeamId = givenTeamExists("France")
+        // Only group-stage points should count towards the group-stage league position.
+        val groupMatch = givenMatchExists(homeTeamId, awayTeamId, round = MatchRound.GROUP_STAGE)
+        val knockoutMatch = givenMatchExists(homeTeamId, awayTeamId, round = MatchRound.ROUND_OF_SIXTEEN)
+        // user2 leads the group stage; test-user only pulls ahead once knockout points
+        // are included, so a global-leaderboard position would be wrong here.
+        givenPredictionExists(groupMatch, "test-user", 1, 1, points = 1)
+        givenPredictionExists(groupMatch, "user2", 1, 1, points = 5)
+        givenPredictionExists(knockoutMatch, "test-user", 1, 1, points = 9)
+
+        val response = handler(Request(Method.GET, "/user/leagues"))
+        response.status shouldBe Status.OK
+        val leagues: List<League> = response.bodyString().fromJson()
+        val groupStage = leagues.single { it.leagueId == "group-stage" }
+        groupStage.yourPosition shouldBe 2
     }
 
     @Test
