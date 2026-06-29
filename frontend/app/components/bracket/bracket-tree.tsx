@@ -110,20 +110,23 @@ function MobileCarousel({ rounds }: { rounds: RoundColumn<BracketMatch>[] }): Re
 
     const colWidth = { width: "72vw", maxWidth: 300 } as const
 
-    // Two nested scrollers with complementary touch-action lock each gesture to a
-    // single axis, so the bracket can't be dragged diagonally in all directions.
-    // The outer body scroller owns vertical scrolling (pan-y), the inner one owns
-    // horizontal round-to-round swiping (pan-x) and snaps one round per swipe. A
-    // vertical gesture isn't permitted on the inner, so the browser routes it up to
-    // the outer; a horizontal gesture isn't permitted on the outer, so it snaps.
-    // The body is capped to a fraction of the viewport so the tall first round
-    // shrinks into a contained, scrollable area instead of dominating the page.
+    // Two nested single-axis scrollers keep each gesture on one axis, so the
+    // bracket can't be dragged diagonally in all directions (the old single
+    // overflow-auto container scrolled both axes at once, which is what made it
+    // feel draggable everywhere). The outer body scroller scrolls only vertically,
+    // the inner one only horizontally (and snaps one round per swipe). Because
+    // neither element can scroll the other axis, the browser axis-locks the
+    // gesture and chains a vertical swipe on the inner up to the outer — so we must
+    // NOT set touch-action here: pan-x/pan-y suppress the off-axis entirely instead
+    // of delegating it, which silently kills vertical scrolling. The body is capped
+    // to a fraction of the viewport so the tall first round shrinks into a
+    // contained, scrollable area instead of dominating the page.
     return (
         <div className="-mx-4">
             <div
                 ref={headerRef}
                 className="flex overflow-x-hidden"
-                style={{ touchAction: "none", gap: 0 }}
+                style={{ gap: 0 }}
             >
                 <div className="shrink-0" style={{ width: 16 }} />
                 {rounds.map((column, r) => (
@@ -143,13 +146,13 @@ function MobileCarousel({ rounds }: { rounds: RoundColumn<BracketMatch>[] }): Re
 
             <div
                 className="overflow-y-auto overflow-x-hidden overscroll-contain"
-                style={{ WebkitOverflowScrolling: "touch", touchAction: "pan-y", maxHeight: `min(${totalH}px, calc(70svh - ${M_HEADER_H}px))` }}
+                style={{ WebkitOverflowScrolling: "touch", maxHeight: `min(${totalH}px, calc(70svh - ${M_HEADER_H}px))` }}
             >
                 <div
                     ref={bodyRef}
                     onScroll={syncHeader}
                     className="flex snap-x snap-mandatory overflow-x-auto overflow-y-hidden overscroll-x-contain"
-                    style={{ WebkitOverflowScrolling: "touch", touchAction: "pan-x", gap: 0, height: totalH }}
+                    style={{ WebkitOverflowScrolling: "touch", gap: 0, height: totalH }}
                 >
                     <div className="shrink-0" style={{ width: 16 }} />
                     {rounds.map((column, r) => {
