@@ -56,16 +56,14 @@ function groupRounds(matches: BracketMatch[]): RoundColumn[] {
         else byRound.set(round, [match])
     }
 
-    // Only include rounds up to and including the last round that has real matches.
-    const presentRounds = KNOCKOUT_ROUNDS.filter((r) => byRound.has(r))
-    if (presentRounds.length === 0) return []
-
-    // For each present round, pad to the expected size with placeholder slots.
-    return presentRounds.map((round) => {
+    // Always render the full bracket: every knockout round, each padded to its
+    // expected size with TBD placeholders. This way the entire empty tree is
+    // visible up front, with real matches filling in as rounds are set.
+    return KNOCKOUT_ROUNDS.map((round) => {
         // Order by bracket position so consecutive pairs (2j, 2j+1) feed the
         // right next-round slot. Seeded for the Round of 32; matches without a
         // position fall back to their incoming (kickoff) order via a stable sort.
-        const real = [...byRound.get(round)!].sort(
+        const real = [...(byRound.get(round) ?? [])].sort(
             (a, b) => (a.bracketPosition ?? Infinity) - (b.bracketPosition ?? Infinity),
         )
         const expected = ROUND_SIZES[round]
@@ -90,14 +88,6 @@ function groupRounds(matches: BracketMatch[]): RoundColumn[] {
 export default function BracketTree({ matches }: BracketTreeProps): React.JSX.Element {
     const compact = useCompact()
     const rounds = groupRounds(matches)
-
-    if (rounds.length === 0) {
-        return (
-            <div className="rounded-2xl border border-dashed border-slate-900/15 p-8 text-center text-sm text-slate-500 dark:border-white/15 dark:text-gray-400">
-                The knockout rounds haven&apos;t started yet. Your bracket will appear here once the Round of 32 is set.
-            </div>
-        )
-    }
 
     // The earliest round still being played is "open"; later rounds are locked.
     const openRoundIndex = rounds.findIndex((column) =>
