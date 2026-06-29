@@ -10,7 +10,8 @@ export interface EntriesProps {
     leagueId: string,
     limit: boolean,
     shouldPaginate: boolean,
-    stage?: GetLeagueLeaderboardStageEnum
+    stage?: GetLeagueLeaderboardStageEnum,
+    stageTabs?: React.ReactNode
 }
 
 function TrophyIcon({className}: {className?: string}): React.JSX.Element {
@@ -88,6 +89,11 @@ export default async function Entries(props: EntriesProps): Promise<React.JSX.El
                         </p>
                     </div>
                 )
+            )}
+            {props.stageTabs && (
+                <div className="mb-6 flex justify-center">
+                    {props.stageTabs}
+                </div>
             )}
             <LeaderboardPagination
                 shouldPaginate={props.shouldPaginate}

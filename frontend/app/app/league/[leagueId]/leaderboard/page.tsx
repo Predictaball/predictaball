@@ -56,8 +56,13 @@ export default async function Home(
                 </header>
 
                 <section className="flex flex-col items-center space-y-5">
-                    {stageFilterEnabled && <StageTabs leagueId={leagueId} activeStage={stage} />}
-                    <Leaderboard shouldPaginate={true} leagueId={leagueId} limit={false} stage={stage} />
+                    <Leaderboard
+                        shouldPaginate={true}
+                        leagueId={leagueId}
+                        limit={false}
+                        stage={stage}
+                        stageTabs={stageFilterEnabled ? <StageTabs leagueId={leagueId} activeStage={stage} /> : undefined}
+                    />
                     {showInvitePrompt && league && (
                         <InvitePrompt leagueId={leagueId} leagueName={league.name}/>
                     )}

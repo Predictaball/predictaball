@@ -7,14 +7,15 @@ interface LeaderboardProps {
     leagueId: string,
     limit: boolean,
     shouldPaginate: boolean,
-    stage?: GetLeagueLeaderboardStageEnum
+    stage?: GetLeagueLeaderboardStageEnum,
+    stageTabs?: React.ReactNode
 }
 
 export default function Leaderboard(props: LeaderboardProps): React.JSX.Element {
     return (
         <div className="w-full mx-auto flex flex-col items-center">
             <Suspense fallback={<LeaderboardSkeleton />}>
-                <Entries shouldPaginate={props.shouldPaginate} leagueId={props.leagueId} limit={props.limit} stage={props.stage} />
+                <Entries shouldPaginate={props.shouldPaginate} leagueId={props.leagueId} limit={props.limit} stage={props.stage} stageTabs={props.stageTabs} />
             </Suspense>
         </div>
     )
