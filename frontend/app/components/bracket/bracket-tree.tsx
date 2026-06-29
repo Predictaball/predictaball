@@ -90,7 +90,11 @@ function mobileCenters(matchCount: number, totalSlots: number): number[] {
 /** Phone layout: snap-scroll carousel with proper bracket connector lines. */
 function MobileCarousel({ rounds }: { rounds: RoundColumn<BracketMatch>[] }): React.JSX.Element {
     const firstRoundCount = rounds[0].slots.length
-    const totalH = firstRoundCount * M_SLOT - M_V_GAP
+    // Slot height × slot count gives the bounding box. We previously subtracted
+    // M_V_GAP to avoid a trailing gap below the last cell, but mobileCenters()
+    // assumes the full slot grid so cards in the smallest rounds (and the
+    // bottom cell of R32) would clip by a few px. Keep the full grid height.
+    const totalH = firstRoundCount * M_SLOT
 
     const centersByRound: number[][] = rounds.map((col) =>
         mobileCenters(col.slots.length, firstRoundCount)
@@ -145,8 +149,7 @@ function MobileCarousel({ rounds }: { rounds: RoundColumn<BracketMatch>[] }): Re
             </div>
 
             <div
-                className="overflow-y-auto overflow-x-hidden overscroll-contain"
-                style={{ WebkitOverflowScrolling: "touch", maxHeight: `min(${totalH}px, calc(70svh - ${M_HEADER_H}px))` }}
+                className="overflow-x-hidden"
             >
                 <div
                     ref={bodyRef}
