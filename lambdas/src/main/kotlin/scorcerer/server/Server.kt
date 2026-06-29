@@ -17,6 +17,7 @@ import scorcerer.server.auth.DatabaseAuthProvider
 import scorcerer.server.db.DatabaseFactory
 import scorcerer.server.resources.adminRoutes
 import scorcerer.server.resources.authRoutes
+import scorcerer.server.resources.bracketRoutes
 import scorcerer.server.resources.countryRankingsRoutes
 import scorcerer.server.resources.leagueRoutes
 import scorcerer.server.resources.matchRoutes
@@ -55,6 +56,7 @@ private val allRoutes = routes(
     authRoutes(authProvider),
     miscRoutes,
     adminRoutes(leaderboardService, tournamentStateService),
+    bracketRoutes(requestContext),
     countryRankingsRoutes(leaderboardService),
     leagueRoutes(requestContext, leaderboardService),
     matchRoutes(requestContext, leaderboardService, tournamentStateService),

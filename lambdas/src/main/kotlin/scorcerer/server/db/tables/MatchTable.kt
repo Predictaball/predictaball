@@ -32,6 +32,7 @@ object MatchTable : Table("match") {
     val venue = varchar("venue", 30)
     val matchDay = integer("match_day").check { it.greaterEq(1) }
     val round = enumerationByName<MatchRound>("round", 20)
+    val bracketPosition = integer("bracket_position").nullable()
     val externalMatchId = varchar("external_match_id", 20).nullable()
     val homePredictions = integer("home_predictions").nullable()
     val drawPredictions = integer("draw_predictions").nullable()
