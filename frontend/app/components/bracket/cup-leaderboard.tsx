@@ -1,10 +1,12 @@
 'use client'
 
 import React, { useEffect, useState } from "react"
+import Link from "next/link"
 import { BracketLeaderboardRow } from "@/client"
 import Pagination from "@/app/components/pagination"
 import useWindowDimensions from "@/app/hooks/use-window-dimension"
 import { PODIUM_GLOW } from "@/app/util/css-classes"
+import { generateHistoryPageLinkForUser } from "@/app/app/user/[userId]/history/user-link-generator"
 
 interface CupLeaderboardProps {
     rows: BracketLeaderboardRow[]
@@ -31,9 +33,12 @@ function CupEntry({ row, isYou }: { row: BracketLeaderboardRow; isYou: boolean }
                     {row.position}
                 </div>
                 <div className="flex min-w-0 flex-1 items-center gap-1.5 text-left">
-                    <span className="truncate font-semibold text-slate-900 dark:text-white">
+                    <Link
+                        href={generateHistoryPageLinkForUser(row)}
+                        className="truncate font-semibold text-slate-900 dark:text-white hover:underline"
+                    >
                         {row.firstName} {row.familyName}
-                    </span>
+                    </Link>
                     {isYou && (
                         <span className="text-[11px] font-bold uppercase tracking-wider text-cyan-600 dark:text-cyan-300">you</span>
                     )}
