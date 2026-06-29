@@ -437,6 +437,7 @@ components:
         - state
         - basePoints
         - bonusPoints
+        - predictable
       properties:
         matchId:
           description: Unique matchId
@@ -493,6 +494,13 @@ components:
             the rest of the tree. Null until a round's slots are seeded.
           type: integer
           format: int32
+        predictable:
+          description: >-
+            Whether the requesting user can currently submit a prediction for this
+            match. A match can exist in the bracket (teams known) before its
+            prediction window opens; such matches are surfaced as locked. Mirrors
+            the upcoming-matches window used by the main predictions screen.
+          type: boolean
     bracket:
       description: The requesting user's Knockout Cup run and running score.
       type: object

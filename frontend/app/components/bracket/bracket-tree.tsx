@@ -2,8 +2,9 @@
 
 import React, { useEffect, useState } from "react"
 import { BracketMatch } from "@/client"
-import { BracketRound, KNOCKOUT_ROUNDS, ROUND_LABELS, ROUND_SHORT_LABELS } from "@/app/util/bracket-scoring"
-import BracketCell, { CellDims, LockIcon } from "./bracket-cell"
+import { ROUND_LABELS, ROUND_SHORT_LABELS } from "@/app/util/bracket-scoring"
+import { RoundColumn, Slot, buildBracket } from "@/app/util/bracket-layout"
+import BracketCell, { CellDims, LockIcon, PlaceholderCell, isMatchLocked } from "./bracket-cell"
 
 // Desktop tree geometry.
 const CARD_W = 188
@@ -14,25 +15,8 @@ const HEADER_H = 26
 const COL = CARD_W + COL_GAP
 const SLOT = CARD_H + V_GAP
 
-/** Expected match count per round in a standard 32-team knockout. */
-const ROUND_SIZES: Record<BracketRound, number> = {
-    ROUND_OF_THIRTY_TWO: 16,
-    ROUND_OF_SIXTEEN: 8,
-    QUARTER_FINAL: 4,
-    SEMI_FINAL: 2,
-    FINAL: 1,
-}
-
 interface BracketTreeProps {
     matches: BracketMatch[]
-}
-
-/** A real match or a TBD placeholder slot. */
-type Slot = { kind: "match"; match: BracketMatch } | { kind: "placeholder"; id: string }
-
-interface RoundColumn {
-    round: BracketRound
-    slots: Slot[]
 }
 
 function useCompact(): boolean {
@@ -47,74 +31,42 @@ function useCompact(): boolean {
     return compact
 }
 
-function groupRounds(matches: BracketMatch[]): RoundColumn[] {
-    const byRound = new Map<BracketRound, BracketMatch[]>()
-    for (const match of matches) {
-        const round = match.round as BracketRound
-        const bucket = byRound.get(round)
-        if (bucket) bucket.push(match)
-        else byRound.set(round, [match])
-    }
-
-    // Always render the full bracket: every knockout round, each padded to its
-    // expected size with TBD placeholders. This way the entire empty tree is
-    // visible up front, with real matches filling in as rounds are set.
-    return KNOCKOUT_ROUNDS.map((round) => {
-        // Order by bracket position so consecutive pairs (2j, 2j+1) feed the
-        // right next-round slot. Seeded for the Round of 32; matches without a
-        // position fall back to their incoming (kickoff) order via a stable sort.
-        const real = [...(byRound.get(round) ?? [])].sort(
-            (a, b) => (a.bracketPosition ?? Infinity) - (b.bracketPosition ?? Infinity),
-        )
-        const expected = ROUND_SIZES[round]
-        const placeholders: Slot[] = Array.from(
-            { length: Math.max(0, expected - real.length) },
-            (_, i) => ({ kind: "placeholder", id: `${round}-ph-${i}` } as const),
-        )
-        const slots: Slot[] = [
-            ...real.map((m): Slot => ({ kind: "match", match: m })),
-            ...placeholders,
-        ]
-        return { round, slots }
-    })
+/**
+ * A round can't be predicted yet (header padlock) when none of its real matches
+ * are open — i.e. every match is a future placeholder or a locked upcoming tie,
+ * with nothing live, completed, or currently predictable.
+ */
+function isRoundLocked(column: RoundColumn<BracketMatch>): boolean {
+    return !column.slots.some(
+        (s) => s.kind === "match" && (s.match.state !== "UPCOMING" || s.match.predictable),
+    )
 }
 
 /**
  * The user's knockout run. On desktop it's a left-to-right single-elimination
  * tree with connectors; on phones it's a horizontal snap carousel — one round
- * per swipe, each round a compact scrollable list so it stays short vertically.
- * Rounds beyond the one currently being played are locked (greyed + padlock).
+ * per swipe — capped to a scrollable viewport so it stays short, with the round
+ * heading pinned to the top while you scroll. Matches that are in the bracket but
+ * not yet open for predictions are greyed out and padlocked.
  */
 export default function BracketTree({ matches }: BracketTreeProps): React.JSX.Element {
     const compact = useCompact()
-    const rounds = groupRounds(matches)
-
-    // The earliest round still being played is "open"; later rounds are locked.
-    const openRoundIndex = rounds.findIndex((column) =>
-        column.slots.some((s) => s.kind === "match" && s.match.state !== "COMPLETED")
-    )
-    const isLocked = (r: number): boolean => openRoundIndex !== -1 && r > openRoundIndex
+    const rounds = buildBracket(matches)
 
     return compact
-        ? <MobileCarousel rounds={rounds} isLocked={isLocked} />
-        : <DesktopTree rounds={rounds} isLocked={isLocked} />
+        ? <MobileCarousel rounds={rounds} />
+        : <DesktopTree rounds={rounds} />
 }
 
-/** A greyed-out TBD placeholder cell. */
-function PlaceholderCell({ dims }: { dims: CellDims }): React.JSX.Element {
-    return (
-        <div
-            className="flex items-center justify-center rounded-xl border border-dashed border-slate-900/10 bg-slate-500/[0.04] dark:border-white/10 dark:bg-white/[0.02]"
-            style={{ width: dims.width, height: dims.height }}
-        >
-            <span className="text-[11px] font-bold uppercase tracking-widest text-slate-300 dark:text-gray-600">TBD</span>
-        </div>
-    )
+function renderSlot(slot: Slot<BracketMatch>, dims: CellDims): React.JSX.Element {
+    if (slot.kind === "placeholder") {
+        return <PlaceholderCell dims={dims} home={slot.home} away={slot.away} />
+    }
+    return <BracketCell match={slot.match} locked={isMatchLocked(slot.match)} dims={dims} />
 }
 
-function renderSlot(slot: Slot, locked: boolean, dims: CellDims): React.JSX.Element {
-    if (slot.kind === "placeholder") return <PlaceholderCell dims={dims} />
-    return <BracketCell match={slot.match} locked={locked} dims={dims} />
+function slotKey(slot: Slot<BracketMatch>): string {
+    return slot.kind === "match" ? slot.match.matchId : slot.id
 }
 
 // Mobile bracket geometry
@@ -133,7 +85,7 @@ function mobileCenters(matchCount: number, totalSlots: number): number[] {
 }
 
 /** Phone layout: snap-scroll carousel with proper bracket connector lines. */
-function MobileCarousel({ rounds, isLocked }: { rounds: RoundColumn[]; isLocked: (r: number) => boolean }): React.JSX.Element {
+function MobileCarousel({ rounds }: { rounds: RoundColumn<BracketMatch>[] }): React.JSX.Element {
     const firstRoundCount = rounds[0].slots.length
     const totalH = firstRoundCount * M_SLOT - M_V_GAP
 
@@ -143,11 +95,14 @@ function MobileCarousel({ rounds, isLocked }: { rounds: RoundColumn[]; isLocked:
 
     return (
         <div
-            className="-mx-4 flex snap-x snap-mandatory overflow-x-auto overflow-y-hidden px-4"
-            style={{ WebkitOverflowScrolling: "touch", gap: 0 }}
+            // Scrolls both ways: swipe between rounds, scroll down within a round.
+            // Capped to a fraction of the viewport so the tall first round shrinks
+            // into a contained, scrollable area instead of dominating the page.
+            className="-mx-4 flex snap-x snap-mandatory overflow-auto overscroll-contain px-4"
+            style={{ WebkitOverflowScrolling: "touch", gap: 0, maxHeight: `min(${totalH + M_HEADER_H}px, 70svh)` }}
         >
             {rounds.map((column, r) => {
-                const locked = isLocked(r)
+                const locked = isRoundLocked(column)
                 const centers = centersByRound[r]
                 const prevCenters = r > 0 ? centersByRound[r - 1] : null
                 const dims: CellDims = { width: "100%", height: M_CARD_H, compact: true }
@@ -165,7 +120,7 @@ function MobileCarousel({ rounds, isLocked }: { rounds: RoundColumn[]; isLocked:
                                         return (
                                             <path
                                                 key={j}
-                                                d={`M 0 ${f1} H ${M_CONNECTOR_W / 2} V ${f2} M ${M_CONNECTOR_W / 2} ${midY} H ${M_CONNECTOR_W}`}
+                                                d={`M 0 ${f1} H ${M_CONNECTOR_W / 2} V ${f2} H 0 M ${M_CONNECTOR_W / 2} ${midY} H ${M_CONNECTOR_W}`}
                                                 className="stroke-slate-300 dark:stroke-white/20"
                                                 strokeWidth={1.5}
                                             />
@@ -176,7 +131,10 @@ function MobileCarousel({ rounds, isLocked }: { rounds: RoundColumn[]; isLocked:
                         )}
 
                         <section className="flex shrink-0 snap-center flex-col" style={{ width: "72vw", maxWidth: 300 }}>
-                            <header className="flex shrink-0 items-center justify-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-gray-400" style={{ height: M_HEADER_H }}>
+                            <header
+                                className="sticky top-0 z-10 flex shrink-0 items-center justify-center gap-1.5 bg-slate-50/95 text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500 backdrop-blur dark:bg-gray-900/95 dark:text-gray-400"
+                                style={{ height: M_HEADER_H }}
+                            >
                                 {ROUND_LABELS[column.round]}
                                 {locked && <LockIcon className="h-3 w-3 text-slate-400 dark:text-gray-500" />}
                             </header>
@@ -184,11 +142,11 @@ function MobileCarousel({ rounds, isLocked }: { rounds: RoundColumn[]; isLocked:
                             <div className="relative" style={{ height: totalH }}>
                                 {column.slots.map((slot, j) => (
                                     <div
-                                        key={slot.kind === "match" ? slot.match.matchId : slot.id}
+                                        key={slotKey(slot)}
                                         className="absolute w-full"
                                         style={{ top: centers[j] - M_CARD_H / 2 }}
                                     >
-                                        {renderSlot(slot, locked, dims)}
+                                        {renderSlot(slot, dims)}
                                     </div>
                                 ))}
                             </div>
@@ -202,7 +160,7 @@ function MobileCarousel({ rounds, isLocked }: { rounds: RoundColumn[]; isLocked:
 }
 
 /** Desktop layout: the connected bracket tree. */
-function DesktopTree({ rounds, isLocked }: { rounds: RoundColumn[]; isLocked: (r: number) => boolean }): React.JSX.Element {
+function DesktopTree({ rounds }: { rounds: RoundColumn<BracketMatch>[] }): React.JSX.Element {
     const dims: CellDims = { width: CARD_W, height: CARD_H, compact: false }
     const totalHeight = rounds[0].slots.length * SLOT
 
@@ -245,10 +203,11 @@ function DesktopTree({ rounds, isLocked }: { rounds: RoundColumn[]; isLocked: (r
                     {rounds.map((column, r) => (
                         <div
                             key={column.round}
-                            className="absolute text-center text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500 dark:text-gray-400"
+                            className="absolute flex items-center justify-center gap-1 text-center text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500 dark:text-gray-400"
                             style={{ left: r * COL, width: CARD_W }}
                         >
                             {ROUND_SHORT_LABELS[column.round]}
+                            {isRoundLocked(column) && <LockIcon className="h-3 w-3 text-slate-400 dark:text-gray-500" />}
                         </div>
                     ))}
                 </div>
@@ -262,11 +221,11 @@ function DesktopTree({ rounds, isLocked }: { rounds: RoundColumn[]; isLocked: (r
                     {rounds.map((column, r) =>
                         column.slots.map((slot, j) => (
                             <div
-                                key={slot.kind === "match" ? slot.match.matchId : slot.id}
+                                key={slotKey(slot)}
                                 className="absolute"
                                 style={{ left: r * COL, top: centers[r][j] - CARD_H / 2, width: CARD_W }}
                             >
-                                {renderSlot(slot, isLocked(r), dims)}
+                                {renderSlot(slot, dims)}
                             </div>
                         )),
                     )}
