@@ -11,6 +11,21 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+      - name: Validate Flyway migrations
+        # Cheap pre-flight: two PRs adding the same Vxx__ number is the most
+        # common breakage. Fail before we waste 5 minutes building a jar that
+        # Flyway will reject at startup.
+        run: |
+          cd lambdas/src/main/resources/db/migration
+          dupes=$(ls V*.sql | sed -E 's/^V([0-9]+)__.*/\1/' | sort -n | uniq -d)
+          if [ -n "$dupes" ]; then
+            echo "::error::Duplicate Flyway migration version(s): $dupes"
+            for v in $dupes; do
+              echo "::error::V$v files:"
+              ls -1 V${v}__*.sql | sed 's/^/  /'
+            done
+            exit 1
+          fi
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
