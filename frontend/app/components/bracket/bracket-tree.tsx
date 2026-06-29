@@ -62,7 +62,12 @@ function groupRounds(matches: BracketMatch[]): RoundColumn[] {
 
     // For each present round, pad to the expected size with placeholder slots.
     return presentRounds.map((round) => {
-        const real = byRound.get(round)!
+        // Order by bracket position so consecutive pairs (2j, 2j+1) feed the
+        // right next-round slot. Seeded for the Round of 32; matches without a
+        // position fall back to their incoming (kickoff) order via a stable sort.
+        const real = [...byRound.get(round)!].sort(
+            (a, b) => (a.bracketPosition ?? Infinity) - (b.bracketPosition ?? Infinity),
+        )
         const expected = ROUND_SIZES[round]
         const placeholders: Slot[] = Array.from(
             { length: Math.max(0, expected - real.length) },
