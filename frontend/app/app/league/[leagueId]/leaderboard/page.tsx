@@ -10,6 +10,7 @@ import BackButton from "@/app/components/back-button";
 import {getConfigWithAuthHeader} from "@/app/api/client-config";
 import {GetLeagueLeaderboardStageEnum, LeagueApi, LeagueKindEnum} from "@/client";
 import {PitchPerspective} from "@/app/components/atmosphere";
+import {supportsStageFilter} from "@/app/util/leagues";
 
 function parseStage(stageParam: string | string[] | undefined): GetLeagueLeaderboardStageEnum {
     const value = typeof stageParam === "string" ? stageParam : undefined
@@ -21,7 +22,12 @@ export default async function Home(
     { params, searchParams }: { params: Promise<{ leagueId: string }>, searchParams: Promise<{ [key: string]: string | string[] | undefined }> }
 ): Promise<React.JSX.Element> {
     const { leagueId } = await params
-    const stage = parseStage((await searchParams)["stage"])
+    // The global, group-stage and knockout leagues don't offer stage filtering,
+    // so ignore any ?stage= param and always show the full leaderboard there.
+    const stageFilterEnabled = supportsStageFilter(leagueId)
+    const stage = stageFilterEnabled
+        ? parseStage((await searchParams)["stage"])
+        : GetLeagueLeaderboardStageEnum.All
 
     const league = await new LeagueApi(await getConfigWithAuthHeader())
         .getLeague({ leagueId })
@@ -50,7 +56,7 @@ export default async function Home(
                 </header>
 
                 <section className="flex flex-col items-center space-y-5">
-                    <StageTabs leagueId={leagueId} activeStage={stage} />
+                    {stageFilterEnabled && <StageTabs leagueId={leagueId} activeStage={stage} />}
                     <Leaderboard shouldPaginate={true} leagueId={leagueId} limit={false} stage={stage} />
                     {showInvitePrompt && league && (
                         <InvitePrompt leagueId={leagueId} leagueName={league.name}/>
