@@ -45,9 +45,11 @@ function isRoundLocked(column: RoundColumn<BracketMatch>): boolean {
 /**
  * The user's knockout run. On desktop it's a left-to-right single-elimination
  * tree with connectors; on phones it's a horizontal snap carousel — one round
- * per swipe — capped to a scrollable viewport so it stays short, with the round
- * heading pinned to the top while you scroll. Matches that are in the bracket but
- * not yet open for predictions are greyed out and padlocked.
+ * per swipe — capped to a scrollable viewport so it stays short. Touch is axis
+ * locked: you swipe left/right to move between rounds and scroll up/down freely
+ * within the tree, but it can't be dragged diagonally in every direction. Matches
+ * that are in the bracket but not yet open for predictions are greyed out and
+ * padlocked.
  */
 export default function BracketTree({ matches }: BracketTreeProps): React.JSX.Element {
     const compact = useCompact()
@@ -88,18 +90,29 @@ function mobileCenters(matchCount: number, totalSlots: number): number[] {
 function MobileCarousel({ rounds }: { rounds: RoundColumn<BracketMatch>[] }): React.JSX.Element {
     const firstRoundCount = rounds[0].slots.length
     const totalH = firstRoundCount * M_SLOT - M_V_GAP
+    const innerH = totalH + M_HEADER_H
 
     const centersByRound: number[][] = rounds.map((col) =>
         mobileCenters(col.slots.length, firstRoundCount)
     )
 
+    // Two nested scrollers with complementary touch-action lock each gesture to a
+    // single axis, so the bracket can't be dragged diagonally in all directions.
+    // The outer scroller owns vertical scrolling (pan-y): a downward swipe scrolls
+    // the whole tree, connectors and all, staying aligned. The inner scroller owns
+    // horizontal swiping (pan-x) and snaps one round per swipe. A vertical gesture
+    // isn't permitted on the inner, so the browser routes it up to the outer; a
+    // horizontal gesture isn't permitted on the outer, so it snaps rounds instead.
+    // Capped to a fraction of the viewport so the tall first round shrinks into a
+    // contained, scrollable area instead of dominating the page.
     return (
         <div
-            // Scrolls both ways: swipe between rounds, scroll down within a round.
-            // Capped to a fraction of the viewport so the tall first round shrinks
-            // into a contained, scrollable area instead of dominating the page.
-            className="-mx-4 flex snap-x snap-mandatory overflow-auto overscroll-contain px-4"
-            style={{ WebkitOverflowScrolling: "touch", gap: 0, maxHeight: `min(${totalH + M_HEADER_H}px, 70svh)` }}
+            className="-mx-4 overflow-y-auto overflow-x-hidden overscroll-contain px-4"
+            style={{ WebkitOverflowScrolling: "touch", touchAction: "pan-y", maxHeight: `min(${innerH}px, 70svh)` }}
+        >
+        <div
+            className="flex snap-x snap-mandatory overflow-x-auto overflow-y-hidden overscroll-x-contain"
+            style={{ WebkitOverflowScrolling: "touch", touchAction: "pan-x", gap: 0, height: innerH }}
         >
             {rounds.map((column, r) => {
                 const locked = isRoundLocked(column)
@@ -155,6 +168,7 @@ function MobileCarousel({ rounds }: { rounds: RoundColumn<BracketMatch>[] }): Re
                 )
             })}
             <div className="shrink-0" style={{ width: 16 }} />
+        </div>
         </div>
     )
 }
