@@ -18,6 +18,14 @@ function leagueSortRank(league: League): number {
     return league.kind === LeagueKindEnum.User ? STANDING_LEAGUE_ORDER.length : STANDING_LEAGUE_ORDER.length + 1
 }
 
+// The tournament-wide standing leagues (Global, Group Stage, Knockout) that every
+// member is auto-joined to. The Knockout Cup surfaces a single "Global" tab of its
+// own, so callers building its league list use this to drop these from the user's
+// leagues — both the duplicate Global and the stage-scoped boards.
+export function isGlobalStandingLeague(leagueId: string): boolean {
+    return STANDING_LEAGUE_ORDER.includes(leagueId)
+}
+
 // Order leagues for display: Global, Group Stage, Knockout, then the user's own
 // leagues (alphabetically), then their country league.
 export function sortLeagues(leagues: League[]): League[] {

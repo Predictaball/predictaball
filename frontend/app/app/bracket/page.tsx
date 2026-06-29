@@ -11,6 +11,7 @@ import { getConfigWithAuthHeader } from "@/app/api/client-config"
 import { getUserId } from "@/app/auth/jwt-handler"
 import { League, UserApi } from "@/client"
 import { BRAND_TEXT_GRADIENT } from "@/app/util/css-classes"
+import { isGlobalStandingLeague } from "@/app/util/leagues"
 
 export default async function BracketPage({ searchParams }: {
     searchParams: Promise<Record<string, string | string[] | undefined>>
@@ -26,9 +27,14 @@ export default async function BracketPage({ searchParams }: {
         getUserId(),
     ])
 
+    // "Global" is surfaced as its own tab; the user's leagues already include the
+    // auto-joined standing leagues (global, group-stage, knockout), so drop those
+    // to avoid a duplicate Global and the stage-scoped boards the cup doesn't use.
     const cupTabs: Array<{ id: string; name: string }> = [
         { id: "global", name: "Global" },
-        ...userLeagues.map((league) => ({ id: league.leagueId, name: league.name })),
+        ...userLeagues
+            .filter((league) => !isGlobalStandingLeague(league.leagueId))
+            .map((league) => ({ id: league.leagueId, name: league.name })),
     ]
 
     return (
