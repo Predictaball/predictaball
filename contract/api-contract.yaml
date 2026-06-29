@@ -130,6 +130,14 @@ components:
           $ref: '#/components/schemas/prediction'
         predictionDistribution:
           $ref: '#/components/schemas/predictionDistribution'
+        bracketPosition:
+          description: >-
+            For knockout matches, the match's slot in the bracket. Seeded for the
+            Round of 32 as 1..16 in top-to-bottom bracket order; consecutive pairs
+            (1&2, 3&4, ...) feed each Round of 16 tie, so the frontend can derive
+            the rest of the tree. Null for group-stage matches.
+          type: integer
+          format: int32
 
     predictionDistribution:
       description: Counts of predictions by outcome (home/draw/away). Populated once a match is no longer UPCOMING.

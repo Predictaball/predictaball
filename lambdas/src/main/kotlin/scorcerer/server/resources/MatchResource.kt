@@ -107,7 +107,7 @@ fun matchRoutes(
                 .join(homeTeamTable, JoinType.INNER, MatchTable.homeTeamId, homeTeamTable[TeamTable.id]).selectAll()
                 .orderBy(MatchTable.datetime)
                 .where { MatchTable.id eq matchId.toInt() }.singleOrNull()?.let { row ->
-                    Match(row[homeTeamTable[TeamTable.name]].toTitleCase(), row[homeTeamTable[TeamTable.flagCode]], row[awayTeamTable[TeamTable.name]].toTitleCase(), row[awayTeamTable[TeamTable.flagCode]], row[MatchTable.id].toString(), row[MatchTable.venue], row[MatchTable.datetime], row[MatchTable.matchDay], Match.Round.valueOf(row[MatchTable.round].value), row[MatchTable.state], row[homeTeamTable[TeamTable.ranking]], row[awayTeamTable[TeamTable.ranking]], row[MatchTable.homeScore], row[MatchTable.awayScore], null, predictionDistributionFromRow(row))
+                    Match(row[homeTeamTable[TeamTable.name]].toTitleCase(), row[homeTeamTable[TeamTable.flagCode]], row[awayTeamTable[TeamTable.name]].toTitleCase(), row[awayTeamTable[TeamTable.flagCode]], row[MatchTable.id].toString(), row[MatchTable.venue], row[MatchTable.datetime], row[MatchTable.matchDay], Match.Round.valueOf(row[MatchTable.round].value), row[MatchTable.state], row[homeTeamTable[TeamTable.ranking]], row[awayTeamTable[TeamTable.ranking]], row[MatchTable.homeScore], row[MatchTable.awayScore], null, predictionDistributionFromRow(row), row[MatchTable.bracketPosition])
                 } ?: throw ApiResponseError(Response(Status.BAD_REQUEST).body("Match does not exist"))
         }
         Response(Status.OK).body(match.toJson())
@@ -152,6 +152,7 @@ private fun listMatches(requesterUserId: String, filterType: String?, userId: St
                     Prediction(row[predictions[PredictionTable.homeScore]], row[predictions[PredictionTable.chip]], row[predictions[PredictionTable.awayScore]], row[MatchTable.id].toString(), row[predictions[PredictionTable.id]].toString(), row[predictions[PredictionTable.memberId]], row[predictions[PredictionTable.points]], row[predictions[PredictionTable.result]].toToGoThrough())
                 },
                 predictionDistributionFromRow(row),
+                row[MatchTable.bracketPosition],
             )
         }
     }
