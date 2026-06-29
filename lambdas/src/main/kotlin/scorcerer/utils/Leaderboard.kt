@@ -12,12 +12,65 @@ import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.openapitools.server.models.CountryLeaderboardInner
 import org.openapitools.server.models.LeaderboardInner
+import org.openapitools.server.models.User
 import scorcerer.server.db.tables.LeagueMembershipTable
+import scorcerer.server.db.tables.MatchRound
 import scorcerer.server.db.tables.MemberTable
 import scorcerer.server.db.tables.TeamTable
 import scorcerer.server.fromJson
 import scorcerer.server.log
 import scorcerer.server.toJson
+
+enum class LeaderboardStage { ALL, GROUP_STAGE, KNOCKOUT }
+
+private val knockoutRounds = MatchRound.entries.filterNot { it == MatchRound.GROUP_STAGE }
+
+// Unlike calculateGlobalLeaderboard, this isn't cached per match day: it's a cheap
+// on-the-fly aggregation, and stage-filtered views don't need movement tracking.
+fun calculateStageLeaderboard(leagueId: String, stage: LeaderboardStage): List<LeaderboardInner> {
+    require(stage != LeaderboardStage.ALL) { "ALL stage does not use calculateStageLeaderboard" }
+    val rounds = if (stage == LeaderboardStage.GROUP_STAGE) listOf(MatchRound.GROUP_STAGE) else knockoutRounds
+
+    val users = transaction {
+        val pointsByUser = pointsByUserForRounds(rounds)
+        (LeagueMembershipTable innerJoin MemberTable)
+            .join(TeamTable, JoinType.LEFT, MemberTable.supportedTeamId, TeamTable.id)
+            .select(
+                MemberTable.id,
+                MemberTable.firstName,
+                MemberTable.familyName,
+                MemberTable.doublePointsChips,
+                MemberTable.oneOutChips,
+                MemberTable.crowdChips,
+                TeamTable.name,
+                TeamTable.flagCode,
+            )
+            .where { LeagueMembershipTable.leagueId eq leagueId }
+            .map { row ->
+                User(
+                    row[MemberTable.firstName],
+                    row[MemberTable.familyName],
+                    row[MemberTable.id],
+                    row[MemberTable.doublePointsChips],
+                    row[MemberTable.oneOutChips],
+                    row[MemberTable.crowdChips],
+                    0,
+                    pointsByUser[row[MemberTable.id]] ?: 0,
+                    row.getOrNull(TeamTable.name)?.toTitleCase(),
+                    row.getOrNull(TeamTable.flagCode),
+                )
+            }
+    }
+
+    val sortedUsers = users.sortedByDescending { it.livePoints }
+    var currentPosition = 0
+    var previousPoints = Int.MAX_VALUE
+    return sortedUsers.mapIndexed { index, user ->
+        if (user.livePoints < previousPoints) currentPosition = index + 1
+        previousPoints = user.livePoints
+        LeaderboardInner(currentPosition, user, LeaderboardInner.Movement.UNCHANGED)
+    }
+}
 
 fun filterLeaderboardToLeague(
     globalLeaderboard: List<LeaderboardInner>?,

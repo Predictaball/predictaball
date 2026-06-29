@@ -32,8 +32,10 @@ import scorcerer.server.extractUserId
 import scorcerer.server.fromJson
 import scorcerer.server.toJson
 import scorcerer.utils.LeaderboardService
+import scorcerer.utils.LeaderboardStage
 import scorcerer.utils.calculateGlobalLeaderboard
 import scorcerer.utils.calculateMovement
+import scorcerer.utils.calculateStageLeaderboard
 import scorcerer.utils.filterLeaderboardToLeague
 import scorcerer.utils.toUser
 import kotlin.math.min
@@ -93,28 +95,36 @@ fun leagueRoutes(contexts: RequestContexts, leaderboardService: LeaderboardServi
         val leagueId = req.path("leagueId")!!
         val pageSize = req.query("pageSize")
         val page = req.query("page")
+        val stage = req.query("stage")?.let { stageParam ->
+            LeaderboardStage.entries.find { it.name == stageParam }
+                ?: throw ApiResponseError(Response(Status.BAD_REQUEST).body("Invalid stage"))
+        } ?: LeaderboardStage.ALL
         val leagueName = transaction {
             LeagueTable.select(LeagueTable.name).where { LeagueTable.id eq leagueId }.singleOrNull()?.get(LeagueTable.name)
         } ?: throw ApiResponseError(Response(Status.BAD_REQUEST).body("League does not exist"))
-        val (latestMatchDay, latestGlobalLeaderboard) = runBlocking {
-            val matchDay = leaderboardService.getLatestLeaderboardMatchDay()
-            val leaderboard = leaderboardService.getLeaderboard(matchDay)
-            matchDay to (
-                leaderboard ?: run {
-                    val computed = calculateGlobalLeaderboard(null)
-                    leaderboardService.writeLeaderboard(computed, 0)
-                    computed
-                }
-                )
-        }
-        val response = if (leagueId == "global") {
-            paginateLeaderboard(leagueName, sortLeaderboard(latestGlobalLeaderboard), page, pageSize)
+        val response = if (stage != LeaderboardStage.ALL) {
+            paginateLeaderboard(leagueName, calculateStageLeaderboard(leagueId, stage), page, pageSize)
         } else {
-            val leagueUserIds = getLeagueUserIds(leagueId)
-            val previousGlobalLeaderboard = runBlocking { leaderboardService.getPreviousLeaderboard(latestMatchDay) }
-            val filteredLeague = filterLeaderboardToLeague(latestGlobalLeaderboard, leagueUserIds)
-            val previousFilteredLeague = filterLeaderboardToLeague(previousGlobalLeaderboard, leagueUserIds)
-            paginateLeaderboard(leagueName, sortLeaderboard(calculateMovement(filteredLeague, previousFilteredLeague)), page, pageSize)
+            val (latestMatchDay, latestGlobalLeaderboard) = runBlocking {
+                val matchDay = leaderboardService.getLatestLeaderboardMatchDay()
+                val leaderboard = leaderboardService.getLeaderboard(matchDay)
+                matchDay to (
+                    leaderboard ?: run {
+                        val computed = calculateGlobalLeaderboard(null)
+                        leaderboardService.writeLeaderboard(computed, 0)
+                        computed
+                    }
+                    )
+            }
+            if (leagueId == "global") {
+                paginateLeaderboard(leagueName, sortLeaderboard(latestGlobalLeaderboard), page, pageSize)
+            } else {
+                val leagueUserIds = getLeagueUserIds(leagueId)
+                val previousGlobalLeaderboard = runBlocking { leaderboardService.getPreviousLeaderboard(latestMatchDay) }
+                val filteredLeague = filterLeaderboardToLeague(latestGlobalLeaderboard, leagueUserIds)
+                val previousFilteredLeague = filterLeaderboardToLeague(previousGlobalLeaderboard, leagueUserIds)
+                paginateLeaderboard(leagueName, sortLeaderboard(calculateMovement(filteredLeague, previousFilteredLeague)), page, pageSize)
+            }
         }
         Response(Status.OK).body(response.toJson())
     },

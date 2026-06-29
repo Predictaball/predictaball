@@ -1,5 +1,5 @@
 import React from "react";
-import {GetLeagueLeaderboard200Response, LeagueApi} from "@/client";
+import {GetLeagueLeaderboard200Response, GetLeagueLeaderboardStageEnum, LeagueApi} from "@/client";
 import {getConfigWithAuthHeader} from "@/app/api/client-config";
 import {filterWithContext} from "@/app/util/array";
 import {getUserId} from "@/app/auth/jwt-handler";
@@ -9,7 +9,8 @@ import {getUserForm} from "@/app/components/leaderboard/get-user-form";
 export interface EntriesProps {
     leagueId: string,
     limit: boolean,
-    shouldPaginate: boolean
+    shouldPaginate: boolean,
+    stage?: GetLeagueLeaderboardStageEnum
 }
 
 function TrophyIcon({className}: {className?: string}): React.JSX.Element {
@@ -31,7 +32,7 @@ export default async function Entries(props: EntriesProps): Promise<React.JSX.El
     async function getLeaderboard(): Promise<GetLeagueLeaderboard200Response | undefined> {
         try {
             const leagueApi = new LeagueApi(await getConfigWithAuthHeader())
-            return await leagueApi.getLeagueLeaderboard({leagueId: props.leagueId, pageSize: "200"})
+            return await leagueApi.getLeagueLeaderboard({leagueId: props.leagueId, pageSize: "200", stage: props.stage})
         } catch (error) {
             return undefined
         }

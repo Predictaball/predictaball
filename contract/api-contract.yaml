@@ -1474,6 +1474,15 @@ paths:
           name: page
           schema:
             type: string
+        - in: query
+          name: stage
+          description: Restrict the leaderboard to points earned in a given stage of the tournament. Defaults to ALL.
+          schema:
+            type: string
+            enum:
+              - ALL
+              - GROUP_STAGE
+              - KNOCKOUT
       responses:
         '200':
           description: Successful response
