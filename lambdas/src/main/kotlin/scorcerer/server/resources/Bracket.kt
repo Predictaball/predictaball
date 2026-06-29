@@ -57,6 +57,7 @@ fun bracketRoutes(contexts: RequestContexts) = routes(
                 userPick = row.pick.toToGoThrough(),
                 actualGoThrough = row.actual.toToGoThrough(),
                 correct = score.correct,
+                bracketPosition = row.bracketPosition,
             )
         }
         Response(Status.OK).body(Bracket(matches, run.totalPoints, run.currentStreak).toJson())
@@ -86,6 +87,7 @@ private data class RunRow(
     val state: Match.State,
     val pick: MatchResult?,
     val actual: MatchResult?,
+    val bracketPosition: Int?,
 )
 
 private data class ScoredMember(
@@ -119,6 +121,7 @@ private fun loadUserRun(userId: String): List<RunRow> = transaction {
                 state = row[MatchTable.state],
                 pick = row.getOrNull(predictions[PredictionTable.id])?.let { row[predictions[PredictionTable.result]] },
                 actual = if (completed) row[MatchTable.result] else null,
+                bracketPosition = row[MatchTable.bracketPosition],
             )
         }
 }
