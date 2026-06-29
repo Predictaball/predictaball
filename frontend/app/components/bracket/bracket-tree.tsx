@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useRef, useState } from "react"
 import { BracketMatch } from "@/client"
 import { ROUND_LABELS, ROUND_SHORT_LABELS } from "@/app/util/bracket-scoring"
 import { RoundColumn, Slot, buildBracket } from "@/app/util/bracket-layout"
@@ -44,19 +44,20 @@ function isRoundLocked(column: RoundColumn<BracketMatch>): boolean {
 
 /**
  * The user's knockout run. On desktop it's a left-to-right single-elimination
- * tree with connectors; on phones it's a single tall column of rounds stacked
- * top to bottom that grows with the page — no internal scroll area to fight
- * with — each round under its own sticky heading so the round label (and its
- * padlock when the round can't be predicted yet) stays visible while you scroll
- * through that round's matches. Matches that are in the bracket but not yet open
- * for predictions are greyed out and padlocked.
+ * tree with connectors; on phones it's a horizontal snap carousel — one round
+ * per swipe — capped to a scrollable viewport so it stays short, with the round
+ * headings pinned above the tree so they stay visible while you scroll. Touch is
+ * axis locked: you swipe left/right to move between rounds and scroll up/down
+ * freely within the tree, but it can't be dragged diagonally in every direction.
+ * Matches that are in the bracket but not yet open for predictions are greyed out
+ * and padlocked.
  */
 export default function BracketTree({ matches }: BracketTreeProps): React.JSX.Element {
     const compact = useCompact()
     const rounds = buildBracket(matches)
 
     return compact
-        ? <MobileBracket rounds={rounds} />
+        ? <MobileCarousel rounds={rounds} />
         : <DesktopTree rounds={rounds} />
 }
 
@@ -73,32 +74,132 @@ function slotKey(slot: Slot<BracketMatch>): string {
 
 // Mobile bracket geometry
 const M_CARD_H = 56
+const M_V_GAP = 12
+const M_SLOT = M_CARD_H + M_V_GAP
+const M_CONNECTOR_W = 28
+const M_HEADER_H = 28
 
-/**
- * Phone layout: one tall column with every round stacked top to bottom, growing
- * with the page so there's no internal scroll area. Each round sits under its own
- * sticky heading, so the round label — and its padlock when the round can't be
- * predicted yet — stays pinned to the top of the viewport while you scroll
- * through that round's matches.
- */
-function MobileBracket({ rounds }: { rounds: RoundColumn<BracketMatch>[] }): React.JSX.Element {
-    const dims: CellDims = { width: "100%", height: M_CARD_H, compact: true }
+/** Returns the vertical centre of each cell in a round column given its match count. */
+function mobileCenters(matchCount: number, totalSlots: number): number[] {
+    // Cells are evenly distributed over the same total height as the first round.
+    return Array.from({ length: matchCount }, (_, i) =>
+        (totalSlots * M_SLOT * (i + 0.5)) / matchCount
+    )
+}
 
+/** Phone layout: snap-scroll carousel with proper bracket connector lines. */
+function MobileCarousel({ rounds }: { rounds: RoundColumn<BracketMatch>[] }): React.JSX.Element {
+    const firstRoundCount = rounds[0].slots.length
+    const totalH = firstRoundCount * M_SLOT - M_V_GAP
+
+    const centersByRound: number[][] = rounds.map((col) =>
+        mobileCenters(col.slots.length, firstRoundCount)
+    )
+
+    // The round headings live in a strip pinned above the scrolling tree, so they
+    // never scroll out of view vertically. The strip mirrors the body's horizontal
+    // scroll position (it isn't directly scrollable) so each heading stays directly
+    // above its round as you swipe between rounds.
+    const headerRef = useRef<HTMLDivElement>(null)
+    const bodyRef = useRef<HTMLDivElement>(null)
+    const syncHeader = (): void => {
+        if (headerRef.current && bodyRef.current) {
+            headerRef.current.scrollLeft = bodyRef.current.scrollLeft
+        }
+    }
+
+    const colWidth = { width: "72vw", maxWidth: 300 } as const
+
+    // Two nested single-axis scrollers keep each gesture on one axis, so the
+    // bracket can't be dragged diagonally in all directions (the old single
+    // overflow-auto container scrolled both axes at once, which is what made it
+    // feel draggable everywhere). The outer body scroller scrolls only vertically,
+    // the inner one only horizontally (and snaps one round per swipe). Because
+    // neither element can scroll the other axis, the browser axis-locks the
+    // gesture and chains a vertical swipe on the inner up to the outer — so we must
+    // NOT set touch-action here: pan-x/pan-y suppress the off-axis entirely instead
+    // of delegating it, which silently kills vertical scrolling. The body is capped
+    // to a fraction of the viewport so the tall first round shrinks into a
+    // contained, scrollable area instead of dominating the page.
     return (
-        <div className="space-y-5">
-            {rounds.map((column) => (
-                <section key={column.round}>
-                    <div className="sticky top-0 z-10 mb-2 flex items-center justify-center gap-1.5 bg-slate-50/90 py-1.5 text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500 backdrop-blur dark:bg-gray-900/90 dark:text-gray-400">
-                        {ROUND_LABELS[column.round]}
-                        {isRoundLocked(column) && <LockIcon className="h-3 w-3 text-slate-400 dark:text-gray-500" />}
-                    </div>
-                    <div className="space-y-2">
-                        {column.slots.map((slot) => (
-                            <div key={slotKey(slot)}>{renderSlot(slot, dims)}</div>
-                        ))}
-                    </div>
-                </section>
-            ))}
+        <div className="-mx-4">
+            <div
+                ref={headerRef}
+                className="flex overflow-x-hidden"
+                style={{ gap: 0 }}
+            >
+                <div className="shrink-0" style={{ width: 16 }} />
+                {rounds.map((column, r) => (
+                    <React.Fragment key={column.round}>
+                        {r > 0 && <div className="shrink-0" style={{ width: M_CONNECTOR_W }} />}
+                        <div
+                            className="flex shrink-0 items-center justify-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-gray-400"
+                            style={{ ...colWidth, height: M_HEADER_H }}
+                        >
+                            {ROUND_LABELS[column.round]}
+                            {isRoundLocked(column) && <LockIcon className="h-3 w-3 text-slate-400 dark:text-gray-500" />}
+                        </div>
+                    </React.Fragment>
+                ))}
+                <div className="shrink-0" style={{ width: 16 }} />
+            </div>
+
+            <div
+                className="overflow-y-auto overflow-x-hidden overscroll-contain"
+                style={{ WebkitOverflowScrolling: "touch", maxHeight: `min(${totalH}px, calc(70svh - ${M_HEADER_H}px))` }}
+            >
+                <div
+                    ref={bodyRef}
+                    onScroll={syncHeader}
+                    className="flex snap-x snap-mandatory overflow-x-auto overflow-y-hidden overscroll-x-contain"
+                    style={{ WebkitOverflowScrolling: "touch", gap: 0, height: totalH }}
+                >
+                    <div className="shrink-0" style={{ width: 16 }} />
+                    {rounds.map((column, r) => {
+                        const centers = centersByRound[r]
+                        const prevCenters = r > 0 ? centersByRound[r - 1] : null
+                        const dims: CellDims = { width: "100%", height: M_CARD_H, compact: true }
+
+                        return (
+                            <React.Fragment key={column.round}>
+                                {prevCenters && (
+                                    <div className="shrink-0 self-start" style={{ width: M_CONNECTOR_W }}>
+                                        <svg width={M_CONNECTOR_W} height={totalH} fill="none" aria-hidden className="pointer-events-none">
+                                            {centers.map((cy, j) => {
+                                                const f1 = prevCenters[2 * j]
+                                                const f2 = prevCenters[2 * j + 1]
+                                                if (f1 == null || f2 == null) return null
+                                                const midY = (f1 + f2) / 2
+                                                return (
+                                                    <path
+                                                        key={j}
+                                                        d={`M 0 ${f1} H ${M_CONNECTOR_W / 2} V ${f2} H 0 M ${M_CONNECTOR_W / 2} ${midY} H ${M_CONNECTOR_W}`}
+                                                        className="stroke-slate-300 dark:stroke-white/20"
+                                                        strokeWidth={1.5}
+                                                    />
+                                                )
+                                            })}
+                                        </svg>
+                                    </div>
+                                )}
+
+                                <section className="relative shrink-0 snap-center" style={{ ...colWidth, height: totalH }}>
+                                    {column.slots.map((slot, j) => (
+                                        <div
+                                            key={slotKey(slot)}
+                                            className="absolute w-full"
+                                            style={{ top: centers[j] - M_CARD_H / 2 }}
+                                        >
+                                            {renderSlot(slot, dims)}
+                                        </div>
+                                    ))}
+                                </section>
+                            </React.Fragment>
+                        )
+                    })}
+                    <div className="shrink-0" style={{ width: 16 }} />
+                </div>
+            </div>
         </div>
     )
 }
