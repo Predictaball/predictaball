@@ -102,8 +102,18 @@ fun leagueRoutes(contexts: RequestContexts, leaderboardService: LeaderboardServi
         val leagueName = transaction {
             LeagueTable.select(LeagueTable.name).where { LeagueTable.id eq leagueId }.singleOrNull()?.get(LeagueTable.name)
         } ?: throw ApiResponseError(Response(Status.BAD_REQUEST).body("League does not exist"))
-        val response = if (stage != LeaderboardStage.ALL) {
-            paginateLeaderboard(leagueName, calculateStageLeaderboard(leagueId, stage), page, pageSize)
+        // The dedicated "group-stage" and "knockout" leagues are themselves stage-scoped:
+        // every member belongs to them, so filtering the global leaderboard to membership
+        // would just reproduce the full all-stages board. Derive the stage from the league
+        // id so their leaderboards only count points earned in that stage. (These leagues
+        // don't expose the stage tabs, so any ?stage= on them is ignored.)
+        val effectiveStage = when (leagueId) {
+            "group-stage" -> LeaderboardStage.GROUP_STAGE
+            "knockout" -> LeaderboardStage.KNOCKOUT
+            else -> stage
+        }
+        val response = if (effectiveStage != LeaderboardStage.ALL) {
+            paginateLeaderboard(leagueName, calculateStageLeaderboard(leagueId, effectiveStage), page, pageSize)
         } else {
             val (latestMatchDay, latestGlobalLeaderboard) = runBlocking {
                 val matchDay = leaderboardService.getLatestLeaderboardMatchDay()

@@ -152,6 +152,42 @@ class LeagueTest : DatabaseTest() {
     }
 
     @Test
+    fun knockoutLeagueOnlyCountsKnockoutPointsWithoutStageParam() {
+        // The dedicated "knockout" league is stage-scoped by its id: even with no
+        // ?stage= param it must show only knockout points, not the full total.
+        givenLeagueExists("knockout", "Knockout")
+        givenUserInLeague("test-user", "knockout")
+        val home = givenTeamExists("Home")
+        val away = givenTeamExists("Away")
+        val groupStageMatch = givenMatchExists(home, away, matchState = Match.State.COMPLETED, round = MatchRound.GROUP_STAGE)
+        val knockoutMatch = givenMatchExists(home, away, matchState = Match.State.COMPLETED, round = MatchRound.SEMI_FINAL)
+        givenPredictionExists(groupStageMatch, "test-user", 1, 0, points = 3)
+        givenPredictionExists(knockoutMatch, "test-user", 1, 0, points = 5)
+
+        val response = handler(Request(Method.GET, "/league/knockout/leaderboard"))
+        response.status shouldBe Status.OK
+        val body: GetLeagueLeaderboard200Response = response.bodyString().fromJson()
+        body.leaderboard.find { it.user.userId == "test-user" }!!.user.livePoints shouldBe 5
+    }
+
+    @Test
+    fun groupStageLeagueOnlyCountsGroupStagePointsWithoutStageParam() {
+        givenLeagueExists("group-stage", "Group Stage")
+        givenUserInLeague("test-user", "group-stage")
+        val home = givenTeamExists("Home")
+        val away = givenTeamExists("Away")
+        val groupStageMatch = givenMatchExists(home, away, matchState = Match.State.COMPLETED, round = MatchRound.GROUP_STAGE)
+        val knockoutMatch = givenMatchExists(home, away, matchState = Match.State.COMPLETED, round = MatchRound.FINAL)
+        givenPredictionExists(groupStageMatch, "test-user", 1, 0, points = 3)
+        givenPredictionExists(knockoutMatch, "test-user", 1, 0, points = 5)
+
+        val response = handler(Request(Method.GET, "/league/group-stage/leaderboard"))
+        response.status shouldBe Status.OK
+        val body: GetLeagueLeaderboard200Response = response.bodyString().fromJson()
+        body.leaderboard.find { it.user.userId == "test-user" }!!.user.livePoints shouldBe 3
+    }
+
+    @Test
     fun leaderboardRejectsInvalidStage() {
         givenLeagueExists("test-league", "Test League")
         val response = handler(Request(Method.GET, "/league/test-league/leaderboard?stage=NOT_A_STAGE"))
