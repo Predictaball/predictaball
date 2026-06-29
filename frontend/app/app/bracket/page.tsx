@@ -5,7 +5,7 @@ import { PitchPerspective } from "@/app/components/atmosphere"
 import SectionHeading from "@/app/components/section-heading"
 import ScoreHeader from "@/app/components/bracket/score-header"
 import BracketTree from "@/app/components/bracket/bracket-tree"
-import CupLeaderboard from "@/app/components/bracket/cup-leaderboard"
+import CupLeaderboardSection from "@/app/components/bracket/cup-leaderboard-section"
 import { getBracket, getBracketLeaderboard } from "@/app/api/bracket"
 import { getConfigWithAuthHeader } from "@/app/api/client-config"
 import { getUserId } from "@/app/auth/jwt-handler"
@@ -95,31 +95,12 @@ export default async function BracketPage({ searchParams }: {
                         : <UnavailableNote />}
                 </section>
 
-                <section className="space-y-3">
-                    <SectionHeading title="Knockout Cup" />
-                    <div className="flex flex-wrap gap-2">
-                        {cupTabs.map((tab) => {
-                            const active = tab.id === leagueId
-                            return (
-                                <Link
-                                    key={tab.id}
-                                    href={`/app/bracket?leagueId=${tab.id}`}
-                                    scroll={false}
-                                    className={`rounded-full px-3 py-1 text-xs font-bold transition-colors ${
-                                        active
-                                            ? "bg-cyan-500/15 text-cyan-600 ring-1 ring-cyan-500/40 dark:text-cyan-300"
-                                            : "bg-slate-900/5 text-slate-500 hover:bg-slate-900/10 dark:bg-white/5 dark:text-gray-400 dark:hover:bg-white/10"
-                                    }`}
-                                >
-                                    {tab.name}
-                                </Link>
-                            )
-                        })}
-                    </div>
-                    {leaderboard
-                        ? <CupLeaderboard rows={leaderboard.leaderboard} currentUserId={userId} />
-                        : <UnavailableNote />}
-                </section>
+                <CupLeaderboardSection
+                    tabs={cupTabs}
+                    initialLeagueId={leagueId}
+                    initialRows={leaderboard ? leaderboard.leaderboard : null}
+                    currentUserId={userId}
+                />
             </div>
         </main>
     )
