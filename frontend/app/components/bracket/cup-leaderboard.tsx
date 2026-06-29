@@ -98,18 +98,15 @@ export default function CupLeaderboard({ rows, currentUserId }: CupLeaderboardPr
                 </div>
             ))}
             {paginated && (
-                <>
-                    {/* Reserve room so the last row is never hidden behind the fixed control. */}
-                    <div className="h-20" />
-                    <div className="fixed inset-x-0 bottom-4 z-30 flex justify-center pointer-events-none">
-                        <Pagination
-                            page={currentPage + 1}
-                            total={totalPages}
-                            onChange={(page) => setCurrentPage(page - 1)}
-                            className="pointer-events-auto"
-                        />
-                    </div>
-                </>
+                // Anchored to the bottom of the leaderboard itself rather than
+                // floating over the viewport, so it never overlaps the bracket above.
+                <div className="mt-3 flex justify-center">
+                    <Pagination
+                        page={currentPage + 1}
+                        total={totalPages}
+                        onChange={(page) => setCurrentPage(page - 1)}
+                    />
+                </div>
             )}
         </div>
     )
