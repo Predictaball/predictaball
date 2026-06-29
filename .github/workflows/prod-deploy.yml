@@ -98,7 +98,12 @@ jobs:
           # DEPLOY_FRONTEND_PROD between "true" and "false" (or unset) and
           # re-run the prod deploy to provision/tear down.
           CDK_DEPLOY_FRONTEND: ${{ vars.DEPLOY_FRONTEND_PROD }}
-          CDK_FRONTEND_FARGATE_HOST: frontend.predictaball.live
+          # The Fargate service answers on both the apex (predictaball.live)
+          # and www. so cutover can happen by flipping the existing DNS at
+          # apex without changing anything about the ECS deployment. The
+          # canonical NEXTAUTH_URL is baked from the first entry — keep apex
+          # first so cookies / OAuth callbacks use the bare domain.
+          CDK_FRONTEND_FARGATE_HOST: predictaball.live,www.predictaball.live
           CDK_AUTH_GOOGLE_ID: ${{ secrets.AUTH_GOOGLE_ID }}
           CDK_AUTH_GOOGLE_SECRET: ${{ secrets.AUTH_GOOGLE_SECRET }}
           CDK_SENTRY_DSN: ${{ vars.SENTRY_DSN }}

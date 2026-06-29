@@ -158,16 +158,22 @@ export class Predictaball extends Stack {
     // Gated by config.deployFrontend so dev can spin it up for validation and
     // tear it down to save credits. Container talks to the backend over the
     // VPC internal network; users hit it via a Host-routed ALB listener rule.
+    // CDK_FRONTEND_FARGATE_HOST accepts a comma-separated list when the
+    // service should be reachable on multiple hostnames (prod cutover uses
+    // "predictaball.live,www.predictaball.live"). The first hostname is the
+    // canonical one and gets baked into NEXTAUTH_URL / the client bundle.
+    const frontendHosts = frontendFargateHost?.split(",").map(h => h.trim()).filter(h => h.length > 0) ?? []
     let frontendService: FargateService | undefined
     let frontendTargetGroup: ApplicationTargetGroup | undefined
     if (config.deployFrontend) {
       if (!apiDomain) {
         throw new Error("CDK_API_DOMAIN must be set when deployFrontend is true (we share the API's ALB)")
       }
-      if (!frontendFargateHost) {
-        throw new Error("CDK_FRONTEND_FARGATE_HOST must be set when deployFrontend is true (e.g. frontend.dev.predictaball.live)")
+      if (frontendHosts.length === 0) {
+        throw new Error("CDK_FRONTEND_FARGATE_HOST must be set when deployFrontend is true (e.g. frontend.dev.predictaball.live, or 'predictaball.live,www.predictaball.live')")
       }
-      const frontendPublicUrl = `https://${frontendFargateHost}`
+      const canonicalFrontendHost = frontendHosts[0]
+      const frontendPublicUrl = `https://${canonicalFrontendHost}`
 
       // Build args are inlined into the client bundle. Runtime secrets are
       // injected via task env vars (below) and not baked into the image.
@@ -273,21 +279,30 @@ export class Predictaball extends Stack {
         defaultTargetGroups: [ecsService.targetGroup],
       })
 
-      // Route the frontend hostname to the frontend target group. Backend
-      // traffic falls through to the listener's default target group.
-      if (frontendTargetGroup && frontendService && frontendFargateHost) {
+      // Route the frontend hostname(s) to the frontend target group. Backend
+      // traffic falls through to the listener's default target group. One
+      // rule covers all hostnames listed in CDK_FRONTEND_FARGATE_HOST so we
+      // don't consume multiple rule priorities.
+      if (frontendTargetGroup && frontendService && frontendHosts.length > 0) {
         new ApplicationListenerRule(this, "frontendListenerRule", {
           listener: httpsListener,
           priority: 10,
-          conditions: [ListenerCondition.hostHeaders([frontendFargateHost])],
+          conditions: [ListenerCondition.hostHeaders(frontendHosts)],
           targetGroups: [frontendTargetGroup],
         })
 
+        // DNS records only get created in envs that manage the zone (dev).
+        // In prod, the dev account owns the predictaball.live zone, so the
+        // cutover DNS swap is done manually at flip time.
         if (hostedZone) {
-          new ARecord(this, "frontendFargateDnsRecord", {
-            zone: hostedZone,
-            recordName: frontendFargateHost,
-            target: RecordTarget.fromAlias(new LoadBalancerTarget(ecsService.loadBalancer)),
+          frontendHosts.forEach((host, i) => {
+            // Apex records need ARecord. Subdomains could be CNAMEs but
+            // ARecord (alias) works for both and avoids special-casing.
+            new ARecord(this, `frontendFargateDnsRecord${i}`, {
+              zone: hostedZone!,
+              recordName: host,
+              target: RecordTarget.fromAlias(new LoadBalancerTarget(ecsService.loadBalancer)),
+            })
           })
         }
       }
