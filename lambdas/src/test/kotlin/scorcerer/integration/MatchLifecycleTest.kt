@@ -235,6 +235,24 @@ class MatchLifecycleTest : PostgresTest() {
     }
 
     @Test
+    fun `penalty shootout records the explicit go-through over a level score`() {
+        val brazil = givenTeamExists("Brazil")
+        val germany = givenTeamExists("Germany")
+        val matchId = givenMatchExists(brazil, germany, matchDay = 1)
+
+        setScore(matchId, 1, 1, 1, leaderboardService)
+        // Level 1-1, but away won on penalties — endMatch is given the explicit
+        // go-through (as ScoreUpdater does from ESPN's winner flag).
+        endMatch(matchId, 1, 1, leaderboardService, goThrough = scorcerer.server.db.tables.MatchResult.AWAY)
+        transaction {
+            MatchTable.selectAll().where { MatchTable.id eq matchId.toInt() }.first().let {
+                it[MatchTable.state] shouldBe Match.State.COMPLETED
+                it[MatchTable.result] shouldBe scorcerer.server.db.tables.MatchResult.AWAY
+            }
+        }
+    }
+
+    @Test
     fun `prediction points persist correctly through score changes`() {
         val brazil = givenTeamExists("Brazil")
         val germany = givenTeamExists("Germany")

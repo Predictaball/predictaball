@@ -29,6 +29,8 @@ fun endMatch(
     awayScore: Int,
     leaderboardService: LeaderboardService,
     tournamentStateService: TournamentStateService = TournamentStateService(),
+    // Explicit go-through (e.g. ESPN's penalty-shootout winner); null = derive from score.
+    goThrough: scorcerer.server.db.tables.MatchResult? = null,
 ) = transaction {
     val matchDay = getMatchDay(matchId)
         ?: throw ApiResponseError(Response(Status.BAD_REQUEST).body("Match does not exist"))
@@ -43,10 +45,9 @@ fun endMatch(
         it[state] = Match.State.COMPLETED
         it[MatchTable.homeScore] = homeScore
         it[MatchTable.awayScore] = awayScore
-        // Record which side went through so the Knockout Cup can score the tie.
-        // A level score (group-stage draw, or a knockout decided on penalties we
-        // can't see) leaves it null; only knockout rounds read this column.
-        it[MatchTable.result] = goThroughFromScore(homeScore, awayScore)
+        // Which side went through, for the Knockout Cup. Prefer the explicit
+        // winner (penalty shootouts); else derive from score (null on a draw).
+        it[MatchTable.result] = goThrough ?: goThroughFromScore(homeScore, awayScore)
     }
 
     val pointsByMember = scorePredictions(matchId, homeScore, awayScore)
