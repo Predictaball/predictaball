@@ -16,10 +16,26 @@ function r32Match(position: number, overrides: Partial<LayoutMatch> = {}): Layou
     }
 }
 
+function r16Match(home: string, away: string, overrides: Partial<LayoutMatch> = {}): LayoutMatch {
+    return {
+        round: r16,
+        state: "UPCOMING",
+        homeTeam: home,
+        homeTeamFlagCode: "h",
+        awayTeam: away,
+        awayTeamFlagCode: "a",
+        ...overrides,
+    }
+}
+
 function placeholders(slots: Slot<LayoutMatch>[]): Array<{ home?: string; away?: string }> {
     return slots
         .filter((s): s is Extract<Slot<LayoutMatch>, { kind: "placeholder" }> => s.kind === "placeholder")
         .map((s) => ({ home: s.home?.name, away: s.away?.name }))
+}
+
+function roundSlots(rounds: ReturnType<typeof buildBracket>, round: typeof r16): Slot<LayoutMatch>[] {
+    return rounds.find((c) => c.round === round)!.slots
 }
 
 describe("buildBracket", () => {
@@ -67,9 +83,50 @@ describe("buildBracket", () => {
         expect(r16Slots[0]).toEqual({ home: "Away 1", away: "Home 2" })
     })
 
-    it("leaves a slot empty until at least one feeder completes", () => {
+    it("leaves a slot empty until at least one feeder is decided or predicted", () => {
         const rounds = buildBracket([r32Match(1), r32Match(2)])
         const r16Slots = placeholders(rounds.find((c) => c.round === r16)!.slots)
         expect(r16Slots[0]).toEqual({ home: undefined, away: undefined })
+    })
+
+    it("partially fills the fed slot from the user's pick before the feeders complete", () => {
+        // Both feeders are still upcoming, but the user has backed a side in each.
+        const rounds = buildBracket([
+            r32Match(1, { userPick: "HOME" }),
+            r32Match(2, { userPick: "AWAY" }),
+        ])
+        const r16Slots = placeholders(roundSlots(rounds, r16))
+        expect(r16Slots[0]).toEqual({ home: "Home 1", away: "Away 2" })
+    })
+
+    it("prefers the actual qualifier over the user's pick once a feeder is decided", () => {
+        const rounds = buildBracket([
+            r32Match(1, { state: "COMPLETED", actualGoThrough: "AWAY", userPick: "HOME" }),
+            r32Match(2, { userPick: "HOME" }),
+        ])
+        const r16Slots = placeholders(roundSlots(rounds, r16))
+        expect(r16Slots[0]).toEqual({ home: "Away 1", away: "Home 2" })
+    })
+
+    it("seats a full Round of 16 tie beneath the feeders that produce it", () => {
+        // Slots 0/1 of R32 feed R16 slot 0; slots 2/3 feed R16 slot 1. The two
+        // real R16 ties are supplied out of order to prove they're placed by feed,
+        // not by kickoff order.
+        const slotZero = r16Match("Away 1", "Home 2")
+        const slotOne = r16Match("Home 3", "Away 4")
+        const rounds = buildBracket([
+            r32Match(1), r32Match(2), r32Match(3), r32Match(4),
+            slotOne, slotZero,
+        ])
+        const r16Slots = roundSlots(rounds, r16)
+        expect(r16Slots[0]).toMatchObject({ kind: "match", match: { homeTeam: "Away 1" } })
+        expect(r16Slots[1]).toMatchObject({ kind: "match", match: { homeTeam: "Home 3" } })
+    })
+
+    it("falls back to kickoff order for a real tie whose feeders aren't known yet", () => {
+        // No R32 matches, so no feeders can supply the R16 tie's teams.
+        const tie = r16Match("England", "France")
+        const r16Slots = roundSlots(buildBracket([tie]), r16)
+        expect(r16Slots[0]).toMatchObject({ kind: "match", match: { homeTeam: "England" } })
     })
 })
