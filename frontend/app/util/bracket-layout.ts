@@ -2,13 +2,13 @@
  * Pure geometry/derivation for the Knockout Cup bracket tree.
  *
  * Groups a user's knockout matches into the full single-elimination tree (every
- * round padded to its expected size with TBD placeholders) and projects the
- * run forward through the empty rounds: each slot is filled from the side that
- * actually went through, or — before the feeders are decided — the side the
- * user backed to go through (their `toGoThrough` pick). When a real next-round
- * match already exists, it's seated in the slot its two feeders point to rather
- * than dumped in kickoff order. Kept free of React and the generated client so
- * it can be unit-tested in isolation (see `__tests__/bracket-layout.test.ts`).
+ * round padded to its expected size with TBD placeholders) and carries known
+ * results forward through the empty rounds: a slot is filled only from the side
+ * that actually went through, so the next round only ever shows teams that have
+ * genuinely qualified — never a team from the user's predictions. When a real
+ * next-round match already exists, it's seated in the slot its two feeders point
+ * to rather than dumped in kickoff order. Kept free of React and the generated
+ * client so it can be unit-tested in isolation (see `__tests__/bracket-layout.test.ts`).
  */
 
 import { BracketRound, GoThrough, KNOCKOUT_ROUNDS } from "./bracket-scoring"
@@ -30,7 +30,11 @@ export interface LayoutMatch {
     homeTeamFlagCode: string
     awayTeam: string
     awayTeamFlagCode: string
-    /** The side the user backed to go through — projects the run forward before a result lands. */
+    /**
+     * The side the user backed to go through. Accepted on the input shape but
+     * deliberately NOT used to advance a team — only known results fill the next
+     * round (see `projectedTeam`).
+     */
     userPick?: GoThrough
     actualGoThrough?: GoThrough
     bracketPosition?: number | null
@@ -56,17 +60,16 @@ export interface RoundColumn<M> {
 }
 
 /**
- * The team a slot sends to the round it feeds: the side that actually went
- * through once the match is decided, otherwise the side the user backed to go
- * through (their `toGoThrough` pick). A placeholder is an unplayed, unpredicted
- * match, so it forwards nothing.
+ * The team a slot sends to the round it feeds: only the side that actually went
+ * through, once that result is known. Predictions never advance a team — an
+ * undecided match (or a placeholder) forwards nothing, so the next round only
+ * ever shows teams that have genuinely qualified.
  */
 function projectedTeam<M extends LayoutMatch>(slot: Slot<M> | undefined): DerivedTeam | undefined {
     if (slot == null || slot.kind !== "match") return undefined
     const match = slot.match
-    const side = match.state === "COMPLETED" ? match.actualGoThrough ?? match.userPick : match.userPick
-    if (side == null) return undefined
-    return side === "HOME"
+    if (match.state !== "COMPLETED" || match.actualGoThrough == null) return undefined
+    return match.actualGoThrough === "HOME"
         ? { name: match.homeTeam, flag: match.homeTeamFlagCode }
         : { name: match.awayTeam, flag: match.awayTeamFlagCode }
 }
@@ -98,8 +101,8 @@ function feedsFrom<M extends LayoutMatch>(match: M, a: Slot<M> | undefined, b: S
  *     so a known fixture lands in the right place however the feeders are ordered.
  *  2. Any real match we can't seat that way (teams not yet known upstream) falls
  *     into the next free slot, preserving kickoff order.
- *  3. Remaining slots become placeholders, partially filled from the teams
- *     projected to feed them — the actual qualifiers, else the user's picks.
+ *  3. Remaining slots become placeholders, partially filled from the known
+ *     qualifiers feeding them — never from the user's predictions.
  */
 export function buildBracket<M extends LayoutMatch>(matches: M[]): RoundColumn<M>[] {
     const byRound = new Map<BracketRound, M[]>()
