@@ -14,6 +14,7 @@ import scorcerer.givenPredictionExists
 import scorcerer.givenTeamExists
 import scorcerer.givenUserExists
 import scorcerer.givenUserInLeague
+import scorcerer.server.db.tables.MatchResult
 import scorcerer.server.db.tables.MatchTable
 import scorcerer.server.db.tables.MemberTable
 import scorcerer.server.db.tables.PredictionTable
@@ -218,7 +219,7 @@ class MatchLifecycleTest : PostgresTest() {
         transaction {
             MatchTable.selectAll().where { MatchTable.id eq matchId.toInt() }.first().let {
                 it[MatchTable.state] shouldBe Match.State.COMPLETED
-                it[MatchTable.result] shouldBe scorcerer.server.db.tables.MatchResult.HOME
+                it[MatchTable.result] shouldBe MatchResult.HOME
             }
         }
 
@@ -230,6 +231,24 @@ class MatchLifecycleTest : PostgresTest() {
                 it[MatchTable.homeScore] shouldBe 1
                 it[MatchTable.awayScore] shouldBe 0
                 it[MatchTable.state] shouldBe Match.State.COMPLETED
+            }
+        }
+    }
+
+    @Test
+    fun `penalty shootout records the explicit go-through over a level score`() {
+        val brazil = givenTeamExists("Brazil")
+        val germany = givenTeamExists("Germany")
+        val matchId = givenMatchExists(brazil, germany, matchDay = 1)
+
+        setScore(matchId, 1, 1, 1, leaderboardService)
+        // Level 1-1, but away won on penalties — endMatch is given the explicit
+        // go-through (as ScoreUpdater does from ESPN's winner flag).
+        endMatch(matchId, 1, 1, leaderboardService, goThrough = MatchResult.AWAY)
+        transaction {
+            MatchTable.selectAll().where { MatchTable.id eq matchId.toInt() }.first().let {
+                it[MatchTable.state] shouldBe Match.State.COMPLETED
+                it[MatchTable.result] shouldBe MatchResult.AWAY
             }
         }
     }

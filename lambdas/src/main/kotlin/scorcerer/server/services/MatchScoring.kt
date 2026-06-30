@@ -15,13 +15,14 @@ import org.openapitools.server.models.Chip
 import org.openapitools.server.models.Match
 import org.openapitools.server.models.Prediction
 import scorcerer.server.ApiResponseError
+import scorcerer.server.db.tables.MatchResult
 import scorcerer.server.db.tables.MatchTable
 import scorcerer.server.db.tables.MemberTable
 import scorcerer.server.db.tables.PredictionTable
 import scorcerer.server.log
 import scorcerer.utils.LeaderboardService
-import scorcerer.utils.MatchResult
 import scorcerer.utils.PointsCalculator.calculatePoints
+import scorcerer.utils.MatchResult as Scoreline
 
 fun endMatch(
     matchId: String,
@@ -29,6 +30,8 @@ fun endMatch(
     awayScore: Int,
     leaderboardService: LeaderboardService,
     tournamentStateService: TournamentStateService = TournamentStateService(),
+    // Explicit go-through (e.g. ESPN's penalty-shootout winner); null = derive from score.
+    goThrough: MatchResult? = null,
 ) = transaction {
     val matchDay = getMatchDay(matchId)
         ?: throw ApiResponseError(Response(Status.BAD_REQUEST).body("Match does not exist"))
@@ -43,10 +46,9 @@ fun endMatch(
         it[state] = Match.State.COMPLETED
         it[MatchTable.homeScore] = homeScore
         it[MatchTable.awayScore] = awayScore
-        // Record which side went through so the Knockout Cup can score the tie.
-        // A level score (group-stage draw, or a knockout decided on penalties we
-        // can't see) leaves it null; only knockout rounds read this column.
-        it[MatchTable.result] = goThroughFromScore(homeScore, awayScore)
+        // Which side went through, for the Knockout Cup. Prefer the explicit
+        // winner (penalty shootouts); else derive from score (null on a draw).
+        it[MatchTable.result] = goThrough ?: goThroughFromScore(homeScore, awayScore)
     }
 
     val pointsByMember = scorePredictions(matchId, homeScore, awayScore)
@@ -177,16 +179,15 @@ fun recalculateAllFixedPoints() = transaction {
 
 // Who progresses, derived from the final score. Null on a level score: group-stage
 // draws never go through, and a knockout decided on penalties isn't distinguishable
-// from the scoreline alone. Returns the db `MatchResult` (HOME/AWAY), distinct from
-// the `scorcerer.utils.MatchResult` scoring helper used elsewhere in this file.
-private fun goThroughFromScore(homeScore: Int, awayScore: Int): scorcerer.server.db.tables.MatchResult? = when {
-    homeScore > awayScore -> scorcerer.server.db.tables.MatchResult.HOME
-    awayScore > homeScore -> scorcerer.server.db.tables.MatchResult.AWAY
+// from the scoreline alone.
+private fun goThroughFromScore(homeScore: Int, awayScore: Int): MatchResult? = when {
+    homeScore > awayScore -> MatchResult.HOME
+    awayScore > homeScore -> MatchResult.AWAY
     else -> null
 }
 
 private fun scorePredictions(matchId: String, homeScore: Int, awayScore: Int): Map<String, Int> {
-    val result = MatchResult(homeScore, awayScore)
+    val result = Scoreline(homeScore, awayScore)
     val predictions = getPredictions(matchId)
     val pointsByPrediction = predictions.associate { it.predictionId.toInt() to calculatePoints(it, result) }
     batchUpdatePredictionPoints(pointsByPrediction)

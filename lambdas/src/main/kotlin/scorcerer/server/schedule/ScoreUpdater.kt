@@ -10,6 +10,7 @@ import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.jetbrains.exposed.v1.jdbc.update
 import org.openapitools.server.models.Match
+import scorcerer.server.db.tables.MatchResult
 import scorcerer.server.db.tables.MatchRound
 import scorcerer.server.db.tables.MatchTable
 import scorcerer.server.db.tables.TeamTable
@@ -37,7 +38,13 @@ import java.time.temporal.ChronoUnit
 private data class EspnTeam(val displayName: String?, val abbreviation: String?)
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-private data class EspnCompetitor(val homeAway: String?, val score: String?, val team: EspnTeam?)
+private data class EspnCompetitor(
+    val homeAway: String?,
+    val score: String?,
+    val team: EspnTeam?,
+    // Winner once final — set even on penalties (level score); both false on a draw.
+    val winner: Boolean?,
+)
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 private data class EspnStatusType(val state: String?, val name: String?, val completed: Boolean?)
@@ -148,6 +155,14 @@ private fun roundFromSlug(slug: String?): MatchRound? = when (slug) {
     "semifinals" -> MatchRound.SEMI_FINAL
     "3rd-place-match" -> MatchRound.THIRD_PLACE_PLAYOFF
     "final" -> MatchRound.FINAL
+    else -> null
+}
+
+// Which side ESPN flags as progressing — the only signal that survives a penalty
+// shootout. Null when neither is flagged; endMatch then derives from the score.
+private fun goThroughFromEspn(home: EspnCompetitor, away: EspnCompetitor): MatchResult? = when {
+    home.winner == true -> MatchResult.HOME
+    away.winner == true -> MatchResult.AWAY
     else -> null
 }
 
@@ -312,7 +327,7 @@ class ScoreUpdater(
                         val matchDay = getMatchDay(match.matchId.toString()) ?: continue
                         setScore(match.matchId.toString(), matchDay, homeScore, awayScore, leaderboardService, tournamentStateService)
                     }
-                    endMatch(match.matchId.toString(), homeScore, awayScore, leaderboardService, tournamentStateService)
+                    endMatch(match.matchId.toString(), homeScore, awayScore, leaderboardService, tournamentStateService, goThroughFromEspn(homeC, awayC))
                     log.info("Match ${match.matchId}: ${match.state} -> COMPLETED ($homeScore-$awayScore)")
                     transitions++
                 }
