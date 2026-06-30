@@ -83,29 +83,31 @@ describe("buildBracket", () => {
         expect(r16Slots[0]).toEqual({ home: "Away 1", away: "Home 2" })
     })
 
-    it("leaves a slot empty until at least one feeder is decided or predicted", () => {
+    it("leaves a slot empty until at least one feeder completes", () => {
         const rounds = buildBracket([r32Match(1), r32Match(2)])
         const r16Slots = placeholders(rounds.find((c) => c.round === r16)!.slots)
         expect(r16Slots[0]).toEqual({ home: undefined, away: undefined })
     })
 
-    it("partially fills the fed slot from the user's pick before the feeders complete", () => {
-        // Both feeders are still upcoming, but the user has backed a side in each.
+    it("does not advance a predicted team — only known results fill the next round", () => {
+        // Feeder 1 is decided; feeder 2 only carries the user's pick. The fed slot
+        // shows the real qualifier and leaves the predicted side as TBD.
+        const rounds = buildBracket([
+            r32Match(1, { state: "COMPLETED", actualGoThrough: "AWAY" }),
+            r32Match(2, { userPick: "HOME" }),
+        ])
+        const r16Slots = placeholders(roundSlots(rounds, r16))
+        expect(r16Slots[0]).toEqual({ home: "Away 1", away: undefined })
+    })
+
+    it("never fills a slot from predictions alone", () => {
+        // Both feeders are upcoming with picks but no result — nothing advances.
         const rounds = buildBracket([
             r32Match(1, { userPick: "HOME" }),
             r32Match(2, { userPick: "AWAY" }),
         ])
         const r16Slots = placeholders(roundSlots(rounds, r16))
-        expect(r16Slots[0]).toEqual({ home: "Home 1", away: "Away 2" })
-    })
-
-    it("prefers the actual qualifier over the user's pick once a feeder is decided", () => {
-        const rounds = buildBracket([
-            r32Match(1, { state: "COMPLETED", actualGoThrough: "AWAY", userPick: "HOME" }),
-            r32Match(2, { userPick: "HOME" }),
-        ])
-        const r16Slots = placeholders(roundSlots(rounds, r16))
-        expect(r16Slots[0]).toEqual({ home: "Away 1", away: "Home 2" })
+        expect(r16Slots[0]).toEqual({ home: undefined, away: undefined })
     })
 
     it("seats a full Round of 16 tie beneath the feeders that produce it", () => {
