@@ -30,6 +30,12 @@ interface BracketCellProps {
      * no sense. Suppresses the backed-side accent, the points, and the padlock.
      */
     resultsOnly?: boolean
+    /**
+     * Whether a completed cell links through to its match page. Off for the
+     * dashboard preview, where the whole card is a single link to the full
+     * bracket and a nested anchor would be invalid.
+     */
+    interactive?: boolean
 }
 
 /**
@@ -39,7 +45,7 @@ interface BracketCellProps {
  * (a round you can't predict yet) are greyed out and show a padlock. In
  * `resultsOnly` mode the pick overlay is dropped and only the real result shows.
  */
-export default function BracketCell({ match, locked, dims, resultsOnly = false }: BracketCellProps): React.JSX.Element {
+export default function BracketCell({ match, locked, dims, resultsOnly = false, interactive = true }: BracketCellProps): React.JSX.Element {
     const completed = !locked && match.state === "COMPLETED" && match.actualGoThrough != null
     const points = match.basePoints + match.bonusPoints
     const flagSize = dims.compact ? 15 : 18
@@ -82,7 +88,7 @@ export default function BracketCell({ match, locked, dims, resultsOnly = false }
         </div>
     )
 
-    return completed
+    return completed && interactive
         ? <Link href={`/app/match/${match.matchId}/predictions`}>{inner}</Link>
         : inner
 }

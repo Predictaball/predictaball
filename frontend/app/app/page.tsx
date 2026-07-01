@@ -15,6 +15,8 @@ import SectionHeading from "@/app/components/section-heading";
 import Wordmark from "@/app/components/wordmark";
 import SurfaceCard from "@/app/components/surface-card";
 import CupBanner from "@/app/components/bracket/cup-banner";
+import BracketPreview from "@/app/components/bracket/bracket-preview";
+import {getBracket} from "@/app/api/bracket";
 import {PitchPerspective} from "@/app/components/atmosphere";
 import LeaguesHelp from "@/app/components/leaderboard/leagues-help";
 import MatchesHelp from "@/app/components/predictions/matches-help";
@@ -43,7 +45,7 @@ const Home = async ({searchParams}: {searchParams: Promise<Record<string, string
     // serially before it: the onboarding redirect below only fires for the rare
     // team-less account (e.g. Google sign-ups), so it isn't worth blocking every
     // load on an extra serial round-trip.
-    const [profile, liveMatches, upcomingMatches, completedMatches, userChips, leagues, tournamentState, userId] = await Promise.all([
+    const [profile, liveMatches, upcomingMatches, completedMatches, userChips, leagues, tournamentState, userId, bracket] = await Promise.all([
         userApi.getUserProfile().catch(() => null),
         matchApi.listMatches({filterType: ListMatchesFilterTypeEnum.Live}).catch(() => []),
         matchApi.listMatches({filterType: ListMatchesFilterTypeEnum.Upcoming}).catch(() => []),
@@ -52,6 +54,7 @@ const Home = async ({searchParams}: {searchParams: Promise<Record<string, string
         userApi.getUserLeagues().catch((): League[] => []),
         tournamentApi.getTournamentState({next: {revalidate: SHARED_DATA_REVALIDATE_SECONDS}}).catch(() => null),
         getUserId(),
+        getBracket(),
     ])
 
     // Members who haven't picked a team yet must do so before seeing the dashboard.
@@ -131,7 +134,7 @@ const Home = async ({searchParams}: {searchParams: Promise<Record<string, string
                 </section>
 
                 <section className="animate-fade-rise animation-delay-200 motion-reduce:animate-none">
-                    <CupBanner/>
+                    {bracket && bracket.matches.length > 0 ? <BracketPreview bracket={bracket}/> : <CupBanner/>}
                 </section>
 
                 <section className="space-y-4 animate-fade-rise animation-delay-300 motion-reduce:animate-none">
