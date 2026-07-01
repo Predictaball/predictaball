@@ -18,9 +18,11 @@ import scorcerer.server.emitCount
 import scorcerer.server.fromJson
 import scorcerer.server.log
 import scorcerer.server.services.TournamentStateService
+import scorcerer.server.services.backfillGoThrough
 import scorcerer.server.services.endMatch
 import scorcerer.server.services.getMatchDay
 import scorcerer.server.services.setScore
+import scorcerer.utils.BracketScoring
 import scorcerer.utils.LeaderboardService
 import java.text.Normalizer
 import java.time.Duration
@@ -86,6 +88,9 @@ private data class ExistingMatch(
     val state: Match.State,
     val espnId: String?,
     val venue: String,
+    // Which side went through (for the Knockout Cup). Null when unknown — either
+    // a group draw or a knockout tie whose winner ESPN hasn't flagged yet.
+    val result: MatchResult?,
 )
 
 // ESPN team names that don't match our team table verbatim. Same alias map we
@@ -208,6 +213,7 @@ class ScoreUpdater(
                     state = it[MatchTable.state],
                     espnId = it[MatchTable.externalMatchId],
                     venue = it[MatchTable.venue],
+                    result = it[MatchTable.result],
                 )
             }
         }
@@ -322,7 +328,24 @@ class ScoreUpdater(
             // State transitions (same shape as before).
             when (state) {
                 "post" -> {
-                    if (match.state == Match.State.COMPLETED) continue
+                    if (match.state == Match.State.COMPLETED) {
+                        // Already completed, but a knockout tie may still be
+                        // missing its go-through: penalty shootouts report as
+                        // final (level score) a few ticks before ESPN flags the
+                        // winner, so the first "post" tick stored a null result.
+                        // Backfill it once the winner appears — otherwise the
+                        // Knockout Cup never scores the tie (no red/green pick,
+                        // and the streak never breaks on a wrong pick).
+                        if (round in BracketScoring.KNOCKOUT_ROUNDS && match.result == null) {
+                            val goThrough = goThroughFromEspn(homeC, awayC)
+                            if (goThrough != null) {
+                                backfillGoThrough(match.matchId.toString(), goThrough, tournamentStateService)
+                                log.info("Match ${match.matchId}: backfilled knockout go-through=$goThrough")
+                                transitions++
+                            }
+                        }
+                        continue
+                    }
                     if (match.state == Match.State.UPCOMING) {
                         val matchDay = getMatchDay(match.matchId.toString()) ?: continue
                         setScore(match.matchId.toString(), matchDay, homeScore, awayScore, leaderboardService, tournamentStateService)

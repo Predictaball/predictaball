@@ -61,6 +61,30 @@ fun endMatch(
     tournamentStateService.invalidateCache()
 }
 
+// Record the Knockout Cup go-through on a match that completed without one.
+// A knockout tie decided on penalties has a level score, so the completing tick
+// can leave result null when ESPN hasn't yet flagged the winner; a later tick
+// calls this once the winner is known. Only a completed match still missing its
+// result is touched — the scoreline and prediction points were already finalised
+// when the match ended, so they're left untouched; only the go-through is filled.
+fun backfillGoThrough(
+    matchId: String,
+    goThrough: MatchResult,
+    tournamentStateService: TournamentStateService = TournamentStateService(),
+) = transaction {
+    val row = MatchTable.selectAll().where { MatchTable.id eq matchId.toInt() }.firstOrNull()
+        ?: throw ApiResponseError(Response(Status.BAD_REQUEST).body("Match does not exist"))
+    if (row[MatchTable.state] != Match.State.COMPLETED || row[MatchTable.result] != null) {
+        log.info("Not backfilling go-through for match $matchId (state=${row[MatchTable.state]}, result already set=${row[MatchTable.result] != null})")
+        return@transaction
+    }
+
+    MatchTable.update({ MatchTable.id eq matchId.toInt() }) {
+        it[result] = goThrough
+    }
+    tournamentStateService.invalidateCache()
+}
+
 fun setScore(
     matchId: String,
     matchDay: Int,

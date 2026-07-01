@@ -15,9 +15,11 @@ import scorcerer.givenTeamExists
 import scorcerer.givenUserExists
 import scorcerer.givenUserInLeague
 import scorcerer.server.db.tables.MatchResult
+import scorcerer.server.db.tables.MatchRound
 import scorcerer.server.db.tables.MatchTable
 import scorcerer.server.db.tables.MemberTable
 import scorcerer.server.db.tables.PredictionTable
+import scorcerer.server.services.backfillGoThrough
 import scorcerer.server.services.endMatch
 import scorcerer.server.services.setScore
 import scorcerer.utils.LeaderboardS3Service
@@ -249,6 +251,69 @@ class MatchLifecycleTest : PostgresTest() {
             MatchTable.selectAll().where { MatchTable.id eq matchId.toInt() }.first().let {
                 it[MatchTable.state] shouldBe Match.State.COMPLETED
                 it[MatchTable.result] shouldBe MatchResult.AWAY
+            }
+        }
+    }
+
+    @Test
+    fun `backfills a knockout go-through onto a completed tie that ended without one`() {
+        val brazil = givenTeamExists("Brazil")
+        val germany = givenTeamExists("Germany")
+        // A knockout tie that completed level, before ESPN flagged the shootout
+        // winner — so it's COMPLETED but its go-through is still null. This is the
+        // state that leaves the Knockout Cup unable to score (or break a streak on)
+        // the tie.
+        val matchId = givenMatchExists(
+            brazil,
+            germany,
+            matchState = Match.State.COMPLETED,
+            homeScore = 1,
+            awayScore = 1,
+            round = MatchRound.ROUND_OF_THIRTY_TWO,
+        )
+        transaction {
+            MatchTable.selectAll().where { MatchTable.id eq matchId.toInt() }
+                .first()[MatchTable.result] shouldBe null
+        }
+
+        // A later tick sees ESPN's winner flag and backfills the go-through.
+        backfillGoThrough(matchId, MatchResult.AWAY)
+        transaction {
+            MatchTable.selectAll().where { MatchTable.id eq matchId.toInt() }
+                .first()[MatchTable.result] shouldBe MatchResult.AWAY
+        }
+    }
+
+    @Test
+    fun `backfill never clobbers a go-through that is already set`() {
+        val brazil = givenTeamExists("Brazil")
+        val germany = givenTeamExists("Germany")
+        val matchId = givenMatchExists(brazil, germany, matchDay = 1, round = MatchRound.ROUND_OF_THIRTY_TWO)
+
+        setScore(matchId, 1, 2, 1, leaderboardService)
+        endMatch(matchId, 2, 1, leaderboardService) // home go-through recorded
+
+        // A stale/mistaken backfill must not overwrite the decided go-through.
+        backfillGoThrough(matchId, MatchResult.AWAY)
+        transaction {
+            MatchTable.selectAll().where { MatchTable.id eq matchId.toInt() }
+                .first()[MatchTable.result] shouldBe MatchResult.HOME
+        }
+    }
+
+    @Test
+    fun `backfill does not touch a match that has not completed`() {
+        val brazil = givenTeamExists("Brazil")
+        val germany = givenTeamExists("Germany")
+        val matchId = givenMatchExists(brazil, germany, matchDay = 1, round = MatchRound.ROUND_OF_THIRTY_TWO)
+
+        setScore(matchId, 1, 1, 1, leaderboardService) // LIVE, not completed
+
+        backfillGoThrough(matchId, MatchResult.AWAY)
+        transaction {
+            MatchTable.selectAll().where { MatchTable.id eq matchId.toInt() }.first().let {
+                it[MatchTable.state] shouldBe Match.State.LIVE
+                it[MatchTable.result] shouldBe null
             }
         }
     }
