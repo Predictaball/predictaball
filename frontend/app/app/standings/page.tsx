@@ -1,15 +1,15 @@
-import React from "react"
-import PageHeader from "@/app/components/page-header"
-import {getConfigWithAuthHeader} from "@/app/api/client-config"
-import {ListMatchesFilterTypeEnum, Match, MatchApi, MatchRoundEnum, Standings, StandingsApi} from "@/client"
-import {PitchPerspective} from "@/app/components/atmosphere"
-import ThirdPlacedTable from "@/app/components/standings/third-placed-table"
-import StandingsRefresher from "@/app/components/standings/standings-refresher"
-import StandingsGroups from "@/app/components/standings/standings-groups"
+import { getBracket } from "@/app/api/bracket"
+import { getConfigWithAuthHeader } from "@/app/api/client-config"
+import { PitchPerspective } from "@/app/components/atmosphere"
 import BracketTree from "@/app/components/bracket/bracket-tree"
-import type {GroupMatch} from "@/app/components/flags/group-venue-map"
-import {buildTeamGroupMap} from "@/app/util/group-matches"
-import {getBracket} from "@/app/api/bracket"
+import type { GroupMatch } from "@/app/components/flags/group-venue-map"
+import PageHeader from "@/app/components/page-header"
+import StandingsGroups from "@/app/components/standings/standings-groups"
+import StandingsRefresher from "@/app/components/standings/standings-refresher"
+import ThirdPlacedTable from "@/app/components/standings/third-placed-table"
+import { buildTeamGroupMap } from "@/app/util/group-matches"
+import { ListMatchesFilterTypeEnum, Match, MatchApi, MatchRoundEnum, Standings, StandingsApi } from "@/client"
+import React from "react"
 
 export const dynamic = "force-dynamic"
 
@@ -82,6 +82,19 @@ export default async function StandingsPage(
             <div className="relative w-full max-w-5xl mx-auto px-4 sm:px-6 py-6 space-y-6">
                 <PageHeader/>
 
+                {knockoutMatches.length > 0 && (
+                    <section className="space-y-4">
+                        <div className="flex flex-col items-center text-center">
+                            <p className="text-xs font-bold uppercase tracking-[0.25em] text-slate-500 dark:text-gray-400">Knockouts</p>
+                            <h2 className="mt-0.5 text-2xl font-black tracking-tight text-slate-900 dark:text-white">Bracket</h2>
+                            <p className="mt-1 max-w-md text-sm text-slate-500 dark:text-gray-400">
+                                The road to the final, filled in as results come in.
+                            </p>
+                        </div>
+                        <BracketTree matches={knockoutMatches} resultsOnly/>
+                    </section>
+                )}
+
                 <div className="flex flex-col items-center text-center">
                     <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 via-cyan-400 to-teal-300 shadow-lg shadow-cyan-500/30">
                         <TableIcon className="h-6 w-6 text-white"/>
@@ -119,19 +132,6 @@ export default async function StandingsPage(
                             </div>
                         </section>
                     </>
-                )}
-
-                {knockoutMatches.length > 0 && (
-                    <section className="space-y-4">
-                        <div className="flex flex-col items-center text-center">
-                            <p className="text-xs font-bold uppercase tracking-[0.25em] text-slate-500 dark:text-gray-400">Knockouts</p>
-                            <h2 className="mt-0.5 text-2xl font-black tracking-tight text-slate-900 dark:text-white">Bracket</h2>
-                            <p className="mt-1 max-w-md text-sm text-slate-500 dark:text-gray-400">
-                                The road to the final, filled in as results come in.
-                            </p>
-                        </div>
-                        <BracketTree matches={knockoutMatches} resultsOnly/>
-                    </section>
                 )}
 
                 <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 pb-8 text-xs text-slate-500 dark:text-gray-400">
