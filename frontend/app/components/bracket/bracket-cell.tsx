@@ -24,19 +24,29 @@ interface BracketCellProps {
     /** Predictions for this match aren't open yet (a future round). */
     locked: boolean
     dims: CellDims
+    /**
+     * Show only the real result (which side went through) with no pick overlay —
+     * used by the standings page's tournament bracket, where a personal run makes
+     * no sense. Suppresses the backed-side accent, the points, and the padlock.
+     */
+    resultsOnly?: boolean
 }
 
 /**
  * A single match cell in the bracket tree: the two teams stacked, the side the
  * user backed accented (and coloured by outcome once decided), the side that
  * actually went through ticked, and the points the pick earned. Locked matches
- * (a round you can't predict yet) are greyed out and show a padlock.
+ * (a round you can't predict yet) are greyed out and show a padlock. In
+ * `resultsOnly` mode the pick overlay is dropped and only the real result shows.
  */
-export default function BracketCell({ match, locked, dims }: BracketCellProps): React.JSX.Element {
+export default function BracketCell({ match, locked, dims, resultsOnly = false }: BracketCellProps): React.JSX.Element {
     const completed = !locked && match.state === "COMPLETED" && match.actualGoThrough != null
     const points = match.basePoints + match.bonusPoints
     const flagSize = dims.compact ? 15 : 18
     const nameClass = dims.compact ? "text-[11px]" : "text-[12px]"
+    // In results mode there's no personal run, so ignore the user's pick entirely.
+    const userPick = resultsOnly ? undefined : match.userPick
+    const correct = resultsOnly ? undefined : match.correct
 
     const inner = (
         <div
@@ -49,15 +59,15 @@ export default function BracketCell({ match, locked, dims }: BracketCellProps): 
         >
             <TeamLine
                 side="HOME" name={match.homeTeam} flag={match.homeTeamFlagCode}
-                userPick={match.userPick} actual={completed ? match.actualGoThrough : undefined}
-                correct={match.correct} points={points} bonus={match.bonusPoints}
+                userPick={userPick} actual={completed ? match.actualGoThrough : undefined}
+                correct={correct} points={points} bonus={match.bonusPoints}
                 locked={locked} flagSize={flagSize} nameClass={nameClass}
             />
             <div className="h-px bg-slate-900/10 dark:bg-white/10" />
             <TeamLine
                 side="AWAY" name={match.awayTeam} flag={match.awayTeamFlagCode}
-                userPick={match.userPick} actual={completed ? match.actualGoThrough : undefined}
-                correct={match.correct} points={points} bonus={match.bonusPoints}
+                userPick={userPick} actual={completed ? match.actualGoThrough : undefined}
+                correct={correct} points={points} bonus={match.bonusPoints}
                 locked={locked} flagSize={flagSize} nameClass={nameClass}
             />
             {locked && (
