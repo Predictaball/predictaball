@@ -17,6 +17,12 @@ const SLOT = CARD_H + V_GAP
 
 interface BracketTreeProps {
     matches: BracketMatch[]
+    /**
+     * Render the real tournament bracket (results only) rather than the viewer's
+     * personal run: no pick accents, no points, no prediction padlocks. Used by
+     * the standings page.
+     */
+    resultsOnly?: boolean
 }
 
 function useCompact(): boolean {
@@ -52,20 +58,23 @@ function isRoundLocked(column: RoundColumn<BracketMatch>): boolean {
  * Matches that are in the bracket but not yet open for predictions are greyed out
  * and padlocked.
  */
-export default function BracketTree({ matches }: BracketTreeProps): React.JSX.Element {
+export default function BracketTree({ matches, resultsOnly = false }: BracketTreeProps): React.JSX.Element {
     const compact = useCompact()
     const rounds = buildBracket(matches)
 
     return compact
-        ? <MobileCarousel rounds={rounds} />
-        : <DesktopTree rounds={rounds} />
+        ? <MobileCarousel rounds={rounds} resultsOnly={resultsOnly} />
+        : <DesktopTree rounds={rounds} resultsOnly={resultsOnly} />
 }
 
-function renderSlot(slot: Slot<BracketMatch>, dims: CellDims): React.JSX.Element {
+function renderSlot(slot: Slot<BracketMatch>, dims: CellDims, resultsOnly: boolean): React.JSX.Element {
     if (slot.kind === "placeholder") {
         return <PlaceholderCell dims={dims} home={slot.home} away={slot.away} />
     }
-    return <BracketCell match={slot.match} locked={isMatchLocked(slot.match)} dims={dims} />
+    // The prediction padlock only makes sense for a personal run; the tournament
+    // bracket shows every known tie plainly.
+    const locked = resultsOnly ? false : isMatchLocked(slot.match)
+    return <BracketCell match={slot.match} locked={locked} dims={dims} resultsOnly={resultsOnly} />
 }
 
 function slotKey(slot: Slot<BracketMatch>): string {
@@ -88,7 +97,7 @@ function mobileCenters(matchCount: number, totalSlots: number): number[] {
 }
 
 /** Phone layout: snap-scroll carousel with proper bracket connector lines. */
-function MobileCarousel({ rounds }: { rounds: RoundColumn<BracketMatch>[] }): React.JSX.Element {
+function MobileCarousel({ rounds, resultsOnly }: { rounds: RoundColumn<BracketMatch>[]; resultsOnly: boolean }): React.JSX.Element {
     const firstRoundCount = rounds[0].slots.length
     // Slot height × slot count gives the bounding box. We previously subtracted
     // M_V_GAP to avoid a trailing gap below the last cell, but mobileCenters()
@@ -141,7 +150,7 @@ function MobileCarousel({ rounds }: { rounds: RoundColumn<BracketMatch>[] }): Re
                             style={{ ...colWidth, height: M_HEADER_H }}
                         >
                             {ROUND_LABELS[column.round]}
-                            {isRoundLocked(column) && <LockIcon className="h-3 w-3 text-slate-400 dark:text-gray-500" />}
+                            {!resultsOnly && isRoundLocked(column) && <LockIcon className="h-3 w-3 text-slate-400 dark:text-gray-500" />}
                         </div>
                     </React.Fragment>
                 ))}
@@ -193,7 +202,7 @@ function MobileCarousel({ rounds }: { rounds: RoundColumn<BracketMatch>[] }): Re
                                             className="absolute w-full"
                                             style={{ top: centers[j] - M_CARD_H / 2 }}
                                         >
-                                            {renderSlot(slot, dims)}
+                                            {renderSlot(slot, dims, resultsOnly)}
                                         </div>
                                     ))}
                                 </section>
@@ -208,7 +217,7 @@ function MobileCarousel({ rounds }: { rounds: RoundColumn<BracketMatch>[] }): Re
 }
 
 /** Desktop layout: the connected bracket tree. */
-function DesktopTree({ rounds }: { rounds: RoundColumn<BracketMatch>[] }): React.JSX.Element {
+function DesktopTree({ rounds, resultsOnly }: { rounds: RoundColumn<BracketMatch>[]; resultsOnly: boolean }): React.JSX.Element {
     const dims: CellDims = { width: CARD_W, height: CARD_H, compact: false }
     const totalHeight = rounds[0].slots.length * SLOT
 
@@ -255,7 +264,7 @@ function DesktopTree({ rounds }: { rounds: RoundColumn<BracketMatch>[] }): React
                             style={{ left: r * COL, width: CARD_W }}
                         >
                             {ROUND_SHORT_LABELS[column.round]}
-                            {isRoundLocked(column) && <LockIcon className="h-3 w-3 text-slate-400 dark:text-gray-500" />}
+                            {!resultsOnly && isRoundLocked(column) && <LockIcon className="h-3 w-3 text-slate-400 dark:text-gray-500" />}
                         </div>
                     ))}
                 </div>
@@ -273,7 +282,7 @@ function DesktopTree({ rounds }: { rounds: RoundColumn<BracketMatch>[] }): React
                                 className="absolute"
                                 style={{ left: r * COL, top: centers[r][j] - CARD_H / 2, width: CARD_W }}
                             >
-                                {renderSlot(slot, dims)}
+                                {renderSlot(slot, dims, resultsOnly)}
                             </div>
                         )),
                     )}
