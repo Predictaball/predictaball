@@ -1,6 +1,10 @@
 import React from "react"
 
-function dotStyle(points: number | null): string {
+// Shared colour scale for a score, used by the recent-form dots here and the
+// points pill on match cards so the two always agree: gold for a doubled exact
+// score (10), amber for an exact score (5), indigo for a doubled outcome (4),
+// blue for the right outcome (2), muted grey otherwise.
+export function pointsColorClasses(points: number | null): string {
     if (points === 10) return "bg-gradient-to-br from-yellow-300 via-amber-400 to-yellow-500 text-yellow-900 shadow-sm shadow-amber-400/50"
     if (points === 5) return "bg-gradient-to-br from-amber-400 via-orange-400 to-yellow-400 text-amber-900"
     if (points === 4) return "bg-gradient-to-br from-blue-400 via-indigo-400 to-violet-400 text-white"
@@ -24,7 +28,7 @@ export default function FormBadge({form, highlightLatest = false}: {form: (numbe
     return (
         <div className="flex items-center gap-1">
             {ordered.map((pts, i) => (
-                <div key={i} className={`h-6 w-6 rounded-full flex items-center justify-center text-[10px] font-black ${dotStyle(pts)} ${highlightLatest && i === latestIndex ? `ring-2 ${ringStyle(pts)} ring-offset-2 ring-offset-slate-50 dark:ring-offset-gray-900` : ""}`}>
+                <div key={i} className={`h-6 w-6 rounded-full flex items-center justify-center text-[10px] font-black ${pointsColorClasses(pts)} ${highlightLatest && i === latestIndex ? `ring-2 ${ringStyle(pts)} ring-offset-2 ring-offset-slate-50 dark:ring-offset-gray-900` : ""}`}>
                     {pts ?? 0}
                 </div>
             ))}
