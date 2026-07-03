@@ -19,8 +19,8 @@ interface SurfaceCardProps {
  */
 export default function SurfaceCard({children, className = "", innerClassName = ""}: SurfaceCardProps): React.JSX.Element {
     return (
-        <div className={`relative rounded-3xl bg-gradient-to-br from-slate-900/15 to-slate-900/5 p-[1px] shadow-xl shadow-slate-900/5 transition-shadow duration-300 hover:shadow-2xl hover:shadow-cyan-500/10 dark:from-white/15 dark:to-white/5 dark:shadow-cyan-500/5 dark:hover:shadow-cyan-500/15 ${className}`}>
-            <div className={`rounded-3xl bg-white/60 backdrop-blur-sm dark:bg-white/[0.03] ${innerClassName || "p-5 sm:p-6"}`}>
+        <div className={`relative rounded-xl bg-gradient-to-br from-slate-900/15 to-slate-900/5 p-[1px] shadow-xl shadow-slate-900/5 transition-shadow duration-300 hover:shadow-2xl hover:shadow-indigo-500/10 dark:from-white/15 dark:to-white/5 dark:shadow-indigo-500/5 dark:hover:shadow-indigo-500/15 ${className}`}>
+            <div className={`rounded-[11px] bg-white/60 backdrop-blur-sm dark:bg-white/[0.03] ${innerClassName || "p-5 sm:p-6"}`}>
                 {children}
             </div>
         </div>
