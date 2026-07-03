@@ -10,3 +10,6 @@ migration.json
 frontend/node_modules/
 frontend/client/
 frontend/.next/
+
+# Kotlin compiler session data (created by local gradle runs)
+.kotlin/
