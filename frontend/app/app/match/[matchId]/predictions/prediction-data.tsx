@@ -24,11 +24,11 @@ export default function PredictionData(props: {
                 <div className="w-full font-bold">
                     {`${props.predictionWithUser.user.firstName} ${props.predictionWithUser.user.familyName}`}
                 </div>
-                <div>
+                <div className="tabular-nums">
                     {props.predictionWithUser.prediction.homeScore} - {props.predictionWithUser.prediction.awayScore}
                 </div>
             </div>
-            <div className="w-1/4 text-4xl font-bold text-slate-700 dark:text-gray-200">
+            <div className="w-1/4 font-display text-4xl font-bold tabular-nums text-slate-700 dark:text-gray-200">
                 {props.predictionWithUser.prediction.points}
             </div>
         </div>

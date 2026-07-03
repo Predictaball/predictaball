@@ -49,7 +49,7 @@ export default function Share({leagueId, kind}: { leagueId: string; kind: League
             <Modal isOpen={isOpen} onClose={onClose} placement="center" backdrop="blur" size="sm">
                 <ModalContent>
                     <ModalHeader className="flex flex-col gap-1">
-                        <span className="text-xs font-semibold tracking-[0.3em] text-cyan-600/90 dark:text-cyan-300/80 uppercase">League invite</span>
+                        <span className="text-xs font-semibold tracking-[0.3em] text-pitch-700/90 dark:text-pitch-300/90 uppercase">League invite</span>
                         <h2 className="text-xl font-black tracking-tight">Invite friends to join</h2>
                     </ModalHeader>
                     <ModalBody className="items-center space-y-4 pb-6">

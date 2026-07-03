@@ -236,7 +236,7 @@ export default function PredictionForm({match, onPredictionSaved, userChips, onC
             {isUpcoming && (
                 <div className="mt-4">
                     {coachKnockoutSide && isKnockout && isDraw && chip !== Chip.Crowd && !justSaved && (
-                        <div className="mb-2 flex items-start gap-2 rounded-xl border border-cyan-500/30 bg-cyan-500/10 px-3 py-2 text-xs text-cyan-700 dark:border-cyan-400/30 dark:bg-cyan-400/10 dark:text-cyan-200">
+                        <div className="mb-2 flex items-start gap-2 rounded-xl border border-pitch-600/30 bg-pitch-600/10 px-3 py-2 text-xs text-pitch-800 dark:border-pitch-400/30 dark:bg-pitch-400/10 dark:text-pitch-200">
                             <span aria-hidden>👇</span>
                             <span>
                                 <span className="font-bold">It&apos;s a draw</span> — the button below splits in two. Tap the team you back to go through; it submits your prediction. This pick is for a new bracket game — more soon.
@@ -270,7 +270,7 @@ export default function PredictionForm({match, onPredictionSaved, userChips, onC
                             isDisabled={!hasChanges || justSaved}
                             className={`w-full h-11 rounded-xl transition-colors ${
                                 justSaved
-                                    ? "bg-gradient-to-r from-cyan-400 to-teal-400 text-gray-950 font-bold shadow-lg shadow-cyan-500/25 !opacity-100"
+                                    ? "bg-pitch-600 text-white dark:bg-pitch-400 dark:text-gray-950 font-bold !opacity-100"
                                     : ACTION_BUTTON_CLASS
                             }`}
                         >
@@ -312,7 +312,7 @@ export default function PredictionForm({match, onPredictionSaved, userChips, onC
             </Modal>
 
             {match.state === MatchStateEnum.Completed && (
-                <div className="mt-4 text-center text-sm text-slate-500 dark:text-gray-400">
+                <div className="mt-4 text-center text-sm tabular-nums text-slate-500 dark:text-gray-400">
                     {`Result: ${match.homeScore ?? 0} - ${match.awayScore ?? 0}`}
                 </div>
             )}
@@ -392,13 +392,13 @@ function LiveChipStatus({prediction, match}: {prediction?: Prediction; match: Ma
 }
 
 // One team in the header row. On a knockout draw the backed team is `picked`
-// (cyan ring + bolder name) and the other is `dimmed`, so the card shows who the
+// (green ring + bolder name) and the other is `dimmed`, so the card shows who the
 // user sent through even though the score is level.
 function TeamSide({code, name, reverse, ranking, picked, dimmed}: {code: string; name: string; reverse?: boolean; ranking?: number; picked?: boolean; dimmed?: boolean}) {
     const displayName = SHORT_COUNTRY_NAMES[name.toLowerCase()] ?? name
     return (
         <div className={`flex flex-col items-center gap-2 w-20 transition-opacity ${reverse ? "order-last" : ""} ${dimmed ? "opacity-40" : ""}`}>
-            <div className={picked ? "rounded-full ring-2 ring-cyan-500 ring-offset-2 ring-offset-white dark:ring-cyan-400 dark:ring-offset-gray-900" : ""}>
+            <div className={picked ? "rounded-full ring-2 ring-pitch-600 ring-offset-2 ring-offset-white dark:ring-pitch-400 dark:ring-offset-gray-900" : ""}>
                 <FlagImage code={code} name={name} size={48}/>
             </div>
             <div className="w-full text-center leading-tight">
@@ -421,7 +421,7 @@ function ThroughBar({code, name}: {code: string; name: string}): React.JSX.Eleme
     const short = SHORT_COUNTRY_NAMES[name.toLowerCase()] ?? name
     return (
         <div className="mt-4 flex justify-center">
-            <span className="inline-flex items-center gap-2 rounded-full border border-cyan-500/20 bg-cyan-500/10 px-3 py-1 text-xs font-bold text-cyan-700 dark:border-cyan-400/20 dark:bg-cyan-400/10 dark:text-cyan-300">
+            <span className="inline-flex items-center gap-2 rounded-full border border-pitch-600/20 bg-pitch-600/10 px-3 py-1 text-xs font-bold text-pitch-800 dark:border-pitch-400/20 dark:bg-pitch-400/10 dark:text-pitch-300">
                 <FlagImage code={code} name={short} size={16}/>
                 {short} to go through
             </span>
@@ -439,7 +439,7 @@ function ScoreInput({value, onChange, disabled, displayOverride, readOnly, nudge
     // ±1 chip on this side: show the new number, a ±1 marker, and the original struck out.
     nudge?: {original: number; adjusted: number}
 }) {
-    const btnClass = "w-full h-8 rounded-lg bg-slate-900/5 border border-slate-900/10 text-cyan-600 hover:bg-slate-900/10 hover:border-cyan-500/40 dark:bg-white/5 dark:border-white/10 dark:text-cyan-300 dark:hover:bg-white/10 dark:hover:border-cyan-400/40 font-bold text-base flex items-center justify-center active:scale-95 transition-all disabled:opacity-20 disabled:pointer-events-none select-none"
+    const btnClass = "w-full h-8 rounded-lg bg-slate-900/5 border border-slate-900/10 text-pitch-700 hover:bg-slate-900/10 hover:border-pitch-600/40 dark:bg-white/5 dark:border-white/10 dark:text-pitch-300 dark:hover:bg-white/10 dark:hover:border-pitch-400/40 font-bold text-base flex items-center justify-center active:scale-95 transition-all disabled:opacity-20 disabled:pointer-events-none select-none"
     const dragRef = useRef<{startY: number; startValue: number; lastValue: number} | null>(null)
     const [isDragging, setIsDragging] = useState(false)
 
@@ -488,11 +488,11 @@ function ScoreInput({value, onChange, disabled, displayOverride, readOnly, nudge
                 onPointerUp={endDrag}
                 onPointerCancel={endDrag}
                 style={{touchAction: "none"}}
-                className={`w-full rounded-2xl bg-gradient-to-tr from-blue-500 via-cyan-400 to-teal-300 p-[2px] transition-transform ${isDragging ? "scale-105" : ""} ${disabled ? "" : "cursor-ns-resize"}`}
+                className={`w-full rounded-2xl bg-pitch-600 dark:bg-pitch-400 p-[2px] transition-transform ${isDragging ? "scale-105" : ""} ${disabled ? "" : "cursor-ns-resize"}`}
             >
                 <div className="w-full aspect-square rounded-2xl bg-white dark:bg-gray-900 flex items-center justify-center text-3xl font-black text-slate-900 dark:text-white select-none">
                     {nudge ? (
-                        <span className="text-cyan-600 dark:text-cyan-300">{nudge.adjusted}</span>
+                        <span className="text-pitch-700 dark:text-pitch-300">{nudge.adjusted}</span>
                     ) : (
                         displayOverride ?? value
                     )}
@@ -507,7 +507,7 @@ function ScoreInput({value, onChange, disabled, displayOverride, readOnly, nudge
                 // Float beneath the box (in the space the steppers vacate) so the
                 // boxes stay aligned: ±1 marker and the original score struck out.
                 <span className="absolute top-full mt-1.5 left-1/2 -translate-x-1/2 inline-flex items-center gap-1 whitespace-nowrap leading-none">
-                    <span className="text-[9px] font-black text-cyan-600 dark:text-cyan-300">±1</span>
+                    <span className="text-[9px] font-black text-pitch-700 dark:text-pitch-300">±1</span>
                     <span className="text-sm font-bold line-through text-slate-400 dark:text-gray-500">{nudge.original}</span>
                 </span>
             )}
@@ -553,8 +553,8 @@ function ChipSelector({selected, onSelect, chips, savedChip}: {
                             onClick={() => onSelect(option.value)}
                             className={`relative h-10 w-10 rounded-lg flex items-center justify-center font-black text-sm transition-all border ${
                                 isSelected
-                                    ? "border-cyan-500 bg-cyan-500/10 text-cyan-600 dark:border-cyan-400 dark:bg-cyan-400/10 dark:text-cyan-300 shadow-sm shadow-cyan-500/20"
-                                    : "border-slate-200 bg-slate-900/[0.02] text-slate-700 hover:bg-slate-900/[0.05] hover:border-cyan-500/40 dark:border-white/10 dark:bg-white/5 dark:text-gray-200 dark:hover:bg-white/10 dark:hover:border-cyan-400/40"
+                                    ? "border-pitch-600 bg-pitch-600/10 text-pitch-700 dark:border-pitch-400 dark:bg-pitch-400/10 dark:text-pitch-300"
+                                    : "border-slate-200 bg-slate-900/[0.02] text-slate-700 hover:bg-slate-900/[0.05] hover:border-pitch-600/40 dark:border-white/10 dark:bg-white/5 dark:text-gray-200 dark:hover:bg-white/10 dark:hover:border-pitch-400/40"
                             } ${disabled ? "opacity-40 pointer-events-none" : ""}`}
                         >
                             <span className="tabular-nums">{option.glyph}</span>

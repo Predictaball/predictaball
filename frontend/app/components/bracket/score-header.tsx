@@ -1,6 +1,6 @@
 import React from "react"
 import SurfaceCard from "@/app/components/surface-card"
-import { BRAND_TEXT_GRADIENT } from "@/app/util/css-classes"
+import { BRAND_TEXT } from "@/app/util/css-classes"
 
 interface ScoreHeaderProps {
     totalPoints: number
@@ -26,7 +26,7 @@ function Stat({ label, value, highlight = false, flame = false }: {
 }): React.JSX.Element {
     return (
         <div className="px-2 sm:px-3">
-            <div className={`font-display text-3xl sm:text-4xl font-black tabular-nums ${highlight ? BRAND_TEXT_GRADIENT : "text-slate-900 dark:text-white"}`}>
+            <div className={`font-display text-3xl sm:text-4xl font-black tabular-nums ${highlight ? BRAND_TEXT : "text-slate-900 dark:text-white"}`}>
                 {flame && <span aria-hidden className="mr-0.5">🔥</span>}
                 {value}
             </div>

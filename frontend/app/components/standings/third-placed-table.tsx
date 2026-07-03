@@ -14,8 +14,8 @@ export default function ThirdPlacedTable({rows}: {rows: GroupStandingRow[]}): Re
         )
     }
     return (
-        <div className="relative rounded-3xl bg-gradient-to-br from-slate-900/15 to-slate-900/5 dark:from-white/15 dark:to-white/5 p-[1px] shadow-xl shadow-slate-900/5 dark:shadow-cyan-500/5">
-            <div className="rounded-3xl bg-white/70 dark:bg-white/[0.03] backdrop-blur-sm overflow-hidden">
+        <div className="relative rounded-xl border-[1.5px] border-slate-300 dark:border-white/15 bg-white dark:bg-gray-900">
+            <div className="rounded-xl overflow-hidden">
                 <table className="w-full text-sm">
                     <thead>
                         <tr className="text-[11px] uppercase tracking-wider text-slate-400 dark:text-gray-500">

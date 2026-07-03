@@ -16,6 +16,24 @@ const config: Config = {
                 sans: ["var(--font-montserrat)", "ui-sans-serif", "system-ui", "sans-serif"],
                 display: ["var(--font-display)", "var(--font-montserrat)", "sans-serif"],
             },
+            // Brand green — the pitch. A grass-green ramp used flat (no
+            // gradients): 700 for text accents on light surfaces, 300/400 for
+            // dark mode, 600 for solid fills like buttons and chyron tabs.
+            colors: {
+                pitch: {
+                    50: "#f2faf4",
+                    100: "#e0f5e6",
+                    200: "#c2e9cf",
+                    300: "#93d6ab",
+                    400: "#5cbc80",
+                    500: "#36a15f",
+                    600: "#26824b",
+                    700: "#20683e",
+                    800: "#1d5334",
+                    900: "#18452c",
+                    950: "#0b2617",
+                },
+            },
             backgroundImage: {
                 "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
                 "gradient-conic":

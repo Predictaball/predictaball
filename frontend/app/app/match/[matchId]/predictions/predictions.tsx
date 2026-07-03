@@ -41,9 +41,9 @@ function MatchGlobeHeader({match}: {match: Match}): React.JSX.Element {
     const showDistribution = match.state !== MatchStateEnum.Upcoming && match.predictionDistribution !== undefined
 
     return (
-        <div className="relative rounded-3xl bg-gradient-to-br from-slate-900/15 to-slate-900/5 dark:from-white/15 dark:to-white/5 p-[1px] shadow-2xl shadow-cyan-500/10">
-            <div className="relative rounded-3xl bg-white dark:bg-gray-900/80 backdrop-blur-xl overflow-hidden">
-                <div className="relative w-full aspect-square sm:aspect-[16/10] bg-gradient-to-br from-slate-100 via-slate-50 to-slate-100 dark:from-gray-900 dark:via-slate-900 dark:to-gray-900">
+        <div className="relative rounded-xl border-[1.5px] border-slate-300 dark:border-white/15 bg-white dark:bg-gray-900">
+            <div className="relative rounded-xl overflow-hidden">
+                <div className="relative w-full aspect-square sm:aspect-[16/10] bg-slate-100 dark:bg-gray-900">
                     <div className="absolute inset-0">
                         <FocusedGlobeClient homeCode={homeCode} awayCode={awayCode} venue={match.venue}/>
                     </div>
@@ -112,13 +112,12 @@ export default function Predictions(
 
     return (
         <main className="relative min-h-svh bg-slate-50 text-slate-900 dark:bg-gray-900 dark:text-white overflow-x-hidden">
-            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(59,130,246,0.08),transparent_55%),radial-gradient(ellipse_at_bottom,rgba(34,197,94,0.05),transparent_60%)] dark:bg-[radial-gradient(ellipse_at_top,rgba(59,130,246,0.15),transparent_55%),radial-gradient(ellipse_at_bottom,rgba(34,197,94,0.10),transparent_60%)]"/>
 
             <div className="relative w-full max-w-2xl mx-auto px-4 sm:px-6 py-6 space-y-6">
                 <header className="relative flex items-center justify-between">
                     <BackButton/>
                     <Link href="/" className="hidden sm:flex items-baseline font-black tracking-tight text-lg absolute left-1/2 -translate-x-1/2">
-                        <span className="bg-gradient-to-r from-blue-500 via-cyan-300 to-teal-300 bg-clip-text text-transparent">predicta</span>
+                        <span className="text-pitch-700 dark:text-pitch-300">predicta</span>
                         <span className="text-slate-900 dark:text-white">ball</span>
                         <span className="ml-0.5 text-[10px] font-medium tracking-[0.2em] text-slate-500 dark:text-gray-400">.LIVE</span>
                     </Link>
@@ -145,7 +144,7 @@ export default function Predictions(
                                 startContent={<GlobeIcon/>}
                                 className="max-w-[12rem]"
                                 classNames={{
-                                    trigger: "h-9 min-h-9 bg-slate-900/5 border border-slate-900/10 hover:bg-slate-900/10 hover:border-cyan-500/40 data-[open=true]:border-cyan-500/40 dark:bg-white/5 dark:border-white/10 dark:hover:bg-white/10 dark:hover:border-cyan-400/40 shadow-none transition-colors",
+                                    trigger: "h-9 min-h-9 bg-slate-900/5 border border-slate-900/10 hover:bg-slate-900/10 hover:border-pitch-600/40 data-[open=true]:border-pitch-600/40 dark:bg-white/5 dark:border-white/10 dark:hover:bg-white/10 dark:hover:border-pitch-400/40 shadow-none transition-colors",
                                     value: "text-sm font-semibold text-slate-700 dark:text-gray-200",
                                     selectorIcon: "text-slate-400 dark:text-gray-500",
                                     popoverContent: "rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-gray-900 shadow-xl",

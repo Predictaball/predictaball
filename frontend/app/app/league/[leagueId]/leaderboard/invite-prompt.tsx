@@ -31,7 +31,7 @@ export default function InvitePrompt({ leagueId, leagueName }: InvitePromptProps
     return (
         <div className="w-full max-w-2xl mx-auto mt-6">
             <Toaster/>
-            <div className="rounded-3xl bg-gradient-to-br from-blue-500/10 via-cyan-400/10 to-teal-300/10 border border-cyan-500/20 dark:border-cyan-400/20 p-6 text-center">
+            <div className="rounded-xl bg-pitch-600/10 dark:bg-pitch-400/10 border border-pitch-600/20 dark:border-pitch-400/20 p-6 text-center">
                 <h3 className="text-lg font-black tracking-tight text-slate-900 dark:text-white">
                     You&apos;re the only one in &ldquo;{leagueName}&rdquo;
                 </h3>

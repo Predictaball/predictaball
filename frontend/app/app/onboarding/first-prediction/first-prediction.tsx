@@ -34,22 +34,21 @@ export default function FirstPrediction({match, userChips, destination}: FirstPr
 
     return (
         <main className="relative min-h-screen bg-slate-50 text-slate-900 dark:bg-gray-900 dark:text-white overflow-x-hidden">
-            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(59,130,246,0.08),transparent_55%),radial-gradient(ellipse_at_bottom,rgba(34,197,94,0.05),transparent_60%)] dark:bg-[radial-gradient(ellipse_at_top,rgba(59,130,246,0.15),transparent_55%),radial-gradient(ellipse_at_bottom,rgba(34,197,94,0.10),transparent_60%)]"/>
 
             <div className="relative w-full max-w-lg mx-auto px-4 sm:px-6 py-12 sm:py-16">
                 <Toaster/>
 
                 <div className="flex flex-col items-center text-center mb-8">
-                    <span className="text-xs font-semibold tracking-[0.3em] text-cyan-600/90 dark:text-cyan-300/80 uppercase">Last step</span>
+                    <span className="text-xs font-semibold tracking-[0.3em] text-pitch-700/90 dark:text-pitch-300/90 uppercase">Last step</span>
                     <h1 className="mt-3 text-3xl font-black tracking-tight">Make your first prediction</h1>
                     <p className="mt-3 text-slate-500 dark:text-gray-400">
                         Call the score, optionally add a power-up, and you&apos;re in. You can change your prediction any time before kickoff.
                     </p>
                 </div>
 
-                <div className="relative rounded-3xl bg-gradient-to-br from-slate-900/15 to-slate-900/5 dark:from-white/15 dark:to-white/5 p-[1px] shadow-2xl shadow-cyan-500/10">
-                    <div className="relative rounded-3xl bg-white dark:bg-gray-900/80 backdrop-blur-xl overflow-hidden">
-                        <div className="relative w-full aspect-[16/10] bg-gradient-to-br from-slate-100 via-slate-50 to-slate-100 dark:from-gray-900 dark:via-slate-900 dark:to-gray-900">
+                <div className="relative rounded-xl border-[1.5px] border-slate-300 dark:border-white/15 bg-white dark:bg-gray-900">
+                    <div className="relative rounded-xl overflow-hidden">
+                        <div className="relative w-full aspect-[16/10] bg-slate-100 dark:bg-gray-900">
                             <div className="absolute inset-0">
                                 <FocusedGlobeClient homeCode={homeCode} awayCode={awayCode} venue={match.venue}/>
                             </div>

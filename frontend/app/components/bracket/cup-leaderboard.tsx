@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react"
 import { BracketLeaderboardRow } from "@/client"
 import Pagination from "@/app/components/pagination"
 import useWindowDimensions from "@/app/hooks/use-window-dimension"
-import { PODIUM_GLOW } from "@/app/util/css-classes"
+import { PODIUM_ROW } from "@/app/util/css-classes"
 
 interface CupLeaderboardProps {
     rows: BracketLeaderboardRow[]
@@ -14,20 +14,19 @@ interface CupLeaderboardProps {
 /** A single cup standing, styled to match the app's main leaderboard rows. */
 function CupEntry({ row, isYou }: { row: BracketLeaderboardRow; isYou: boolean }): React.JSX.Element {
     const isPodium = row.position <= 3
-    const podiumGlow = isPodium ? PODIUM_GLOW[row.position as 1 | 2 | 3] : ""
 
     return (
         <div
-            className={`relative w-full max-w-2xl rounded-2xl p-[1px] mb-2.5 ${
+            className={`relative w-full max-w-2xl border-l-[3px] border-b border-b-slate-200 dark:border-b-white/10 ${
                 isYou
-                    ? "bg-gradient-to-r from-blue-500 via-cyan-400 to-teal-300"
+                    ? "border-l-pitch-600 bg-pitch-600/10 dark:border-l-pitch-400 dark:bg-pitch-400/10"
                     : isPodium
-                        ? podiumGlow
-                        : "bg-slate-900/10 dark:bg-white/10"
+                        ? PODIUM_ROW[row.position as 1 | 2 | 3]
+                        : "border-l-transparent"
             }`}
         >
-            <div className="flex items-center gap-3 rounded-2xl bg-white dark:bg-gray-900/85 backdrop-blur-sm px-4 py-3">
-                <div className="w-9 text-center text-lg font-black tabular-nums text-slate-900 dark:text-white shrink-0">
+            <div className="flex items-center gap-3 px-4 py-3">
+                <div className="w-9 text-center font-display text-lg font-black tabular-nums text-slate-900 dark:text-white shrink-0">
                     {row.position}
                 </div>
                 <div className="flex min-w-0 flex-1 items-center gap-1.5 text-left">
@@ -35,13 +34,13 @@ function CupEntry({ row, isYou }: { row: BracketLeaderboardRow; isYou: boolean }
                         {row.firstName} {row.familyName}
                     </span>
                     {isYou && (
-                        <span className="text-[11px] font-bold uppercase tracking-wider text-cyan-600 dark:text-cyan-300">you</span>
+                        <span className="text-[11px] font-bold uppercase tracking-wider text-pitch-700 dark:text-pitch-300">you</span>
                     )}
                     {row.isCupHolder && (
                         <span title="Knockout Cup holder" aria-label="Knockout Cup holder">🏆</span>
                     )}
                 </div>
-                <div className="w-12 text-center font-black tabular-nums bg-gradient-to-r from-blue-500 via-cyan-500 to-teal-500 dark:from-blue-400 dark:via-cyan-300 dark:to-teal-300 bg-clip-text text-transparent shrink-0">
+                <div className="w-12 text-center font-display text-lg font-black tabular-nums text-pitch-700 dark:text-pitch-300 shrink-0">
                     {row.totalPoints}
                 </div>
             </div>
@@ -91,9 +90,9 @@ export default function CupLeaderboard({ rows, currentUserId }: CupLeaderboardPr
             ))}
             {Array.from({ length: fillerCount }).map((_, i) => (
                 // Invisible row matching an entry's height, keeping every page the same height.
-                <div key={`filler-${i}`} aria-hidden inert className="invisible w-full max-w-2xl rounded-2xl p-[1px] mb-2.5">
-                    <div className="flex items-center gap-3 rounded-2xl px-4 py-3">
-                        <div className="text-lg font-black">0</div>
+                <div key={`filler-${i}`} aria-hidden inert className="invisible w-full max-w-2xl border-l-[3px] border-b border-l-transparent">
+                    <div className="flex items-center gap-3 px-4 py-3">
+                        <div className="font-display text-lg font-black">0</div>
                     </div>
                 </div>
             ))}

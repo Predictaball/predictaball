@@ -33,7 +33,7 @@ function ChevronRight(): React.JSX.Element {
 /**
  * Compact "Page X of Y" pagination — a floating glass pill with Prev / Next
  * controls and a live page counter. Scales to any list length and stays
- * cohesive with the brand gradient. Presentational only: callers own the
+ * cohesive with the brand palette. Presentational only: callers own the
  * paging state and any scroll behaviour.
  */
 export default function Pagination(props: PaginationProps): React.JSX.Element {
@@ -63,7 +63,7 @@ export default function Pagination(props: PaginationProps): React.JSX.Element {
                 aria-live="polite"
                 className="flex items-center gap-1.5 h-9 px-4 rounded-full bg-slate-900/5 dark:bg-white/5 text-sm font-bold tabular-nums select-none"
             >
-                <span className="bg-gradient-to-r from-blue-500 via-cyan-500 to-teal-500 dark:from-blue-400 dark:via-cyan-300 dark:to-teal-300 bg-clip-text text-transparent">
+                <span className="text-pitch-700 dark:text-pitch-300">
                     {props.page}
                 </span>
                 <span className="text-slate-300 dark:text-gray-600">/</span>

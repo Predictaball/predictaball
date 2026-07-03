@@ -14,7 +14,6 @@ export default async function ProfilePage(): Promise<React.JSX.Element> {
 
     return (
         <main className="relative min-h-screen bg-slate-50 text-slate-900 dark:bg-gray-900 dark:text-white overflow-x-clip">
-            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(59,130,246,0.08),transparent_55%),radial-gradient(ellipse_at_bottom,rgba(34,197,94,0.05),transparent_60%)] dark:bg-[radial-gradient(ellipse_at_top,rgba(59,130,246,0.15),transparent_55%),radial-gradient(ellipse_at_bottom,rgba(34,197,94,0.10),transparent_60%)]"/>
 
             <div className="relative w-full max-w-lg mx-auto px-4 sm:px-6 py-6 space-y-8">
                 <Toaster />
@@ -33,7 +32,7 @@ export default async function ProfilePage(): Promise<React.JSX.Element> {
                             {profile.supportedTeamFlagCode ? (
                                 <FlagImage code={profile.supportedTeamFlagCode} name={profile.supportedTeamName ?? `${profile.firstName} ${profile.familyName}`} size={76}/>
                             ) : (
-                                <div className="flex h-[76px] w-[76px] items-center justify-center rounded-full bg-gradient-to-br from-blue-500 via-cyan-400 to-teal-300 text-2xl font-black text-white shadow-lg shadow-cyan-500/30">
+                                <div className="flex h-[76px] w-[76px] items-center justify-center rounded-full bg-pitch-600 dark:bg-pitch-500 text-2xl font-black text-white">
                                     {`${profile.firstName.charAt(0)}${profile.familyName.charAt(0)}`.toUpperCase()}
                                 </div>
                             )}
@@ -54,8 +53,8 @@ export default async function ProfilePage(): Promise<React.JSX.Element> {
 
                         <section className="space-y-3">
                             <h2 className={SECTION_EYEBROW + " px-1"}>Account</h2>
-                            <div className="rounded-2xl bg-gradient-to-br from-slate-900/15 to-slate-900/5 dark:from-white/15 dark:to-white/5 p-[1px]">
-                                <div className="rounded-2xl bg-white dark:bg-gray-900/80 backdrop-blur-sm divide-y divide-slate-100 dark:divide-white/5">
+                            <div className="rounded-xl border-[1.5px] border-slate-300 dark:border-white/15 bg-white dark:bg-gray-900">
+                                <div className="rounded-xl divide-y divide-slate-100 dark:divide-white/5">
                                     <div className="flex items-center justify-between gap-4 p-5">
                                         <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-gray-400">Email</p>
                                         <p className="text-slate-900 dark:text-white text-right truncate">{profile.email}</p>
@@ -70,8 +69,8 @@ export default async function ProfilePage(): Promise<React.JSX.Element> {
 
                         <section className="space-y-3">
                             <h2 className={SECTION_EYEBROW + " px-1"}>Email preferences</h2>
-                            <div className="rounded-2xl bg-gradient-to-br from-slate-900/15 to-slate-900/5 dark:from-white/15 dark:to-white/5 p-[1px]">
-                                <div className="rounded-2xl bg-white dark:bg-gray-900/80 backdrop-blur-sm p-5">
+                            <div className="rounded-xl border-[1.5px] border-slate-300 dark:border-white/15 bg-white dark:bg-gray-900">
+                                <div className="rounded-xl p-5">
                                     <div className="flex items-center justify-between gap-4">
                                         <div>
                                             <p className="text-slate-900 dark:text-white font-medium">Prediction reminders</p>

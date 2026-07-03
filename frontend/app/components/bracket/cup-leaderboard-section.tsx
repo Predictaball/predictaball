@@ -59,7 +59,7 @@ export default function CupLeaderboardSection({
                             aria-pressed={active}
                             className={`rounded-full px-3 py-1 text-xs font-bold transition-colors ${
                                 active
-                                    ? "bg-cyan-500/15 text-cyan-600 ring-1 ring-cyan-500/40 dark:text-cyan-300"
+                                    ? "bg-pitch-600/15 text-pitch-700 ring-1 ring-pitch-600/40 dark:text-pitch-300"
                                     : "bg-slate-900/5 text-slate-500 hover:bg-slate-900/10 dark:bg-white/5 dark:text-gray-400 dark:hover:bg-white/10"
                             }`}
                         >

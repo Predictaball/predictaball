@@ -86,7 +86,6 @@ export default async function Home({
 
     return (
         <main className="relative min-h-svh bg-slate-50 text-slate-900 dark:bg-gray-900 dark:text-white overflow-x-clip">
-            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(59,130,246,0.08),transparent_55%),radial-gradient(ellipse_at_bottom,rgba(34,197,94,0.05),transparent_60%)] dark:bg-[radial-gradient(ellipse_at_top,rgba(59,130,246,0.15),transparent_55%),radial-gradient(ellipse_at_bottom,rgba(34,197,94,0.10),transparent_60%)]"/>
 
             <div className="relative w-full max-w-3xl mx-auto px-4 sm:px-6 py-6 space-y-8">
                 <PageHeader/>
@@ -96,7 +95,7 @@ export default async function Home({
                         {user?.supportedTeamFlagCode ? (
                             <FlagImage code={user.supportedTeamFlagCode} name={user.supportedTeamName ?? fullName} size={76}/>
                         ) : (
-                            <div className="flex h-[76px] w-[76px] shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 via-cyan-400 to-teal-300 text-2xl font-black text-white shadow-lg shadow-cyan-500/30">
+                            <div className="flex h-[76px] w-[76px] shrink-0 items-center justify-center rounded-full bg-pitch-600 dark:bg-pitch-500 text-2xl font-black text-white">
                                 {initials.toUpperCase()}
                             </div>
                         )}
@@ -122,7 +121,7 @@ export default async function Home({
                                             </div>
                                             <div className="rounded-2xl border border-slate-200/70 dark:border-white/10 bg-white/70 dark:bg-gray-900/70 backdrop-blur-sm px-5 py-2.5 min-w-[88px] text-center">
                                                 <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-gray-400">Points</p>
-                                                <p className="text-xl font-black tabular-nums bg-gradient-to-r from-blue-500 via-cyan-500 to-teal-500 dark:from-blue-400 dark:via-cyan-300 dark:to-teal-300 bg-clip-text text-transparent">{totalPoints}</p>
+                                                <p className="text-xl font-black tabular-nums text-pitch-700 dark:text-pitch-300">{totalPoints}</p>
                                             </div>
                                         </div>
                                     )}

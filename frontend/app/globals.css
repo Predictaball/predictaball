@@ -2,14 +2,20 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Type pairing: Montserrat is the body default (set on <body>); Space Grotesk
-   is the display face for every heading. Applying it here in the base layer
-   means all h1–h4 across the app inherit it automatically — no per-heading
-   class needed. Non-heading display text (the hero wordmark, big landing
-   numerals) opts in explicitly with the `font-display` utility. */
+/* Type pairing: Montserrat is the body default (set on <body>); Barlow
+   Condensed is the display face for every heading — a condensed grotesque with
+   kit-number/scoreboard character. Applying it here in the base layer means
+   all h1–h4 across the app inherit it automatically — no per-heading class
+   needed. Non-heading display text (the hero wordmark, big landing numerals)
+   opts in explicitly with the `font-display` utility.
+
+   Condensed faces sit better with neutral tracking, and every numeral in a
+   heading (scores, points, positions) should line up like a scoreboard, so
+   headings get tabular figures by default. */
 @layer base {
     h1, h2, h3, h4 {
         font-family: var(--font-display), var(--font-montserrat), sans-serif;
+        font-variant-numeric: tabular-nums;
     }
 }
 

@@ -77,7 +77,7 @@ export default async function Entries(props: EntriesProps): Promise<React.JSX.El
                     </p>
                 ) : (
                     <div className="mb-6 flex flex-col items-center text-center">
-                        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 via-cyan-400 to-teal-300 shadow-lg shadow-cyan-500/30">
+                        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-pitch-600 dark:bg-pitch-500">
                             <TrophyIcon className="h-8 w-8 text-white"/>
                         </div>
                         <p className="mt-3 text-xs font-bold uppercase tracking-[0.25em] text-slate-500 dark:text-gray-400">League</p>

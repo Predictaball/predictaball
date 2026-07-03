@@ -39,8 +39,8 @@ export default function TournamentCountdown({ kickoff, initialDays }: Tournament
     }, [kickoff])
 
     return (
-        <div className="relative rounded-3xl bg-gradient-to-br from-slate-900/15 to-slate-900/5 dark:from-white/15 dark:to-white/5 p-[1px] shadow-2xl shadow-cyan-500/10">
-            <div className="rounded-3xl bg-white dark:bg-gray-900/80 backdrop-blur-sm px-6 py-7 sm:py-10 text-center">
+        <div className="relative rounded-xl border-[1.5px] border-slate-300 dark:border-white/15 bg-white dark:bg-gray-900">
+            <div className="rounded-xl px-6 py-7 sm:py-10 text-center">
                 <div className="text-[11px] sm:text-xs font-bold uppercase tracking-[0.25em] text-slate-500 dark:text-gray-400 mb-3">
                     Kickoff in
                 </div>
@@ -63,7 +63,7 @@ export default function TournamentCountdown({ kickoff, initialDays }: Tournament
 function BigNumber({ value }: { value: number }) {
     return (
         <div className="text-5xl sm:text-7xl font-black leading-none tracking-tight">
-            <span className="bg-gradient-to-r from-blue-500 via-cyan-400 to-teal-300 bg-clip-text text-transparent tabular-nums">
+            <span className="text-pitch-700 dark:text-pitch-300 tabular-nums">
                 {value}
             </span>
         </div>
@@ -94,7 +94,7 @@ function HoursMins({ hours, minutes }: { hours: number; minutes: number }) {
 
 function Sep() {
     return (
-        <span className="text-4xl sm:text-6xl font-black leading-none bg-gradient-to-r from-blue-500 via-cyan-400 to-teal-300 bg-clip-text text-transparent">
+        <span className="text-4xl sm:text-6xl font-black leading-none text-pitch-700 dark:text-pitch-300">
             :
         </span>
     )
@@ -103,7 +103,7 @@ function Sep() {
 function Unit({ value, label }: { value: string; label: string }) {
     return (
         <div className="flex flex-col items-center min-w-[3.5rem]">
-            <span className="text-4xl sm:text-6xl font-black tabular-nums leading-none bg-gradient-to-r from-blue-500 via-cyan-400 to-teal-300 bg-clip-text text-transparent">
+            <span className="text-4xl sm:text-6xl font-black tabular-nums leading-none text-pitch-700 dark:text-pitch-300">
                 {value}
             </span>
             <span className="mt-1.5 text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-gray-400">
@@ -116,7 +116,7 @@ function Unit({ value, label }: { value: string; label: string }) {
 function Imminent() {
     return (
         <div className="text-3xl sm:text-5xl font-black leading-none tracking-tight">
-            <span className="bg-gradient-to-r from-blue-500 via-cyan-400 to-teal-300 bg-clip-text text-transparent">
+            <span className="text-pitch-700 dark:text-pitch-300">
                 Kicking off now
             </span>
         </div>

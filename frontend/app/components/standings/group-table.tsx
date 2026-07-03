@@ -20,10 +20,10 @@ export function positionDot(position: number): string {
 
 export default function GroupTable({group, standings}: {group: string; standings: GroupStandingRow[]}): React.JSX.Element {
     return (
-        <div className="relative rounded-3xl bg-gradient-to-br from-slate-900/15 to-slate-900/5 dark:from-white/15 dark:to-white/5 p-[1px] shadow-xl shadow-slate-900/5 dark:shadow-cyan-500/5">
-            <div className="rounded-3xl bg-white/70 dark:bg-white/[0.03] backdrop-blur-sm overflow-hidden">
+        <div className="relative rounded-xl border-[1.5px] border-slate-300 dark:border-white/15 bg-white dark:bg-gray-900">
+            <div className="rounded-xl overflow-hidden">
                 <div className="flex items-center gap-2 px-4 pt-4 pb-2">
-                    <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 via-cyan-400 to-teal-300 text-sm font-black text-white">
+                    <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-pitch-600 dark:bg-pitch-500 text-sm font-black text-white">
                         {group}
                     </span>
                     <span className="text-sm font-bold text-slate-700 dark:text-gray-200">Group {group}</span>

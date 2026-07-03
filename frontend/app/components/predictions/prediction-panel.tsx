@@ -92,8 +92,8 @@ export default function PredictionPanel({liveMatches, upcomingMatches, completed
     return (
         <div className="w-full space-y-6">
             <div className="max-w-5xl mx-auto">
-                <div className="relative rounded-3xl bg-gradient-to-br from-slate-900/15 to-slate-900/5 dark:from-white/15 dark:to-white/5 p-[1px] shadow-2xl shadow-cyan-500/10">
-                    <div className="relative rounded-3xl bg-white dark:bg-gray-900/80 backdrop-blur-xl overflow-hidden">
+                <div className="relative rounded-xl border-[1.5px] border-slate-300 dark:border-white/15 bg-white dark:bg-gray-900">
+                    <div className="relative rounded-xl overflow-hidden">
                         <div className="flex flex-col md:flex-row">
                             <GlobeSection match={selected} status={status}>
                                 <FocusedGlobeClient homeCode={homeCode} awayCode={awayCode} venue={selected.venue}/>
@@ -134,7 +134,7 @@ function GlobeSection({
     children: React.ReactNode
 }): React.JSX.Element {
     return (
-        <div className="relative w-full md:w-[62%] aspect-square md:aspect-auto md:min-h-[480px] bg-gradient-to-br from-slate-100 via-slate-50 to-slate-100 dark:from-gray-900 dark:via-slate-900 dark:to-gray-900">
+        <div className="relative w-full md:w-[62%] aspect-square md:aspect-auto md:min-h-[480px] bg-slate-100 dark:bg-gray-900">
             <div className="absolute inset-0">{children}</div>
             <div className="absolute top-4 left-4 right-4 flex items-center justify-between gap-2 pointer-events-none">
                 <span className="inline-flex items-center gap-2 rounded-full bg-white/80 border border-slate-200 text-slate-700 dark:bg-black/50 dark:border-white/10 dark:text-gray-200 px-3 py-1 text-xs font-semibold backdrop-blur">

@@ -17,7 +17,7 @@ export default function CookiePolicy(): React.JSX.Element {
             <section className="flex-1 px-6 lg:px-10 pb-24">
                 <div className="max-w-3xl mx-auto">
                     <h1 className="text-4xl lg:text-5xl font-black tracking-tight mb-2">
-                        <span className="bg-gradient-to-r from-blue-500 via-cyan-300 to-teal-300 bg-clip-text text-transparent">
+                        <span className="text-pitch-700 dark:text-pitch-300">
                             Cookie Policy
                         </span>
                     </h1>
@@ -86,7 +86,7 @@ export default function CookiePolicy(): React.JSX.Element {
                         <section>
                             <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-3">Contact</h2>
                             <p>
-                                Questions about this policy? See our <Link href="/privacy-policy" className="text-cyan-600 dark:text-cyan-300 underline">Privacy Policy</Link> or get in touch through the email address listed there.
+                                Questions about this policy? See our <Link href="/privacy-policy" className="text-pitch-700 dark:text-pitch-300 underline">Privacy Policy</Link> or get in touch through the email address listed there.
                             </p>
                         </section>
                     </div>

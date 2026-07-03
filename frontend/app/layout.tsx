@@ -1,12 +1,18 @@
 import type {Metadata} from "next";
-import {Montserrat, Space_Grotesk} from "next/font/google";
+import {Barlow_Condensed, Montserrat} from "next/font/google";
 import "./globals.css";
 import {Providers} from "@/app/providers";
 import LegalFooter from "@/app/components/legal-footer";
 import React from "react";
 
 const montserrat = Montserrat({subsets: ["latin"], variable: "--font-montserrat"});
-const spaceGrotesk = Space_Grotesk({subsets: ["latin"], variable: "--font-display"});
+// Display face: a condensed grotesque with kit-number/scoreboard character —
+// deliberately a sports voice, not a tech one.
+const barlowCondensed = Barlow_Condensed({
+    subsets: ["latin"],
+    weight: ["500", "600", "700", "800", "900"],
+    variable: "--font-display",
+});
 
 export const metadata: Metadata = {
     metadataBase: new URL("https://www.predictaball.live"),
@@ -24,7 +30,7 @@ export default function RootLayout({children}: Readonly<{
 }>) {
     return (
         <html lang="en" suppressHydrationWarning>
-            <body className={`${montserrat.variable} ${spaceGrotesk.variable} ${montserrat.className} bg-slate-50 text-slate-900 dark:bg-gray-900 dark:text-white`}>
+            <body className={`${montserrat.variable} ${barlowCondensed.variable} ${montserrat.className} bg-slate-50 text-slate-900 dark:bg-gray-900 dark:text-white`}>
             <Providers>
                 <div className="min-h-screen">{children}</div>
                 <LegalFooter/>

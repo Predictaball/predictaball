@@ -156,7 +156,7 @@ function Reset() {
                         </>
                     )}
                     <div className="text-center">
-                        <a href={`/login?email=${encodeURIComponent(email)}&mode=login`} className="text-sm font-medium text-cyan-600 dark:text-cyan-300 hover:text-cyan-700 dark:hover:text-cyan-200 hover:underline">
+                        <a href={`/login?email=${encodeURIComponent(email)}&mode=login`} className="text-sm font-medium text-pitch-700 dark:text-pitch-300 hover:text-pitch-800 dark:hover:text-pitch-200 hover:underline">
                             Back to sign in
                         </a>
                     </div>

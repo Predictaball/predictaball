@@ -4,7 +4,7 @@ import React, {useState} from "react"
 import {LeaderboardInner, LeaderboardInnerMovementEnum} from "@/client"
 import FormBadge from "@/app/components/leaderboard/form-badge"
 import {FlagImage} from "@/app/components/predictions/flag-image"
-import {NEGATIVE_CHIP, NEUTRAL_CHIP, PODIUM_GLOW, POSITIVE_CHIP} from "@/app/util/css-classes"
+import {PODIUM_ROW} from "@/app/util/css-classes"
 
 interface EntryProps {
     entry: LeaderboardInner
@@ -15,36 +15,41 @@ interface EntryProps {
     form: (number | null)[]
 }
 
-const MOVEMENT_CHIP: Record<LeaderboardInnerMovementEnum, string> = {
-    IMPROVED: POSITIVE_CHIP,
-    WORSENED: NEGATIVE_CHIP,
-    UNCHANGED: NEUTRAL_CHIP,
+// Newspaper league-table movement: a plain coloured arrow, green up, red down.
+const MOVEMENT_TEXT: Record<LeaderboardInnerMovementEnum, string> = {
+    IMPROVED: "text-emerald-600 dark:text-emerald-400",
+    WORSENED: "text-rose-600 dark:text-rose-400",
+    UNCHANGED: "text-slate-400 dark:text-gray-500",
 }
 
+/**
+ * A league-table row, newspaper back-page style: flush rows split by hairline
+ * rules, tabular numerals, and a solid left rule marking the podium places and
+ * the signed-in user — no glows, no glass.
+ */
 export default function Entry(props: EntryProps): React.JSX.Element {
     const [isLoading, setIsLoading] = useState(false)
 
     const isPodium = props.entry.position <= 3
     const isUser = props.isUser ?? false
-    const podiumGlow = isPodium ? PODIUM_GLOW[props.entry.position as 1 | 2 | 3] : ""
 
     return (
         <div
             onClick={() => setIsLoading(!props.disablePulse)}
-            className={`group relative w-full max-w-2xl rounded-2xl p-[1px] mb-2.5 transition-transform ${
+            className={`group relative w-full max-w-2xl border-l-[3px] border-b border-b-slate-200 dark:border-b-white/10 transition-colors ${
                 isUser
-                    ? "bg-gradient-to-r from-blue-500 via-cyan-400 to-teal-300"
+                    ? "border-l-pitch-600 bg-pitch-600/10 dark:border-l-pitch-400 dark:bg-pitch-400/10"
                     : isPodium
-                        ? podiumGlow
-                        : "bg-slate-900/10 dark:bg-white/10"
-            } ${isLoading ? "animate-pulse" : "hover:scale-[1.01]"}`}
+                        ? PODIUM_ROW[props.entry.position as 1 | 2 | 3]
+                        : "border-l-transparent"
+            } ${isLoading ? "animate-pulse" : "hover:bg-slate-900/[0.03] dark:hover:bg-white/[0.04]"}`}
         >
-            <div className="flex items-center gap-3 rounded-2xl bg-white dark:bg-gray-900/85 backdrop-blur-sm px-4 py-3">
+            <div className="flex items-center gap-3 px-4 py-3">
                 <div className="flex items-center gap-2 shrink-0">
-                    <div className={`flex items-center justify-center h-6 w-6 rounded-full border text-[10px] font-bold ${MOVEMENT_CHIP[props.movement]}`}>
+                    <div className={`flex items-center justify-center h-6 w-5 text-xs font-bold ${MOVEMENT_TEXT[props.movement]}`}>
                         {props.icon}
                     </div>
-                    <div className="w-9 text-center text-lg font-black tabular-nums text-slate-900 dark:text-white">
+                    <div className="w-9 text-center font-display text-lg font-black tabular-nums text-slate-900 dark:text-white">
                         {props.entry.position}
                     </div>
                 </div>
@@ -59,7 +64,7 @@ export default function Entry(props: EntryProps): React.JSX.Element {
                             <FlagImage code={props.entry.user.supportedTeamFlagCode} name={props.entry.user.supportedTeamName ?? ""} size={22}/>
                         )}
                     </div>
-                    <div className="w-12 text-center font-black tabular-nums bg-gradient-to-r from-blue-500 via-cyan-500 to-teal-500 dark:from-blue-400 dark:via-cyan-300 dark:to-teal-300 bg-clip-text text-transparent">
+                    <div className="w-12 text-center font-display text-lg font-black tabular-nums text-pitch-700 dark:text-pitch-300">
                         {props.entry.user.fixedPoints + props.entry.user.livePoints}
                     </div>
                 </div>

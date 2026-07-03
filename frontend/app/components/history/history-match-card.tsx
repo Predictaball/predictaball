@@ -24,9 +24,9 @@ export default function HistoryMatchCard({match}: {match: Match}): React.JSX.Ele
     return (
         <Link
             href={`/app/match/${match.matchId}/predictions`}
-            className="block w-full max-w-lg rounded-2xl bg-gradient-to-br from-slate-900/15 to-slate-900/5 dark:from-white/15 dark:to-white/5 p-[1px] shadow-xl shadow-slate-900/5 dark:shadow-cyan-500/5 transition-transform hover:scale-[1.01]"
+            className="block w-full max-w-lg rounded-xl border-[1.5px] border-slate-300 dark:border-white/15 bg-white dark:bg-gray-900 transition-transform hover:scale-[1.01]"
         >
-            <div className="rounded-2xl bg-white dark:bg-gray-900/80 backdrop-blur-sm px-4 py-3.5 sm:px-5">
+            <div className="rounded-xl px-4 py-3.5 sm:px-5">
                 <div className="relative">
                 <div className="flex items-center justify-between text-[11px]">
                     <span className="font-bold uppercase tracking-[0.15em] text-slate-500 dark:text-gray-400">
@@ -55,7 +55,7 @@ export default function HistoryMatchCard({match}: {match: Match}): React.JSX.Ele
 
                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                     <span className="text-[9px] font-bold uppercase tracking-[0.15em] text-slate-400 dark:text-gray-500">{live ? "Live" : "Result"}</span>
-                    <div className="text-2xl font-black tabular-nums text-slate-900 dark:text-white leading-tight">
+                    <div className="font-display text-2xl font-black tabular-nums text-slate-900 dark:text-white leading-tight">
                         {match.homeScore ?? "–"}<span className="px-1.5 text-slate-300 dark:text-gray-600">-</span>{match.awayScore ?? "–"}
                     </div>
                 </div>

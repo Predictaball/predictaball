@@ -14,8 +14,8 @@ interface GroupMatchListProps {
 // page — the same destination the map's venue pills point to.
 export default function GroupMatchList({group, matches}: GroupMatchListProps): React.JSX.Element {
     return (
-        <div className="rounded-3xl bg-gradient-to-br from-slate-900/15 to-slate-900/5 dark:from-white/15 dark:to-white/5 p-[1px] shadow-2xl shadow-cyan-500/10">
-            <div className="rounded-3xl bg-white dark:bg-gray-900/80 backdrop-blur-xl p-4 space-y-2">
+        <div className="rounded-xl border-[1.5px] border-slate-300 dark:border-white/15 bg-white dark:bg-gray-900">
+            <div className="rounded-xl p-4 space-y-2">
                 <h3 className="px-1 text-xs font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-gray-400">
                     Group {group} fixtures
                 </h3>

@@ -165,7 +165,7 @@ export function ChipBadge({glyph, muted = false, title, className = ""}: {
 }): React.JSX.Element {
     const tone = muted
         ? "border-slate-200 bg-slate-900/[0.04] text-slate-400 dark:border-white/10 dark:bg-white/5 dark:text-gray-500"
-        : "border-cyan-500/30 bg-cyan-500/15 text-cyan-700 dark:border-cyan-400/30 dark:bg-cyan-400/15 dark:text-cyan-300"
+        : "border-pitch-600/30 bg-pitch-600/15 text-pitch-800 dark:border-pitch-400/30 dark:bg-pitch-400/15 dark:text-pitch-300"
     return (
         <span title={title} className={`rounded border px-1.5 py-0.5 text-[9px] font-black leading-none ${tone} ${className}`}>
             {glyph}
@@ -198,11 +198,11 @@ export function NudgeScore({original, adjusted, className = ""}: {
     return (
         <span title={`Off by One nudged ${original.home}–${original.away} to ${adjusted.home}–${adjusted.away}`} className={`inline-flex items-center tabular-nums ${className}`}>
             <span className="line-through decoration-1 opacity-40">{original.home}–{original.away}</span>
-            <span className="mx-1.5 inline-flex flex-col items-center leading-none text-cyan-500 dark:text-cyan-400" aria-label="off by one">
-                <span className="text-[0.62em] font-black text-cyan-600 dark:text-cyan-300">±1</span>
+            <span className="mx-1.5 inline-flex flex-col items-center leading-none text-pitch-600 dark:text-pitch-400" aria-label="off by one">
+                <span className="text-[0.62em] font-black text-pitch-700 dark:text-pitch-300">±1</span>
                 <span className="-mt-px text-[1.1em] leading-none">⟶</span>
             </span>
-            <span className="text-cyan-600 dark:text-cyan-300">{adjusted.home}–{adjusted.away}</span>
+            <span className="text-pitch-700 dark:text-pitch-300">{adjusted.home}–{adjusted.away}</span>
         </span>
     )
 }

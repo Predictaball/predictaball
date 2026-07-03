@@ -71,13 +71,13 @@ export default async function Headline({ hasLiveMatch, supportedTeamId, streaks 
     const countryNeighbours = country ? countryRankings.slice(Math.max(0, countryIndex - 1), countryIndex + 2) : []
 
     return (
-        <div className="relative rounded-3xl bg-gradient-to-br from-slate-900/15 to-slate-900/5 dark:from-white/15 dark:to-white/5 p-[1px] shadow-2xl shadow-cyan-500/10">
-            <div className="rounded-3xl bg-white dark:bg-gray-900/80 backdrop-blur-sm px-6 py-7 sm:py-10 text-center">
+        <div className="relative rounded-xl border-[1.5px] border-slate-300 dark:border-white/15 bg-white dark:bg-gray-900">
+            <div className="rounded-xl px-6 py-7 sm:py-10 text-center">
                 {/* The points total stays dead-centre; the live pill rides alongside
                     it on the right without nudging the number off-centre. */}
                 <div className="relative">
                     <div className="text-5xl sm:text-7xl font-black leading-none tracking-tight">
-                        <span className="bg-gradient-to-r from-blue-500 via-cyan-400 to-teal-300 bg-clip-text text-transparent">
+                        <span className="text-pitch-700 dark:text-pitch-300">
                             <CountUpWrapped end={total} />
                         </span>
                     </div>
@@ -100,7 +100,7 @@ export default async function Headline({ hasLiveMatch, supportedTeamId, streaks 
                         <Link
                             href="/app/leaderboard/countries"
                             title={`${country.teamName} is ${ordinal(country.position)} of ${countryRankings.length} countries`}
-                            className="inline-flex items-center gap-2.5 rounded-full bg-slate-900/5 dark:bg-white/5 border border-slate-900/10 dark:border-white/10 px-3.5 py-1.5 transition-colors hover:border-cyan-500/40 dark:hover:border-cyan-400/40"
+                            className="inline-flex items-center gap-2.5 rounded-full bg-slate-900/5 dark:bg-white/5 border border-slate-900/10 dark:border-white/10 px-3.5 py-1.5 transition-colors hover:border-pitch-600/40 dark:hover:border-pitch-400/40"
                         >
                             {countryNeighbours.map(entry => {
                                 const isUser = entry.teamId === supportedTeamId

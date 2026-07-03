@@ -133,7 +133,7 @@ export default function AuthForm({ callbackUrl, leagueId, initialEmail, initialM
                         setPassword("")
                         setDidFail(false)
                     }}
-                    className="flex items-center gap-2 text-sm text-slate-500 dark:text-gray-400 hover:text-cyan-600 dark:hover:text-cyan-300 transition-colors"
+                    className="flex items-center gap-2 text-sm text-slate-500 dark:text-gray-400 hover:text-pitch-700 dark:hover:text-pitch-300 transition-colors"
                 >
                     <span aria-hidden>←</span>
                     <span className="truncate">{subtitle}</span>
@@ -234,7 +234,7 @@ export default function AuthForm({ callbackUrl, leagueId, initialEmail, initialM
                         }
                     />
                     <div className="flex items-center justify-end">
-                        <a href={`/reset?email=${encodeURIComponent(email)}`} className="text-sm font-medium text-cyan-600 dark:text-cyan-300 hover:text-cyan-700 dark:hover:text-cyan-200 hover:underline">
+                        <a href={`/reset?email=${encodeURIComponent(email)}`} className="text-sm font-medium text-pitch-700 dark:text-pitch-300 hover:text-pitch-800 dark:hover:text-pitch-200 hover:underline">
                             Forgot password?
                         </a>
                     </div>

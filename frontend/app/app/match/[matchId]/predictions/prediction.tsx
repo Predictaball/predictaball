@@ -6,6 +6,7 @@ import {Match, PredictionWithUser} from "@/client";
 import {FlagImage} from "@/app/components/predictions/flag-image";
 import {generateHistoryPageLinkForUser} from "@/app/app/user/[userId]/history/user-link-generator";
 import {ChipBadge, chipDisplay, NudgeScore} from "@/app/components/predictions/chip-impact";
+import {PODIUM_ROW} from "@/app/util/css-classes";
 
 export default function PredictionWithLink(props: {
     predictionWithUser: PredictionWithUser
@@ -21,16 +22,16 @@ export default function PredictionWithLink(props: {
     return (
         <Link className="block max-w-2xl w-full" href={generateHistoryPageLinkForUser(user)}>
             <div
-                className={`group relative w-full rounded-2xl p-[1px] mb-2.5 transition-transform hover:scale-[1.01] ${
+                className={`group relative w-full border-l-[3px] border-b border-b-slate-200 dark:border-b-white/10 transition-colors hover:bg-slate-900/[0.03] dark:hover:bg-white/[0.04] ${
                     isUser
-                        ? "bg-gradient-to-r from-blue-500 via-cyan-400 to-teal-300"
+                        ? "border-l-pitch-600 bg-pitch-600/10 dark:border-l-pitch-400 dark:bg-pitch-400/10"
                         : isPodium
-                            ? "bg-gradient-to-r from-slate-900/20 to-slate-900/10 dark:from-white/25 dark:to-white/10"
-                            : "bg-slate-900/10 dark:bg-white/10"
+                            ? PODIUM_ROW[props.position as 1 | 2 | 3]
+                            : "border-l-transparent"
                 }`}
             >
-                <div className="flex items-center gap-3 rounded-2xl bg-white dark:bg-gray-900/85 backdrop-blur-sm px-4 py-3">
-                    <div className="flex items-center justify-center w-7 text-lg font-black tabular-nums text-slate-900 dark:text-white">
+                <div className="flex items-center gap-3 px-4 py-3">
+                    <div className="flex items-center justify-center w-7 font-display text-lg font-black tabular-nums text-slate-900 dark:text-white">
                         {props.position}
                     </div>
                     {user.supportedTeamFlagCode && (
@@ -51,7 +52,7 @@ export default function PredictionWithLink(props: {
                     </div>
                     {display.pointsBadge && <ChipBadge {...display.pointsBadge}/>}
                     {prediction.points !== undefined && (
-                        <div className="w-7 text-right text-lg font-black tabular-nums bg-gradient-to-r from-blue-500 via-cyan-500 to-teal-500 dark:from-blue-400 dark:via-cyan-300 dark:to-teal-300 bg-clip-text text-transparent">
+                        <div className="w-7 text-right text-lg font-black tabular-nums text-pitch-700 dark:text-pitch-300">
                             {prediction.points}
                         </div>
                     )}

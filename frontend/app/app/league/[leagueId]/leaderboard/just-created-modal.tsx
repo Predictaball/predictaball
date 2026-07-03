@@ -55,9 +55,9 @@ export default function JustCreatedModal({ leagueId, leagueName }: JustCreatedMo
             <Modal isOpen={isOpen} onClose={handleClose} placement="center" backdrop="blur" size="md">
                 <ModalContent>
                     <ModalHeader className="flex flex-col gap-1">
-                        <span className="text-xs font-semibold tracking-[0.3em] text-cyan-600/90 dark:text-cyan-300/80 uppercase">Your league is ready</span>
+                        <span className="text-xs font-semibold tracking-[0.3em] text-pitch-700/90 dark:text-pitch-300/90 uppercase">Your league is ready</span>
                         <h2 className="text-2xl font-black tracking-tight">
-                            <span className="bg-gradient-to-r from-blue-500 via-cyan-300 to-teal-300 bg-clip-text text-transparent">{leagueName}</span>
+                            <span className="text-pitch-700 dark:text-pitch-300">{leagueName}</span>
                         </h2>
                     </ModalHeader>
                     <ModalBody className="space-y-3">

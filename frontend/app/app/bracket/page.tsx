@@ -10,7 +10,7 @@ import { getBracket, getBracketLeaderboard } from "@/app/api/bracket"
 import { getConfigWithAuthHeader } from "@/app/api/client-config"
 import { getUserId } from "@/app/auth/jwt-handler"
 import { League, UserApi } from "@/client"
-import { BRAND_TEXT_GRADIENT } from "@/app/util/css-classes"
+import { BRAND_TEXT } from "@/app/util/css-classes"
 import { isGlobalStandingLeague } from "@/app/util/leagues"
 
 export default async function BracketPage({ searchParams }: {
@@ -39,14 +39,13 @@ export default async function BracketPage({ searchParams }: {
 
     return (
         <main className="relative min-h-svh overflow-x-hidden bg-slate-50 text-slate-900 dark:bg-gray-900 dark:text-white">
-            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(59,130,246,0.08),transparent_55%),radial-gradient(ellipse_at_bottom,rgba(34,197,94,0.05),transparent_60%)] dark:bg-[radial-gradient(ellipse_at_top,rgba(59,130,246,0.15),transparent_55%),radial-gradient(ellipse_at_bottom,rgba(34,197,94,0.10),transparent_60%)]" />
             <div className="pointer-events-none absolute inset-x-0 top-0 h-svh"><PitchPerspective /></div>
 
             <div className="relative mx-auto w-full max-w-3xl space-y-8 px-4 py-6 sm:px-6">
                 <header className="relative flex items-center justify-between gap-3">
                     <BackButton />
                     <Link href="/" className="absolute left-1/2 hidden -translate-x-1/2 items-baseline text-lg font-black tracking-tight sm:flex">
-                        <span className="bg-gradient-to-r from-blue-500 via-cyan-300 to-teal-300 bg-clip-text text-transparent">predicta</span>
+                        <span className="text-pitch-700 dark:text-pitch-300">predicta</span>
                         <span className="text-slate-900 dark:text-white">ball</span>
                         <span className="ml-0.5 text-[10px] font-medium tracking-[0.2em] text-slate-500 dark:text-gray-400">.LIVE</span>
                     </Link>
@@ -55,7 +54,7 @@ export default async function BracketPage({ searchParams }: {
 
                 <section className="space-y-2 text-center">
                     <h1 className="text-3xl font-black tracking-tight sm:text-4xl">
-                        <span className={BRAND_TEXT_GRADIENT}>Knockout Cup</span>
+                        <span className={BRAND_TEXT}>Knockout Cup</span>
                     </h1>
                     <p className="mx-auto max-w-md text-sm text-slate-600 dark:text-gray-400">
                         A side-game over the knockouts: every team you back to go through scores points that

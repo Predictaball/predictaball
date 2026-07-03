@@ -6,7 +6,7 @@ import {useRouter} from "next/navigation"
 import {Chip, Match, MatchStateEnum} from "@/client"
 import {LocalTime} from "@/app/components/predictions/local-time"
 import {FlagImage} from "@/app/components/predictions/flag-image"
-import {ACTION_PILL_BORDER} from "@/app/util/css-classes"
+import {ACTION_PILL_BORDER, CHYRON_TAB} from "@/app/util/css-classes"
 import {PointsPill} from "@/app/components/predictions/chip-impact"
 import {PredictionRatePill} from "@/app/components/points/streak-badges"
 import type {StreakStats} from "@/app/util/streaks"
@@ -17,7 +17,11 @@ const CHIP_GLYPH: Partial<Record<Chip, string>> = {
     [Chip.OneGoalOut]: "±1",
 }
 
-const PILL_BORDER = "bg-slate-900/10 hover:bg-slate-900/20 dark:bg-white/10 dark:hover:bg-white/20"
+// Score-bug frames: solid opaque cards with a hard border. Selected gets the
+// brand green, unpredicted matches get the amber "act now" edge.
+const PILL_FRAME = "snap-center shrink-0 rounded-lg border-[1.5px] bg-white dark:bg-gray-900 transition-colors"
+const PILL_BORDER = "border-slate-300 hover:border-slate-400 dark:border-white/15 dark:hover:border-white/30"
+const PILL_BORDER_SELECTED = "border-pitch-600 dark:border-pitch-400"
 
 interface MatchStripProps {
     liveMatches: Match[]
@@ -103,17 +107,17 @@ function CompletedRow({matches, historyHref, streaks}: {matches: Match[]; histor
                     <Link
                         key={m.matchId}
                         href={`/app/match/${m.matchId}/predictions`}
-                        className={`snap-center shrink-0 rounded-2xl p-[1.5px] transition-transform hover:scale-[1.02] ${PILL_BORDER}`}
+                        className={`${PILL_FRAME} ${PILL_BORDER}`}
                     >
                         <PillBody match={m}/>
                     </Link>
                 ))}
                 <Link
                     href={historyHref}
-                    className={`snap-center shrink-0 rounded-2xl p-[1.5px] transition-transform hover:scale-[1.02] ${PILL_BORDER}`}
+                    className={`${PILL_FRAME} ${PILL_BORDER}`}
                 >
-                    <div className="h-full rounded-2xl bg-white dark:bg-gray-900/90 px-6 flex flex-col items-center justify-center gap-0.5 min-w-[120px] text-center">
-                        <span className="text-sm font-bold text-cyan-600 dark:text-cyan-300">View all →</span>
+                    <div className="h-full rounded-lg px-6 flex flex-col items-center justify-center gap-0.5 min-w-[120px] text-center">
+                        <span className="text-sm font-bold text-pitch-700 dark:text-pitch-300">View all →</span>
                         <span className="text-[11px] text-slate-400 dark:text-gray-500">Past matches</span>
                     </div>
                 </Link>
@@ -125,12 +129,17 @@ function CompletedRow({matches, historyHref, streaks}: {matches: Match[]; histor
 function RowHeader({title, live, action}: {title: string; live?: boolean; action?: React.ReactNode}) {
     return (
         <div className="flex items-center gap-2 mb-2 px-4 sm:px-6">
-            {live && <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse"/>}
-            <h3 className="text-sm font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-gray-400">{title}</h3>
+            <h3 className={live ? LIVE_TAB : CHYRON_TAB}>
+                {live && <span aria-hidden className="mr-1.5 h-1.5 w-1.5 rounded-full bg-white animate-pulse"/>}
+                {title}
+            </h3>
             {action && <div className="ml-auto">{action}</div>}
         </div>
     )
 }
+
+// The live rows' tab swaps the chyron green for broadcast red.
+const LIVE_TAB = "inline-flex items-center w-fit bg-red-600 text-white dark:bg-red-500 px-2.5 py-1 rounded-sm font-display text-sm font-bold uppercase tracking-[0.18em] leading-none"
 
 // Clicking an unselected pill swaps the big card to that match. Clicking the
 // already-selected one opens the dedicated predictions page — same gesture,
@@ -160,9 +169,9 @@ const MatchPill = React.forwardRef<HTMLButtonElement, {match: Match; selected: b
             ref={ref}
             type="button"
             onClick={handleClick}
-            className={`snap-center shrink-0 rounded-2xl p-[1.5px] transition-transform ${
+            className={`${PILL_FRAME} ${
                 selected
-                    ? "bg-gradient-to-br from-blue-500 via-cyan-400 to-teal-300 scale-[1.02]"
+                    ? PILL_BORDER_SELECTED
                     : needsPrediction
                         ? ACTION_PILL_BORDER
                         : PILL_BORDER
@@ -190,11 +199,11 @@ function PillBody({match}: {match: Match}): React.JSX.Element {
     const chipGlyph = predicted ? CHIP_GLYPH[predicted.chip] : undefined
 
     return (
-        <div className="rounded-2xl bg-white dark:bg-gray-900/90 px-4 py-3 min-w-[200px] text-left">
+        <div className="rounded-lg px-4 py-3 min-w-[200px] text-left">
             <div className="flex items-center justify-between gap-3">
                 <PillFlag code={homeCode} name={match.homeTeam}/>
                 {(isCompleted || isLive) && hasScore ? (
-                    <span className={`text-sm font-black tabular-nums ${isLive ? "text-red-500 dark:text-red-400" : "text-slate-700 dark:text-gray-200"}`}>{match.homeScore} - {match.awayScore}</span>
+                    <span className={`font-display text-base font-black tabular-nums ${isLive ? "text-red-600 dark:text-red-400" : "text-slate-800 dark:text-gray-100"}`}>{match.homeScore} - {match.awayScore}</span>
                 ) : (
                     <span className="text-xs font-semibold text-slate-400 dark:text-gray-500">vs</span>
                 )}
@@ -205,13 +214,13 @@ function PillBody({match}: {match: Match}): React.JSX.Element {
                     <LocalTime date={match.datetime}/>
                 </div>
                 {predicted ? (
-                    <span className="inline-flex items-center gap-1.5 font-bold text-cyan-600 dark:text-cyan-300">
+                    <span className="inline-flex items-center gap-1.5 font-bold text-pitch-700 dark:text-pitch-300">
                         {chipGlyph && (
-                            <span className="rounded border border-cyan-500/30 bg-cyan-500/15 px-1 py-0.5 text-[9px] font-black leading-none tabular-nums text-cyan-700 dark:border-cyan-400/30 dark:bg-cyan-400/15 dark:text-cyan-300">
+                            <span className="rounded border border-pitch-600/30 bg-pitch-600/15 px-1 py-0.5 text-[9px] font-black leading-none tabular-nums text-pitch-800 dark:border-pitch-400/30 dark:bg-pitch-400/15 dark:text-pitch-300">
                                 {chipGlyph}
                             </span>
                         )}
-                        {crowdPending ? "? - ?" : `${predicted.homeScore} - ${predicted.awayScore}`}
+                        <span className="tabular-nums">{crowdPending ? "? - ?" : `${predicted.homeScore} - ${predicted.awayScore}`}</span>
                         {predicted.points !== undefined
                             ? <PointsPill points={predicted.points} className="h-5 px-2 text-[10px]"/>
                             : <CheckIcon/>}

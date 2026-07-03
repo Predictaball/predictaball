@@ -60,7 +60,7 @@ export default function LeaderboardPagination(props: LeaderboardPaginationProps)
         {pageEntries.map((entry, index) => (
             <React.Fragment key={index}>
                 {showLeaderBreak && index === 1 && (
-                    <div aria-hidden className="w-full max-w-2xl mb-2.5 flex items-center gap-2 px-4 text-slate-300 dark:text-gray-600">
+                    <div aria-hidden className="w-full max-w-2xl py-1.5 flex items-center gap-2 px-4 text-slate-300 dark:text-gray-600">
                         <span className="h-px flex-1 bg-slate-200 dark:bg-white/10"/>
                         <span className="text-lg font-black leading-none tracking-widest">⋯</span>
                         <span className="h-px flex-1 bg-slate-200 dark:bg-white/10"/>
@@ -77,9 +77,9 @@ export default function LeaderboardPagination(props: LeaderboardPaginationProps)
         {Array.from({length: fillerCount}).map((_, i) => (
             // Invisible row that matches an entry's height exactly, keeping every
             // page the same height. aria-hidden + inert so it's inert to AT/focus.
-            <div key={`filler-${i}`} aria-hidden inert className="invisible w-full max-w-2xl rounded-2xl p-[1px] mb-2.5">
-                <div className="flex items-center gap-3 rounded-2xl px-4 py-3">
-                    <div className="text-lg font-black">0</div>
+            <div key={`filler-${i}`} aria-hidden inert className="invisible w-full max-w-2xl border-l-[3px] border-b border-l-transparent">
+                <div className="flex items-center gap-3 px-4 py-3">
+                    <div className="font-display text-lg font-black">0</div>
                 </div>
             </div>
         ))}

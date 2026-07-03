@@ -10,7 +10,6 @@ interface AuthShellProps {
 export default function AuthShell({title, children}: AuthShellProps): React.JSX.Element {
     return (
         <section className="relative min-h-svh bg-slate-50 text-slate-900 dark:bg-gray-900 dark:text-white overflow-hidden">
-            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(59,130,246,0.08),transparent_55%),radial-gradient(ellipse_at_bottom,rgba(34,197,94,0.06),transparent_55%)] dark:bg-[radial-gradient(ellipse_at_top,rgba(59,130,246,0.18),transparent_55%),radial-gradient(ellipse_at_bottom,rgba(34,197,94,0.12),transparent_55%)]"/>
 
             <div
                 className="pointer-events-none absolute inset-0 opacity-25 dark:opacity-40 [mask-image:radial-gradient(ellipse_at_center,black_30%,transparent_75%)]"
@@ -26,7 +25,7 @@ export default function AuthShell({title, children}: AuthShellProps): React.JSX.
             <div className="relative flex flex-col items-center justify-center px-6 py-12 min-h-svh">
                 <Link href="/" className="group flex items-center mb-8">
                     <span className="font-display flex items-baseline font-black tracking-tight text-lg">
-                        <span className="bg-gradient-to-r from-blue-500 via-cyan-300 to-teal-300 bg-clip-text text-transparent">
+                        <span className="text-pitch-700 dark:text-pitch-300">
                             predicta
                         </span>
                         <span className="text-slate-900 dark:text-white">ball</span>
@@ -34,8 +33,8 @@ export default function AuthShell({title, children}: AuthShellProps): React.JSX.
                     </span>
                 </Link>
 
-                <div className="relative w-full max-w-md rounded-2xl bg-gradient-to-br from-slate-900/15 to-slate-900/5 dark:from-white/15 dark:to-white/5 p-[1px]">
-                    <div className="rounded-2xl bg-white dark:bg-gray-900/80 backdrop-blur-xl p-6 sm:p-8">
+                <div className="relative w-full max-w-md rounded-xl border-[1.5px] border-slate-300 dark:border-white/15 bg-white dark:bg-gray-900">
+                    <div className="rounded-xl p-6 sm:p-8">
                         <h1 className="text-2xl font-black tracking-tight text-center mb-6">
                             {title}
                         </h1>

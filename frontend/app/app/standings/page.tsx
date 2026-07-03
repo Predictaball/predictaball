@@ -74,7 +74,6 @@ export default async function StandingsPage(
 
     return (
         <main className="relative min-h-svh bg-slate-50 text-slate-900 dark:bg-gray-900 dark:text-white overflow-x-clip">
-            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(59,130,246,0.08),transparent_55%),radial-gradient(ellipse_at_bottom,rgba(34,197,94,0.05),transparent_60%)] dark:bg-[radial-gradient(ellipse_at_top,rgba(59,130,246,0.15),transparent_55%),radial-gradient(ellipse_at_bottom,rgba(34,197,94,0.10),transparent_60%)]"/>
             <div className="pointer-events-none absolute inset-x-0 top-0 h-svh"><PitchPerspective/></div>
 
             {hasLiveMatch && <StandingsRefresher/>}
@@ -96,7 +95,7 @@ export default async function StandingsPage(
                 )}
 
                 <div className="flex flex-col items-center text-center">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 via-cyan-400 to-teal-300 shadow-lg shadow-cyan-500/30">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-pitch-600 dark:bg-pitch-500">
                         <TableIcon className="h-6 w-6 text-white"/>
                     </div>
                     <p className="mt-2 text-xs font-bold uppercase tracking-[0.25em] text-slate-500 dark:text-gray-400">Group Stage</p>

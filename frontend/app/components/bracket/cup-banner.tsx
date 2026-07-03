@@ -9,9 +9,9 @@ export default function CupBanner(): React.JSX.Element {
     return (
         <Link
             href="/app/bracket"
-            className="group relative block rounded-3xl bg-gradient-to-br from-amber-400/40 via-orange-400/20 to-amber-500/10 p-[1px] shadow-xl shadow-orange-500/10 transition-shadow duration-300 hover:shadow-2xl hover:shadow-orange-500/20"
+            className="group relative block rounded-xl border-[1.5px] border-amber-400 dark:border-amber-300/60 bg-white dark:bg-gray-900 transition-colors hover:border-amber-500 dark:hover:border-amber-300"
         >
-            <div className="flex items-center gap-4 rounded-3xl bg-white/70 p-4 backdrop-blur-sm dark:bg-white/[0.03] sm:p-5">
+            <div className="flex items-center gap-4 rounded-xl p-4 sm:p-5">
                 <div aria-hidden className="text-3xl sm:text-4xl">🏆</div>
                 <div className="min-w-0 flex-1">
                     <div className="font-display text-lg font-black tracking-tight">Knockout Cup</div>

@@ -2,25 +2,22 @@ import React from "react"
 
 interface SurfaceCardProps {
     children: React.ReactNode
-    /** Extra classes for the outer gradient-border frame. */
+    /** Extra classes for the outer bordered frame. */
     className?: string
     /** Extra classes for the inner panel (e.g. padding overrides). */
     innerClassName?: string
 }
 
 /**
- * The app's signature surface: a hairline gradient "border" (a 1px-padded
- * gradient frame) wrapping a frosted panel. Centralised here so every elevated
- * card — leagues, leaderboards, group tables — shares the exact same depth,
- * radius and glow, and so the treatment can be tuned in one place.
- *
- * A gentle shadow lift on hover gives the cards a touch of life without
- * implying the whole surface is a single tap target.
+ * The app's signature surface: a solid, opaque panel with a hard hairline
+ * border — matchday programme, not frosted glass. Centralised here so every
+ * elevated card — leagues, leaderboards, group tables — shares the exact same
+ * depth and radius, and so the treatment can be tuned in one place.
  */
 export default function SurfaceCard({children, className = "", innerClassName = ""}: SurfaceCardProps): React.JSX.Element {
     return (
-        <div className={`relative rounded-3xl bg-gradient-to-br from-slate-900/15 to-slate-900/5 p-[1px] shadow-xl shadow-slate-900/5 transition-shadow duration-300 hover:shadow-2xl hover:shadow-cyan-500/10 dark:from-white/15 dark:to-white/5 dark:shadow-cyan-500/5 dark:hover:shadow-cyan-500/15 ${className}`}>
-            <div className={`rounded-3xl bg-white/60 backdrop-blur-sm dark:bg-white/[0.03] ${innerClassName || "p-5 sm:p-6"}`}>
+        <div className={`relative rounded-xl border-[1.5px] border-slate-300 bg-white dark:border-white/15 dark:bg-gray-900 ${className}`}>
+            <div className={`rounded-xl ${innerClassName || "p-5 sm:p-6"}`}>
                 {children}
             </div>
         </div>

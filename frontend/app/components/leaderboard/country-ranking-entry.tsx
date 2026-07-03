@@ -2,6 +2,7 @@ import React from "react"
 import Link from "next/link"
 import {CountryLeaderboardInner} from "@/client"
 import {FlagImage} from "@/app/components/predictions/flag-image"
+import {PODIUM_ROW} from "@/app/util/css-classes"
 
 interface CountryRankingEntryProps {
     entry: CountryLeaderboardInner
@@ -19,14 +20,14 @@ export default function CountryRankingEntry(props: CountryRankingEntryProps): Re
     return (
         <Link
             href={`/app/league/${entry.leagueId}/leaderboard`}
-            className={`group relative block w-full max-w-2xl rounded-2xl p-[1px] mb-2.5 transition-transform hover:scale-[1.01] ${
+            className={`group relative block w-full max-w-2xl border-l-[3px] border-b border-b-slate-200 dark:border-b-white/10 transition-colors hover:bg-slate-900/[0.03] dark:hover:bg-white/[0.04] ${
                 isPodium
-                    ? "bg-gradient-to-r from-slate-900/20 to-slate-900/10 dark:from-white/25 dark:to-white/10"
-                    : "bg-slate-900/10 dark:bg-white/10"
+                    ? PODIUM_ROW[entry.position as 1 | 2 | 3]
+                    : "border-l-transparent"
             }`}
         >
-            <div className="flex items-center gap-3 rounded-2xl bg-white dark:bg-gray-900/85 backdrop-blur-sm px-4 py-3">
-                <div className="w-9 text-center text-lg font-black tabular-nums text-slate-900 dark:text-white shrink-0">
+            <div className="flex items-center gap-3 px-4 py-3">
+                <div className="w-9 text-center font-display text-lg font-black tabular-nums text-slate-900 dark:text-white shrink-0">
                     {entry.position}
                 </div>
                 <div className="flex w-[26px] justify-center shrink-0">
@@ -40,7 +41,7 @@ export default function CountryRankingEntry(props: CountryRankingEntryProps): Re
                         {entry.predictorCount} {entry.predictorCount === 1 ? "predictor" : "predictors"} · {entry.predictedMatches} {entry.predictedMatches === 1 ? "match" : "matches"}
                     </div>
                 </div>
-                <div className="w-16 text-center font-black tabular-nums bg-gradient-to-r from-blue-500 via-cyan-500 to-teal-500 dark:from-blue-400 dark:via-cyan-300 dark:to-teal-300 bg-clip-text text-transparent shrink-0">
+                <div className="w-16 text-center font-display text-lg font-black tabular-nums text-pitch-700 dark:text-pitch-300 shrink-0">
                     {formatScore(entry.score)}
                 </div>
             </div>

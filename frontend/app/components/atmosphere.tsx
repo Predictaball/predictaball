@@ -14,6 +14,12 @@ import React from "react"
 
 const FLOOR_MASK = "linear-gradient(to top, rgba(0,0,0,0.95), transparent 72%)"
 
+// Mowing stripes: the alternating light/dark grass bands a groundskeeper's
+// mower leaves. Runs goal-to-goal (horizontal bands on desktop's landscape
+// pitch, vertical on mobile's portrait one) beneath the chalk markings.
+const STRIPES_DESKTOP = "repeating-linear-gradient(to top, rgba(38,130,75,0.055) 0 85px, transparent 85px 170px)"
+const STRIPES_MOBILE = "repeating-linear-gradient(to right, rgba(38,130,75,0.055) 0 85px, transparent 85px 170px)"
+
 export function PitchPerspective(): React.JSX.Element {
     return (
         <>
@@ -38,13 +44,14 @@ function DesktopPitch(): React.JSX.Element {
                     transformOrigin: "bottom center",
                     maskImage: FLOOR_MASK,
                     WebkitMaskImage: FLOOR_MASK,
+                    backgroundImage: STRIPES_DESKTOP,
                 }}
             >
                 <svg
                     aria-hidden
                     viewBox="0 0 1050 680"
                     preserveAspectRatio="xMidYMid slice"
-                    className="pointer-events-none absolute inset-0 h-full w-full text-slate-900/[0.04] dark:text-white/[0.05]"
+                    className="pointer-events-none absolute inset-0 h-full w-full text-slate-900/[0.09] dark:text-white/[0.10]"
                     fill="none"
                     stroke="currentColor"
                     strokeWidth={2}
@@ -86,13 +93,14 @@ function MobilePitch(): React.JSX.Element {
                     transformOrigin: "bottom center",
                     maskImage: FLOOR_MASK,
                     WebkitMaskImage: FLOOR_MASK,
+                    backgroundImage: STRIPES_MOBILE,
                 }}
             >
                 <svg
                     aria-hidden
                     viewBox="0 0 680 1050"
                     preserveAspectRatio="xMidYMax slice"
-                    className="pointer-events-none absolute inset-0 h-full w-full text-slate-900/[0.05] dark:text-white/[0.06] [&_*]:[vector-effect:non-scaling-stroke]"
+                    className="pointer-events-none absolute inset-0 h-full w-full text-slate-900/[0.10] dark:text-white/[0.11] [&_*]:[vector-effect:non-scaling-stroke]"
                     fill="none"
                     stroke="currentColor"
                     strokeWidth={2}

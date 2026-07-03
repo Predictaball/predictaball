@@ -17,7 +17,7 @@ export default function PrivacyPolicy(): React.JSX.Element {
             <section className="flex-1 px-6 lg:px-10 pb-24">
                 <div className="max-w-3xl mx-auto">
                     <h1 className="text-4xl lg:text-5xl font-black tracking-tight mb-2">
-                        <span className="bg-gradient-to-r from-blue-500 via-cyan-300 to-teal-300 bg-clip-text text-transparent">
+                        <span className="text-pitch-700 dark:text-pitch-300">
                             Privacy Policy
                         </span>
                     </h1>
@@ -45,7 +45,7 @@ export default function PrivacyPolicy(): React.JSX.Element {
                             <ul className="list-disc pl-6 space-y-2">
                                 <li>To create and manage your account and authenticate you when you sign in.</li>
                                 <li>To run the prediction game, calculate scores, and display leaderboards to you and other players in your leagues.</li>
-                                <li>To send you password reset emails when you request them, and &mdash; if you opt in &mdash; prediction reminder emails on match days when you have unpredicted matches. We use Resend as our email provider. You can turn reminders on or off at any time on your <Link href="/app/profile" className="text-cyan-600 dark:text-cyan-300 underline">profile page</Link>.</li>
+                                <li>To send you password reset emails when you request them, and &mdash; if you opt in &mdash; prediction reminder emails on match days when you have unpredicted matches. We use Resend as our email provider. You can turn reminders on or off at any time on your <Link href="/app/profile" className="text-pitch-700 dark:text-pitch-300 underline">profile page</Link>.</li>
                                 <li>To keep the service secure and diagnose problems.</li>
                             </ul>
                         </section>
@@ -91,14 +91,14 @@ export default function PrivacyPolicy(): React.JSX.Element {
                                 <li>Receive a copy of your data in a portable format.</li>
                             </ul>
                             <p className="mt-3">
-                                To exercise any of these rights, contact us at the email address below. You also have the right to lodge a complaint with the UK&apos;s data protection regulator, the <a href="https://ico.org.uk/" className="text-cyan-600 dark:text-cyan-300 underline" rel="noopener noreferrer" target="_blank">Information Commissioner&apos;s Office (ICO)</a>.
+                                To exercise any of these rights, contact us at the email address below. You also have the right to lodge a complaint with the UK&apos;s data protection regulator, the <a href="https://ico.org.uk/" className="text-pitch-700 dark:text-pitch-300 underline" rel="noopener noreferrer" target="_blank">Information Commissioner&apos;s Office (ICO)</a>.
                             </p>
                         </section>
 
                         <section>
                             <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-3">Cookies</h2>
                             <p>
-                                See our <Link href="/cookie-policy" className="text-cyan-600 dark:text-cyan-300 underline">Cookie Policy</Link> for details. In short: we only use strictly necessary cookies, and no analytics or advertising cookies.
+                                See our <Link href="/cookie-policy" className="text-pitch-700 dark:text-pitch-300 underline">Cookie Policy</Link> for details. In short: we only use strictly necessary cookies, and no analytics or advertising cookies.
                             </p>
                         </section>
 
@@ -119,7 +119,7 @@ export default function PrivacyPolicy(): React.JSX.Element {
                         <section>
                             <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-3">Contact</h2>
                             <p>
-                                For privacy questions or to exercise your rights, email <a href="mailto:privacy@predictaball.live" className="text-cyan-600 dark:text-cyan-300 underline">privacy@predictaball.live</a>.
+                                For privacy questions or to exercise your rights, email <a href="mailto:privacy@predictaball.live" className="text-pitch-700 dark:text-pitch-300 underline">privacy@predictaball.live</a>.
                             </p>
                         </section>
                     </div>

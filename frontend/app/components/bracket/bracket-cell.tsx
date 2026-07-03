@@ -115,14 +115,14 @@ function TeamLine({ side, name, flag, userPick, actual, correct, points, bonus, 
             ? "bg-emerald-500/15"
             : correct === false
                 ? "bg-rose-500/15"
-                : "bg-cyan-500/10"
+                : "bg-pitch-600/10"
     const bar = !picked
         ? "bg-transparent"
         : correct === true
             ? "bg-emerald-500"
             : correct === false
                 ? "bg-rose-500"
-                : "bg-cyan-500"
+                : "bg-pitch-600"
     const nameColor = locked
         ? "font-medium text-slate-400 dark:text-gray-500"
         : picked

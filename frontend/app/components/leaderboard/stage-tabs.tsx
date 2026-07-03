@@ -37,7 +37,7 @@ export default function StageTabs({leagueId, activeStage}: StageTabsProps): Reac
                         aria-pressed={isActive}
                         className={`flex h-9 items-center justify-center rounded-full px-4 text-sm font-bold transition-colors ${
                             isActive
-                                ? "bg-gradient-to-br from-blue-500 via-cyan-400 to-teal-300 text-white shadow-lg shadow-cyan-500/30"
+                                ? "bg-pitch-600 dark:bg-pitch-500 text-white"
                                 : "bg-slate-900/5 text-slate-600 hover:bg-slate-900/10 dark:bg-white/5 dark:text-gray-300 dark:hover:bg-white/10"
                         }`}
                     >
