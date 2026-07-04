@@ -1,5 +1,4 @@
 import React from "react"
-import Link from "next/link"
 import BackButton from "@/app/components/back-button"
 import { PitchPerspective } from "@/app/components/atmosphere"
 import SectionHeading from "@/app/components/section-heading"
@@ -10,7 +9,9 @@ import { getBracket, getBracketLeaderboard } from "@/app/api/bracket"
 import { getConfigWithAuthHeader } from "@/app/api/client-config"
 import { getUserId } from "@/app/auth/jwt-handler"
 import { League, UserApi } from "@/client"
-import { BRAND_TEXT_GRADIENT } from "@/app/util/css-classes"
+import PageShell from "@/app/components/page-shell"
+import Wordmark from "@/app/components/wordmark"
+import { BRAND_TEXT_GRADIENT, TEXT_PRIMARY } from "@/app/util/css-classes"
 import { isGlobalStandingLeague } from "@/app/util/leagues"
 
 export default async function BracketPage({ searchParams }: {
@@ -38,18 +39,13 @@ export default async function BracketPage({ searchParams }: {
     ]
 
     return (
-        <main className="relative min-h-svh overflow-x-hidden bg-slate-50 text-slate-900 dark:bg-gray-900 dark:text-white">
-            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(59,130,246,0.08),transparent_55%),radial-gradient(ellipse_at_bottom,rgba(34,197,94,0.05),transparent_60%)] dark:bg-[radial-gradient(ellipse_at_top,rgba(59,130,246,0.15),transparent_55%),radial-gradient(ellipse_at_bottom,rgba(34,197,94,0.10),transparent_60%)]" />
+        <PageShell svh>
             <div className="pointer-events-none absolute inset-x-0 top-0 h-svh"><PitchPerspective /></div>
 
             <div className="relative mx-auto w-full max-w-3xl space-y-8 px-4 py-6 sm:px-6">
                 <header className="relative flex items-center justify-between gap-3">
                     <BackButton />
-                    <Link href="/" className="absolute left-1/2 hidden -translate-x-1/2 items-baseline text-lg font-black tracking-tight sm:flex">
-                        <span className="bg-gradient-to-r from-blue-500 via-cyan-300 to-teal-300 bg-clip-text text-transparent">predicta</span>
-                        <span className="text-slate-900 dark:text-white">ball</span>
-                        <span className="ml-0.5 text-[10px] font-medium tracking-[0.2em] text-slate-500 dark:text-gray-400">.LIVE</span>
-                    </Link>
+                    <Wordmark className="hidden sm:flex absolute left-1/2 -translate-x-1/2"/>
                     <span className="w-9" />
                 </header>
 
@@ -71,7 +67,7 @@ export default async function BracketPage({ searchParams }: {
                             { label: "Final", pts: 12 },
                         ].map(({ label, pts }) => (
                             <div key={label} className="flex flex-col items-center gap-0.5">
-                                <span className="text-base font-black tabular-nums text-slate-900 dark:text-white">+{pts}</span>
+                                <span className={`text-base font-black tabular-nums ${TEXT_PRIMARY}`}>+{pts}</span>
                                 <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-gray-500">{label}</span>
                             </div>
                         ))}
@@ -102,7 +98,7 @@ export default async function BracketPage({ searchParams }: {
                     currentUserId={userId}
                 />
             </div>
-        </main>
+        </PageShell>
     )
 }
 

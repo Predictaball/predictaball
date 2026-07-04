@@ -1,6 +1,8 @@
 import React from "react"
 import {GroupStandingRow} from "@/client"
 import {FlagImage} from "@/app/components/predictions/flag-image"
+import SurfaceCard from "@/app/components/surface-card"
+import {BRAND_GRADIENT, TABLE_CELL_CENTER, TABLE_CELL_CENTER_HIDDEN_SM, TABLE_HEADER_CELL, TABLE_HEADER_CELL_HIDDEN_SM} from "@/app/util/css-classes"
 
 /**
  * Background tint for a row based on where the team sits. Top two qualify for
@@ -20,53 +22,51 @@ export function positionDot(position: number): string {
 
 export default function GroupTable({group, standings}: {group: string; standings: GroupStandingRow[]}): React.JSX.Element {
     return (
-        <div className="relative rounded-3xl bg-gradient-to-br from-slate-900/15 to-slate-900/5 dark:from-white/15 dark:to-white/5 p-[1px] shadow-xl shadow-slate-900/5 dark:shadow-cyan-500/5">
-            <div className="rounded-3xl bg-white/70 dark:bg-white/[0.03] backdrop-blur-sm overflow-hidden">
-                <div className="flex items-center gap-2 px-4 pt-4 pb-2">
-                    <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 via-cyan-400 to-teal-300 text-sm font-black text-white">
-                        {group}
-                    </span>
-                    <span className="text-sm font-bold text-slate-700 dark:text-gray-200">Group {group}</span>
-                </div>
-                <table className="w-full text-sm">
-                    <thead>
-                        <tr className="text-[11px] uppercase tracking-wider text-slate-400 dark:text-gray-500">
-                            <th className="py-1.5 pl-4 pr-1 text-left font-semibold">#</th>
-                            <th className="py-1.5 px-1 text-left font-semibold">Team</th>
-                            <th className="py-1.5 px-1 text-center font-semibold w-7">P</th>
-                            <th className="py-1.5 px-1 text-center font-semibold w-7 hidden sm:table-cell">W</th>
-                            <th className="py-1.5 px-1 text-center font-semibold w-7 hidden sm:table-cell">D</th>
-                            <th className="py-1.5 px-1 text-center font-semibold w-7 hidden sm:table-cell">L</th>
-                            <th className="py-1.5 px-1 text-center font-semibold w-9">GD</th>
-                            <th className="py-1.5 pl-1 pr-4 text-center font-semibold w-9">Pts</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {standings.map(row => (
-                            <tr key={row.teamId} className={`border-t border-slate-900/5 dark:border-white/5 ${positionAccent(row.position)}`}>
-                                <td className="py-2 pl-4 pr-1">
-                                    <span className="flex items-center gap-1.5">
-                                        <span className={`h-1.5 w-1.5 rounded-full ${positionDot(row.position)}`}/>
-                                        <span className="text-xs font-semibold text-slate-500 dark:text-gray-400">{row.position}</span>
-                                    </span>
-                                </td>
-                                <td className="py-2 px-1">
-                                    <span className="flex items-center gap-2 min-w-0">
-                                        <FlagImage code={row.flagCode} name={row.teamName} size={22}/>
-                                        <span className="truncate font-semibold text-slate-800 dark:text-gray-100">{row.teamName}</span>
-                                    </span>
-                                </td>
-                                <td className="py-2 px-1 text-center tabular-nums text-slate-600 dark:text-gray-300">{row.played}</td>
-                                <td className="py-2 px-1 text-center tabular-nums text-slate-600 dark:text-gray-300 hidden sm:table-cell">{row.won}</td>
-                                <td className="py-2 px-1 text-center tabular-nums text-slate-600 dark:text-gray-300 hidden sm:table-cell">{row.drawn}</td>
-                                <td className="py-2 px-1 text-center tabular-nums text-slate-600 dark:text-gray-300 hidden sm:table-cell">{row.lost}</td>
-                                <td className="py-2 px-1 text-center tabular-nums text-slate-600 dark:text-gray-300">{row.goalDifference > 0 ? `+${row.goalDifference}` : row.goalDifference}</td>
-                                <td className="py-2 pl-1 pr-4 text-center tabular-nums font-black text-slate-900 dark:text-white">{row.points}</td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
+        <SurfaceCard innerClassName="overflow-hidden">
+            <div className="flex items-center gap-2 px-4 pt-4 pb-2">
+                <span className={`flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br ${BRAND_GRADIENT} text-sm font-black text-white`}>
+                    {group}
+                </span>
+                <span className="text-sm font-bold text-slate-700 dark:text-gray-200">Group {group}</span>
             </div>
-        </div>
+            <table className="w-full text-sm">
+                <thead>
+                    <tr className="text-[11px] uppercase tracking-wider text-slate-400 dark:text-gray-500">
+                        <th className="py-1.5 pl-4 pr-1 text-left font-semibold">#</th>
+                        <th className="py-1.5 px-1 text-left font-semibold">Team</th>
+                        <th className={TABLE_HEADER_CELL}>P</th>
+                        <th className={TABLE_HEADER_CELL_HIDDEN_SM}>W</th>
+                        <th className={TABLE_HEADER_CELL_HIDDEN_SM}>D</th>
+                        <th className={TABLE_HEADER_CELL_HIDDEN_SM}>L</th>
+                        <th className="py-1.5 px-1 text-center font-semibold w-9">GD</th>
+                        <th className="py-1.5 pl-1 pr-4 text-center font-semibold w-9">Pts</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {standings.map(row => (
+                        <tr key={row.teamId} className={`border-t border-slate-900/5 dark:border-white/5 ${positionAccent(row.position)}`}>
+                            <td className="py-2 pl-4 pr-1">
+                                <span className="flex items-center gap-1.5">
+                                    <span className={`h-1.5 w-1.5 rounded-full ${positionDot(row.position)}`}/>
+                                    <span className="text-xs font-semibold text-slate-500 dark:text-gray-400">{row.position}</span>
+                                </span>
+                            </td>
+                            <td className="py-2 px-1">
+                                <span className="flex items-center gap-2 min-w-0">
+                                    <FlagImage code={row.flagCode} name={row.teamName} size={22}/>
+                                    <span className="truncate font-semibold text-slate-800 dark:text-gray-100">{row.teamName}</span>
+                                </span>
+                            </td>
+                            <td className={TABLE_CELL_CENTER}>{row.played}</td>
+                            <td className={TABLE_CELL_CENTER_HIDDEN_SM}>{row.won}</td>
+                            <td className={TABLE_CELL_CENTER_HIDDEN_SM}>{row.drawn}</td>
+                            <td className={TABLE_CELL_CENTER_HIDDEN_SM}>{row.lost}</td>
+                            <td className={TABLE_CELL_CENTER}>{row.goalDifference > 0 ? `+${row.goalDifference}` : row.goalDifference}</td>
+                            <td className="py-2 pl-1 pr-4 text-center tabular-nums font-black text-slate-900 dark:text-white">{row.points}</td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+        </SurfaceCard>
     )
 }

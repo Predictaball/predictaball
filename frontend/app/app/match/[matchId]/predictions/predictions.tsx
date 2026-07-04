@@ -1,7 +1,6 @@
 'use client'
 
 import React, {useState} from "react";
-import Link from "next/link";
 import {useRouter} from "next/navigation";
 import {League, Match, MatchRoundEnum, MatchStateEnum, PredictionWithUser} from "@/client";
 import PredictionData from "@/app/app/match/[matchId]/predictions/prediction";
@@ -9,11 +8,14 @@ import {Select, SelectItem} from "@nextui-org/react"
 import Pagination from "@/app/components/pagination"
 import BackButton from "@/app/components/back-button"
 import useWindowDimensions from "@/app/hooks/use-window-dimension";
-import {SECTION_EYEBROW} from "@/app/util/css-classes";
+import {GLASS_PILL, GLASS_PILL_BOLD, SECTION_EYEBROW} from "@/app/util/css-classes";
 import FocusedGlobeClient from "@/app/components/flags/focused-globe-client";
 import {LocalTime} from "@/app/components/predictions/local-time";
 import {MatchScoreOverlay} from "@/app/components/predictions/match-score-overlay";
 import DistributionBar from "@/app/components/predictions/distribution-bar";
+import PageShell from "@/app/components/page-shell";
+import SurfaceCard from "@/app/components/surface-card";
+import Wordmark from "@/app/components/wordmark";
 
 const ROUND_LABEL: Record<MatchRoundEnum, string> = {
     GROUP_STAGE: "Group Stage",
@@ -41,39 +43,37 @@ function MatchGlobeHeader({match}: {match: Match}): React.JSX.Element {
     const showDistribution = match.state !== MatchStateEnum.Upcoming && match.predictionDistribution !== undefined
 
     return (
-        <div className="relative rounded-3xl bg-gradient-to-br from-slate-900/15 to-slate-900/5 dark:from-white/15 dark:to-white/5 p-[1px] shadow-2xl shadow-cyan-500/10">
-            <div className="relative rounded-3xl bg-white dark:bg-gray-900/80 backdrop-blur-xl overflow-hidden">
-                <div className="relative w-full aspect-square sm:aspect-[16/10] bg-gradient-to-br from-slate-100 via-slate-50 to-slate-100 dark:from-gray-900 dark:via-slate-900 dark:to-gray-900">
-                    <div className="absolute inset-0">
-                        <FocusedGlobeClient homeCode={homeCode} awayCode={awayCode} venue={match.venue}/>
-                    </div>
-                    <div className="absolute top-4 left-4 right-4 flex items-center justify-between pointer-events-none">
-                        {live ? (
-                            <span aria-hidden/>
-                        ) : (
-                            <span className="inline-flex items-center gap-2 rounded-full bg-white/80 border border-slate-200 text-slate-700 dark:bg-black/50 dark:border-white/10 dark:text-gray-200 px-3 py-1 text-xs font-semibold backdrop-blur">
-                                {ROUND_LABEL[match.round]}
-                            </span>
-                        )}
-                        <span className="rounded-full bg-white/80 border border-slate-200 text-slate-600 dark:bg-black/50 dark:border-white/10 dark:text-gray-300 px-3 py-1 text-xs backdrop-blur">
-                            <LocalTime date={match.datetime}/>
+        <SurfaceCard solid innerClassName="relative backdrop-blur-xl overflow-hidden">
+            <div className="relative w-full aspect-square sm:aspect-[16/10] bg-gradient-to-br from-slate-100 via-slate-50 to-slate-100 dark:from-gray-900 dark:via-slate-900 dark:to-gray-900">
+                <div className="absolute inset-0">
+                    <FocusedGlobeClient homeCode={homeCode} awayCode={awayCode} venue={match.venue}/>
+                </div>
+                <div className="absolute top-4 left-4 right-4 flex items-center justify-between pointer-events-none">
+                    {live ? (
+                        <span aria-hidden/>
+                    ) : (
+                        <span className={GLASS_PILL_BOLD}>
+                            {ROUND_LABEL[match.round]}
                         </span>
-                    </div>
-                    <div className="absolute bottom-4 left-4 right-4 flex justify-center pointer-events-none">
-                        <MatchScoreOverlay match={match}/>
+                    )}
+                    <span className={GLASS_PILL}>
+                        <LocalTime date={match.datetime}/>
+                    </span>
+                </div>
+                <div className="absolute bottom-4 left-4 right-4 flex justify-center pointer-events-none">
+                    <MatchScoreOverlay match={match}/>
+                </div>
+            </div>
+            {showDistribution && (
+                // The bar's own component adds mt-4 internally; cancel it
+                // with -mt-4 so the panel padding lands cleanly.
+                <div className="border-t border-slate-200/70 dark:border-white/5 px-4 sm:px-5 pt-3 pb-4">
+                    <div className="-mt-4">
+                        <DistributionBar distribution={match.predictionDistribution!} homeName={match.homeTeam} awayName={match.awayTeam}/>
                     </div>
                 </div>
-                {showDistribution && (
-                    // The bar's own component adds mt-4 internally; cancel it
-                    // with -mt-4 so the panel padding lands cleanly.
-                    <div className="border-t border-slate-200/70 dark:border-white/5 px-4 sm:px-5 pt-3 pb-4">
-                        <div className="-mt-4">
-                            <DistributionBar distribution={match.predictionDistribution!} homeName={match.homeTeam} awayName={match.awayTeam}/>
-                        </div>
-                    </div>
-                )}
-            </div>
-        </div>
+            )}
+        </SurfaceCard>
     )
 }
 
@@ -111,17 +111,11 @@ export default function Predictions(
     }
 
     return (
-        <main className="relative min-h-svh bg-slate-50 text-slate-900 dark:bg-gray-900 dark:text-white overflow-x-hidden">
-            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(59,130,246,0.08),transparent_55%),radial-gradient(ellipse_at_bottom,rgba(34,197,94,0.05),transparent_60%)] dark:bg-[radial-gradient(ellipse_at_top,rgba(59,130,246,0.15),transparent_55%),radial-gradient(ellipse_at_bottom,rgba(34,197,94,0.10),transparent_60%)]"/>
-
+        <PageShell svh>
             <div className="relative w-full max-w-2xl mx-auto px-4 sm:px-6 py-6 space-y-6">
                 <header className="relative flex items-center justify-between">
                     <BackButton/>
-                    <Link href="/" className="hidden sm:flex items-baseline font-black tracking-tight text-lg absolute left-1/2 -translate-x-1/2">
-                        <span className="bg-gradient-to-r from-blue-500 via-cyan-300 to-teal-300 bg-clip-text text-transparent">predicta</span>
-                        <span className="text-slate-900 dark:text-white">ball</span>
-                        <span className="ml-0.5 text-[10px] font-medium tracking-[0.2em] text-slate-500 dark:text-gray-400">.LIVE</span>
-                    </Link>
+                    <Wordmark className="hidden sm:flex absolute left-1/2 -translate-x-1/2"/>
                     <div className="w-10"/>
                 </header>
 
@@ -179,6 +173,6 @@ export default function Predictions(
                         </div>}
                 </section>
             </div>
-        </main>
+        </PageShell>
     )
 }

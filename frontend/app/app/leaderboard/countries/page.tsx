@@ -1,5 +1,4 @@
 import React from "react";
-import Link from "next/link";
 import BackButton from "@/app/components/back-button";
 import EmptyState from "@/app/components/empty-state";
 import {getConfigWithAuthHeader} from "@/app/api/client-config";
@@ -7,6 +6,9 @@ import {SHARED_DATA_REVALIDATE_SECONDS} from "@/app/api/constants";
 import {CountryLeaderboardInner, LeagueApi} from "@/client";
 import {PitchPerspective} from "@/app/components/atmosphere";
 import CountryRankingEntry from "@/app/components/leaderboard/country-ranking-entry";
+import PageShell from "@/app/components/page-shell";
+import Wordmark from "@/app/components/wordmark";
+import {BRAND_GRADIENT, SECTION_EYEBROW, TEXT_PRIMARY} from "@/app/util/css-classes";
 
 function GlobeIcon({className}: {className?: string}): React.JSX.Element {
     return (
@@ -25,28 +27,23 @@ export default async function CountryRankingsPage(): Promise<React.JSX.Element> 
         .catch(() => [])
 
     return (
-        <main className="relative min-h-svh bg-slate-50 text-slate-900 dark:bg-gray-900 dark:text-white overflow-x-hidden">
-            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(59,130,246,0.08),transparent_55%),radial-gradient(ellipse_at_bottom,rgba(34,197,94,0.05),transparent_60%)] dark:bg-[radial-gradient(ellipse_at_top,rgba(59,130,246,0.15),transparent_55%),radial-gradient(ellipse_at_bottom,rgba(34,197,94,0.10),transparent_60%)]"/>
+        <PageShell svh>
             <div className="pointer-events-none absolute inset-x-0 top-0 h-svh"><PitchPerspective/></div>
 
             <div className="relative w-full max-w-3xl mx-auto px-4 sm:px-6 py-6 space-y-8">
                 <header className="relative flex items-center justify-between gap-3">
                     <BackButton/>
-                    <Link href="/" className="hidden sm:flex items-baseline font-black tracking-tight text-lg absolute left-1/2 -translate-x-1/2">
-                        <span className="bg-gradient-to-r from-blue-500 via-cyan-300 to-teal-300 bg-clip-text text-transparent">predicta</span>
-                        <span className="text-slate-900 dark:text-white">ball</span>
-                        <span className="ml-0.5 text-[10px] font-medium tracking-[0.2em] text-slate-500 dark:text-gray-400">.LIVE</span>
-                    </Link>
+                    <Wordmark className="hidden sm:flex absolute left-1/2 -translate-x-1/2"/>
                     <div className="w-10"/>
                 </header>
 
                 <section className="flex flex-col items-center">
                     <div className="mb-6 flex flex-col items-center text-center">
-                        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 via-cyan-400 to-teal-300 shadow-lg shadow-cyan-500/30">
+                        <div className={`flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br ${BRAND_GRADIENT} shadow-lg shadow-cyan-500/30`}>
                             <GlobeIcon className="h-8 w-8 text-white"/>
                         </div>
-                        <p className="mt-3 text-xs font-bold uppercase tracking-[0.25em] text-slate-500 dark:text-gray-400">Rankings</p>
-                        <h1 className="mt-1 text-3xl font-black tracking-tight text-slate-900 dark:text-white">
+                        <p className={`mt-3 ${SECTION_EYEBROW}`}>Rankings</p>
+                        <h1 className={`mt-1 text-3xl font-black tracking-tight ${TEXT_PRIMARY}`}>
                             Country Rankings
                         </h1>
                         <p className="mt-2 max-w-md text-sm text-slate-500 dark:text-gray-400">
@@ -67,6 +64,6 @@ export default async function CountryRankingsPage(): Promise<React.JSX.Element> 
                     </div>
                 </section>
             </div>
-        </main>
+        </PageShell>
     );
 }

@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react"
 import { Button, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, useDisclosure } from "@nextui-org/react"
-import { BUTTON_CLASS } from "@/app/util/css-classes"
+import { BRAND_TEXT_GRADIENT_LIGHT, BUTTON_CLASS, EYEBROW_CYAN, MODAL_TITLE } from "@/app/util/css-classes"
 
 // Tracks whether this user has already seen the one-off "+1 chip per power-up
 // for the knockouts" notification. Client-side flag so we don't need a DB
@@ -52,9 +52,9 @@ export default function KnockoutChipBonusModal(): React.JSX.Element | null {
         <Modal isOpen={isOpen} onClose={handleClose} placement="center" backdrop="blur" size="md">
             <ModalContent>
                 <ModalHeader className="flex flex-col gap-1">
-                    <span className="text-xs font-semibold tracking-[0.3em] text-cyan-600/90 dark:text-cyan-300/80 uppercase">Knockouts bonus</span>
-                    <h2 className="text-2xl font-black tracking-tight">
-                        You&apos;ve got <span className="bg-gradient-to-r from-blue-500 via-cyan-300 to-teal-300 bg-clip-text text-transparent">+1 of each power-up</span>
+                    <span className={EYEBROW_CYAN}>Knockouts bonus</span>
+                    <h2 className={MODAL_TITLE}>
+                        You&apos;ve got <span className={BRAND_TEXT_GRADIENT_LIGHT}>+1 of each power-up</span>
                     </h2>
                 </ModalHeader>
                 <ModalBody>

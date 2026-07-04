@@ -3,7 +3,7 @@
 import React, { useEffect } from "react"
 import { Button, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, useDisclosure } from "@nextui-org/react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { BUTTON_CLASS } from "@/app/util/css-classes"
+import { BRAND_TEXT_GRADIENT_LIGHT, BUTTON_CLASS, EYEBROW_CYAN, MODAL_TITLE } from "@/app/util/css-classes"
 
 interface WelcomeModalProps {
     leagueName: string
@@ -31,9 +31,9 @@ export default function WelcomeModal({ leagueName }: WelcomeModalProps): React.J
         <Modal isOpen={isOpen} onClose={handleClose} placement="center" backdrop="blur" size="md">
             <ModalContent>
                 <ModalHeader className="flex flex-col gap-1">
-                    <span className="text-xs font-semibold tracking-[0.3em] text-cyan-600/90 dark:text-cyan-300/80 uppercase">You&apos;re in!</span>
-                    <h2 className="text-2xl font-black tracking-tight">
-                        Welcome to <span className="bg-gradient-to-r from-blue-500 via-cyan-300 to-teal-300 bg-clip-text text-transparent">{leagueName}</span>
+                    <span className={EYEBROW_CYAN}>You&apos;re in!</span>
+                    <h2 className={MODAL_TITLE}>
+                        Welcome to <span className={BRAND_TEXT_GRADIENT_LIGHT}>{leagueName}</span>
                     </h2>
                 </ModalHeader>
                 <ModalBody>

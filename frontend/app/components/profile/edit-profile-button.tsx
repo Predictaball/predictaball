@@ -7,7 +7,7 @@ import toast from "react-hot-toast"
 import { getConfigWithAuthHeaderClient } from "@/app/api/client-config-client-side"
 import { UserApi } from "@/client"
 import TeamPicker from "@/app/components/team-picker"
-import { AUTH_INPUT_CLASS_NAMES, BUTTON_CLASS, GHOST_BUTTON_CLASS } from "@/app/util/css-classes"
+import { AUTH_INPUT_CLASS_NAMES, BUTTON_CLASS, GHOST_BUTTON_CLASS, MODAL_TITLE } from "@/app/util/css-classes"
 
 interface EditProfileButtonProps {
     initialFirstName: string
@@ -78,7 +78,7 @@ export default function EditProfileButton({ initialFirstName, initialFamilyName,
             <Modal isOpen={isOpen} onClose={handleClose} placement="center" backdrop="blur" size="md" scrollBehavior="inside">
                 <ModalContent>
                     <ModalHeader>
-                        <h2 className="text-2xl font-black tracking-tight">Edit profile</h2>
+                        <h2 className={MODAL_TITLE}>Edit profile</h2>
                     </ModalHeader>
                     <ModalBody className="space-y-4">
                         <div className="grid grid-cols-2 gap-3">

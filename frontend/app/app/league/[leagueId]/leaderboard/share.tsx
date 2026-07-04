@@ -1,7 +1,7 @@
 'use client'
 
 import { copyToClipboard } from "@/app/util/clipboard"
-import { BRAND_GHOST_BUTTON_CLASS, BUTTON_CLASS, GHOST_BUTTON_CLASS } from "@/app/util/css-classes"
+import { BRAND_GHOST_BUTTON_CLASS, BUTTON_CLASS, EYEBROW_CYAN, GHOST_BUTTON_CLASS } from "@/app/util/css-classes"
 import { Button, Modal, ModalBody, ModalContent, ModalHeader, useDisclosure } from "@nextui-org/react"
 import toast, { Toaster } from "react-hot-toast"
 import React, { useState } from "react";
@@ -49,7 +49,7 @@ export default function Share({leagueId, kind}: { leagueId: string; kind: League
             <Modal isOpen={isOpen} onClose={onClose} placement="center" backdrop="blur" size="sm">
                 <ModalContent>
                     <ModalHeader className="flex flex-col gap-1">
-                        <span className="text-xs font-semibold tracking-[0.3em] text-cyan-600/90 dark:text-cyan-300/80 uppercase">League invite</span>
+                        <span className={EYEBROW_CYAN}>League invite</span>
                         <h2 className="text-xl font-black tracking-tight">Invite friends to join</h2>
                     </ModalHeader>
                     <ModalBody className="items-center space-y-4 pb-6">

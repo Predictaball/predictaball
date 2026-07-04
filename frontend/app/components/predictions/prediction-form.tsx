@@ -5,7 +5,7 @@ import DistributionBar from "@/app/components/predictions/distribution-bar"
 import { FlagImage } from "@/app/components/predictions/flag-image"
 import type { UserChips } from "@/app/components/predictions/get-user-chips"
 import { handlePrediction } from "@/app/components/predictions/submit-prediction"
-import { ACTION_BUTTON_CLASS } from "@/app/util/css-classes"
+import { ACTION_BUTTON_CLASS, BRAND_GRADIENT } from "@/app/util/css-classes"
 import { SHORT_COUNTRY_NAMES } from "@/app/util/teams"
 import { Chip, Match, MatchRoundEnum, MatchStateEnum, Prediction, ToGoThrough } from "@/client"
 import { Button, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, useDisclosure } from "@nextui-org/react"
@@ -488,7 +488,7 @@ function ScoreInput({value, onChange, disabled, displayOverride, readOnly, nudge
                 onPointerUp={endDrag}
                 onPointerCancel={endDrag}
                 style={{touchAction: "none"}}
-                className={`w-full rounded-2xl bg-gradient-to-tr from-blue-500 via-cyan-400 to-teal-300 p-[2px] transition-transform ${isDragging ? "scale-105" : ""} ${disabled ? "" : "cursor-ns-resize"}`}
+                className={`w-full rounded-2xl bg-gradient-to-tr ${BRAND_GRADIENT} p-[2px] transition-transform ${isDragging ? "scale-105" : ""} ${disabled ? "" : "cursor-ns-resize"}`}
             >
                 <div className="w-full aspect-square rounded-2xl bg-white dark:bg-gray-900 flex items-center justify-center text-3xl font-black text-slate-900 dark:text-white select-none">
                     {nudge ? (

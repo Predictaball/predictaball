@@ -11,7 +11,7 @@ import {
     ModalHeader,
     useDisclosure
 } from "@nextui-org/react";
-import {AUTH_INPUT_CLASS_NAMES, BRAND_GHOST_BUTTON_CLASS, BUTTON_CLASS, GHOST_BUTTON_CLASS} from "@/app/util/css-classes";
+import {AUTH_INPUT_CLASS_NAMES, BRAND_GHOST_BUTTON_CLASS, BRAND_GRADIENT, BUTTON_CLASS, GHOST_BUTTON_CLASS, MODAL_AMBIENT_GLOW} from "@/app/util/css-classes";
 import {LeagueApi} from "@/client";
 import {PressEvent} from "@react-types/shared";
 import { getConfigWithAuthHeaderClient } from "@/app/api/client-config-client-side";
@@ -84,13 +84,13 @@ export default function JoinLeague(): React.JSX.Element {
             >
                 <ModalContent>
                     {(onClose) => (
-                        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-500 via-cyan-400 to-teal-300 p-[1.5px] shadow-2xl shadow-cyan-500/25">
+                        <div className={`relative overflow-hidden rounded-3xl bg-gradient-to-br ${BRAND_GRADIENT} p-[1.5px] shadow-2xl shadow-cyan-500/25`}>
                             <div className="relative overflow-hidden rounded-3xl bg-white dark:bg-gray-900">
                                 {/* ambient brand glow */}
-                                <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(59,130,246,0.12),transparent_60%),radial-gradient(ellipse_at_bottom,rgba(34,197,94,0.08),transparent_65%)] dark:bg-[radial-gradient(ellipse_at_top,rgba(59,130,246,0.22),transparent_60%),radial-gradient(ellipse_at_bottom,rgba(34,197,94,0.14),transparent_65%)]"/>
+                                <div className={MODAL_AMBIENT_GLOW}/>
 
                                 <ModalHeader className="relative flex flex-col items-center gap-3 px-6 pt-8 pb-1">
-                                    <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 via-cyan-400 to-teal-300 shadow-lg shadow-cyan-500/30">
+                                    <div className={`flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br ${BRAND_GRADIENT} shadow-lg shadow-cyan-500/30`}>
                                         <TicketIcon className="h-7 w-7 text-white"/>
                                     </div>
                                     <div className="text-center">

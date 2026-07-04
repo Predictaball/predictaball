@@ -6,7 +6,7 @@ import {useRouter} from "next/navigation"
 import {Chip, Match, MatchStateEnum} from "@/client"
 import {LocalTime} from "@/app/components/predictions/local-time"
 import {FlagImage} from "@/app/components/predictions/flag-image"
-import {ACTION_PILL_BORDER} from "@/app/util/css-classes"
+import {ACTION_PILL_BORDER, BRAND_GRADIENT} from "@/app/util/css-classes"
 import {PointsPill} from "@/app/components/predictions/chip-impact"
 import {PredictionRatePill} from "@/app/components/points/streak-badges"
 import type {StreakStats} from "@/app/util/streaks"
@@ -162,7 +162,7 @@ const MatchPill = React.forwardRef<HTMLButtonElement, {match: Match; selected: b
             onClick={handleClick}
             className={`snap-center shrink-0 rounded-2xl p-[1.5px] transition-transform ${
                 selected
-                    ? "bg-gradient-to-br from-blue-500 via-cyan-400 to-teal-300 scale-[1.02]"
+                    ? `bg-gradient-to-br ${BRAND_GRADIENT} scale-[1.02]`
                     : needsPrediction
                         ? ACTION_PILL_BORDER
                         : PILL_BORDER

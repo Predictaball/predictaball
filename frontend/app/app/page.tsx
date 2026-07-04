@@ -14,6 +14,7 @@ import ThemeToggle from "@/app/components/theme-toggle";
 import SectionHeading from "@/app/components/section-heading";
 import Wordmark from "@/app/components/wordmark";
 import SurfaceCard from "@/app/components/surface-card";
+import PageShell from "@/app/components/page-shell";
 import CupBanner from "@/app/components/bracket/cup-banner";
 import BracketPreview from "@/app/components/bracket/bracket-preview";
 import {getBracket} from "@/app/api/bracket";
@@ -31,6 +32,7 @@ import {MatchSelectionProvider} from "@/app/components/predictions/match-selecti
 import {getUserChips} from "@/app/components/predictions/get-user-chips";
 import {getUserId} from "@/app/auth/jwt-handler";
 import {computeStreakStats} from "@/app/util/streaks";
+import {BRAND_GRADIENT, CYAN_LINK} from "@/app/util/css-classes";
 
 const Home = async ({searchParams}: {searchParams: Promise<Record<string, string | string[] | undefined>>}) => {
     const resolvedSearchParams = await searchParams
@@ -77,8 +79,7 @@ const Home = async ({searchParams}: {searchParams: Promise<Record<string, string
     const firstMatchId = (firstUnpredictedUpcoming ?? liveMatches[0] ?? upcomingMatches[0])?.matchId
 
     return (
-        <main className="relative min-h-screen bg-slate-50 text-slate-900 dark:bg-gray-900 dark:text-white overflow-x-clip">
-            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(59,130,246,0.08),transparent_55%),radial-gradient(ellipse_at_bottom,rgba(34,197,94,0.05),transparent_60%)] dark:bg-[radial-gradient(ellipse_at_top,rgba(59,130,246,0.15),transparent_55%),radial-gradient(ellipse_at_bottom,rgba(34,197,94,0.10),transparent_60%)]"/>
+        <PageShell>
             <div className="pointer-events-none absolute inset-x-0 bottom-0 h-svh"><PitchPerspective/></div>
 
             <div className="relative w-full max-w-screen-lg mx-auto px-4 sm:px-6 py-6 space-y-10">
@@ -91,7 +92,7 @@ const Home = async ({searchParams}: {searchParams: Promise<Record<string, string
                             {profile?.supportedTeamFlagCode ? (
                                 <FlagImage code={profile.supportedTeamFlagCode} name={profile.supportedTeamName ?? "Profile"} size={32}/>
                             ) : (
-                                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 via-cyan-400 to-teal-300 text-xs font-black text-white">
+                                <span className={`flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br ${BRAND_GRADIENT} text-xs font-black text-white`}>
                                     {initials}
                                 </span>
                             )}
@@ -116,7 +117,7 @@ const Home = async ({searchParams}: {searchParams: Promise<Record<string, string
                             count={liveMatches.length + upcomingMatches.length}
                             action={
                                 <div className="flex items-center gap-3">
-                                    <Link href="/app/standings" className="text-xs font-semibold text-cyan-600 dark:text-cyan-300 hover:text-cyan-700 dark:hover:text-cyan-200 transition-colors">
+                                    <Link href="/app/standings" className={CYAN_LINK}>
                                         Standings →
                                     </Link>
                                     <MatchesHelp/>
@@ -141,7 +142,7 @@ const Home = async ({searchParams}: {searchParams: Promise<Record<string, string
                     <SectionHeading
                         title="Global standing"
                         action={
-                            <Link href="/app/league/global/leaderboard" className="text-xs font-semibold text-cyan-600 dark:text-cyan-300 hover:text-cyan-700 dark:hover:text-cyan-200 transition-colors">
+                            <Link href="/app/league/global/leaderboard" className={CYAN_LINK}>
                                 View all →
                             </Link>
                         }
@@ -155,7 +156,7 @@ const Home = async ({searchParams}: {searchParams: Promise<Record<string, string
                     <SectionHeading
                         title="Country rankings"
                         action={
-                            <Link href="/app/leaderboard/countries" className="text-xs font-semibold text-cyan-600 dark:text-cyan-300 hover:text-cyan-700 dark:hover:text-cyan-200 transition-colors">
+                            <Link href="/app/leaderboard/countries" className={CYAN_LINK}>
                                 View all →
                             </Link>
                         }
@@ -179,7 +180,7 @@ const Home = async ({searchParams}: {searchParams: Promise<Record<string, string
             })()}
 
             <KnockoutChipBonusModal/>
-        </main>
+        </PageShell>
     );
 }
 

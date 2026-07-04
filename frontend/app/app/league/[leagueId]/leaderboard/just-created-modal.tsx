@@ -5,7 +5,7 @@ import { Button, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, useDi
 import { useRouter, useSearchParams } from "next/navigation"
 import toast, { Toaster } from "react-hot-toast"
 import { copyToClipboard } from "@/app/util/clipboard"
-import { BUTTON_CLASS, GHOST_BUTTON_CLASS } from "@/app/util/css-classes"
+import { BRAND_TEXT_GRADIENT_LIGHT, BUTTON_CLASS, EYEBROW_CYAN, GHOST_BUTTON_CLASS, MODAL_TITLE } from "@/app/util/css-classes"
 import { inviteUrl } from "@/app/util/leagues"
 import InviteQRCode from "@/app/components/leaderboard/invite-qr-code"
 
@@ -55,9 +55,9 @@ export default function JustCreatedModal({ leagueId, leagueName }: JustCreatedMo
             <Modal isOpen={isOpen} onClose={handleClose} placement="center" backdrop="blur" size="md">
                 <ModalContent>
                     <ModalHeader className="flex flex-col gap-1">
-                        <span className="text-xs font-semibold tracking-[0.3em] text-cyan-600/90 dark:text-cyan-300/80 uppercase">Your league is ready</span>
-                        <h2 className="text-2xl font-black tracking-tight">
-                            <span className="bg-gradient-to-r from-blue-500 via-cyan-300 to-teal-300 bg-clip-text text-transparent">{leagueName}</span>
+                        <span className={EYEBROW_CYAN}>Your league is ready</span>
+                        <h2 className={MODAL_TITLE}>
+                            <span className={BRAND_TEXT_GRADIENT_LIGHT}>{leagueName}</span>
                         </h2>
                     </ModalHeader>
                     <ModalBody className="space-y-3">

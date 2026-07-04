@@ -7,6 +7,7 @@ import toast, { Toaster } from "react-hot-toast"
 import { getConfigWithAuthHeaderClient } from "@/app/api/client-config-client-side"
 import { UserApi } from "@/client"
 import TeamPicker from "@/app/components/team-picker"
+import PageShell from "@/app/components/page-shell"
 import { BUTTON_CLASS } from "@/app/util/css-classes"
 
 export default function OnboardingPage() {
@@ -41,9 +42,7 @@ function OnboardingContent() {
     }
 
     return (
-        <main className="relative min-h-screen bg-slate-50 text-slate-900 dark:bg-gray-900 dark:text-white overflow-x-hidden">
-            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(59,130,246,0.08),transparent_55%),radial-gradient(ellipse_at_bottom,rgba(34,197,94,0.05),transparent_60%)] dark:bg-[radial-gradient(ellipse_at_top,rgba(59,130,246,0.15),transparent_55%),radial-gradient(ellipse_at_bottom,rgba(34,197,94,0.10),transparent_60%)]"/>
-
+        <PageShell>
             <div className="relative w-full max-w-md mx-auto px-4 sm:px-6 py-16">
                 <Toaster />
                 <h1 className="text-2xl font-black tracking-tight mb-2">One last thing</h1>
@@ -63,6 +62,6 @@ function OnboardingContent() {
                     </Button>
                 </div>
             </div>
-        </main>
+        </PageShell>
     )
 }

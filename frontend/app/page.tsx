@@ -3,6 +3,7 @@ import {Header} from "@/app/components/landing-header";
 import FlagGlobe from "@/app/components/flags/flag-globe-client";
 import HowItWorks from "@/app/components/landing/how-it-works";
 import {PitchPerspective} from "@/app/components/atmosphere";
+import {BRAND_TEXT_GRADIENT_LIGHT} from "@/app/util/css-classes";
 
 export default async function Home(): Promise<React.JSX.Element> {
 
@@ -43,7 +44,7 @@ export default async function Home(): Promise<React.JSX.Element> {
                     <div className="mt-24 relative overflow-hidden rounded-3xl bg-gradient-to-r from-blue-600/20 via-cyan-500/20 to-teal-400/20 p-[1px]">
                         <div className="rounded-3xl bg-white dark:bg-gray-900/90 backdrop-blur-sm px-8 py-14 text-center">
                             <h3 className="font-display text-4xl lg:text-5xl font-black tracking-tight">
-                                Ready to <span className="bg-gradient-to-r from-blue-500 via-cyan-300 to-teal-300 bg-clip-text text-transparent">play</span>?
+                                Ready to <span className={BRAND_TEXT_GRADIENT_LIGHT}>play</span>?
                             </h3>
                             <p className="mt-4 text-lg text-slate-600 dark:text-gray-300">Sign up now and start predicting.</p>
                             <a href="/login" className="mt-8 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-blue-600 via-cyan-400 to-teal-300 px-7 py-3 font-semibold text-gray-900 shadow-lg shadow-cyan-500/20 transition-transform hover:scale-105">

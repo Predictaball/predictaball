@@ -1,6 +1,7 @@
 import React from "react"
 import Link from "next/link"
 import {Header} from "@/app/components/landing-header"
+import {BRAND_TEXT_GRADIENT_LIGHT, CARD_TITLE, LINK_UNDERLINE} from "@/app/util/css-classes"
 
 export const metadata = {
     title: "Cookie Policy | Predictaball.live",
@@ -17,7 +18,7 @@ export default function CookiePolicy(): React.JSX.Element {
             <section className="flex-1 px-6 lg:px-10 pb-24">
                 <div className="max-w-3xl mx-auto">
                     <h1 className="text-4xl lg:text-5xl font-black tracking-tight mb-2">
-                        <span className="bg-gradient-to-r from-blue-500 via-cyan-300 to-teal-300 bg-clip-text text-transparent">
+                        <span className={BRAND_TEXT_GRADIENT_LIGHT}>
                             Cookie Policy
                         </span>
                     </h1>
@@ -25,14 +26,14 @@ export default function CookiePolicy(): React.JSX.Element {
 
                     <div className="space-y-8 text-slate-700 dark:text-gray-300 leading-relaxed">
                         <section>
-                            <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-3">What are cookies?</h2>
+                            <h2 className={CARD_TITLE}>What are cookies?</h2>
                             <p>
                                 Cookies are small text files that websites place on your device. They are widely used to make websites work, or work more efficiently, and to provide information to the site owner.
                             </p>
                         </section>
 
                         <section>
-                            <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-3">Our approach</h2>
+                            <h2 className={CARD_TITLE}>Our approach</h2>
                             <p>
                                 Predictaball.live only uses cookies that are <strong>strictly necessary</strong> for the site to function. Under the UK Privacy and Electronic Communications Regulations (PECR), strictly necessary cookies do not require your consent, but we still want to be transparent about which ones we use and why.
                             </p>
@@ -42,7 +43,7 @@ export default function CookiePolicy(): React.JSX.Element {
                         </section>
 
                         <section>
-                            <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-3">Cookies we set</h2>
+                            <h2 className={CARD_TITLE}>Cookies we set</h2>
                             <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-gray-700">
                                 <table className="w-full text-sm">
                                     <thead className="bg-slate-100 dark:bg-gray-800/60">
@@ -77,16 +78,16 @@ export default function CookiePolicy(): React.JSX.Element {
                         </section>
 
                         <section>
-                            <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-3">Managing cookies</h2>
+                            <h2 className={CARD_TITLE}>Managing cookies</h2>
                             <p>
                                 Because we only use strictly necessary cookies, blocking them will prevent you from signing in or using the site. You can clear or block cookies at any time through your browser settings — see your browser&apos;s help pages for details.
                             </p>
                         </section>
 
                         <section>
-                            <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-3">Contact</h2>
+                            <h2 className={CARD_TITLE}>Contact</h2>
                             <p>
-                                Questions about this policy? See our <Link href="/privacy-policy" className="text-cyan-600 dark:text-cyan-300 underline">Privacy Policy</Link> or get in touch through the email address listed there.
+                                Questions about this policy? See our <Link href="/privacy-policy" className={LINK_UNDERLINE}>Privacy Policy</Link> or get in touch through the email address listed there.
                             </p>
                         </section>
                     </div>

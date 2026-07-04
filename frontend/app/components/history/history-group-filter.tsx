@@ -5,7 +5,7 @@ import {GroupStandingRow, Match} from "@/client"
 import HistoryMatchCard from "@/app/components/history/history-match-card"
 import PredictionComparisonTable from "@/app/components/history/prediction-comparison-table"
 import {KNOCKOUT_GROUP} from "@/app/util/group-matches"
-import {SECTION_EYEBROW} from "@/app/util/css-classes"
+import {BRAND_GRADIENT, SECTION_EYEBROW} from "@/app/util/css-classes"
 
 interface HistoryGroupFilterProps {
     matchesByGroup: Record<string, Match[]>
@@ -35,7 +35,7 @@ export default function HistoryGroupFilter({matchesByGroup, groupOrder, initialG
                                 aria-pressed={isActive}
                                 className={`flex h-9 items-center justify-center rounded-full px-3 text-sm font-bold transition-colors ${
                                     isActive
-                                        ? "bg-gradient-to-br from-blue-500 via-cyan-400 to-teal-300 text-white shadow-lg shadow-cyan-500/30"
+                                        ? `bg-gradient-to-br ${BRAND_GRADIENT} text-white shadow-lg shadow-cyan-500/30`
                                         : "bg-slate-900/5 text-slate-600 hover:bg-slate-900/10 dark:bg-white/5 dark:text-gray-300 dark:hover:bg-white/10"
                                 }`}
                             >

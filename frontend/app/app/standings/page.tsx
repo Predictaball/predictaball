@@ -8,6 +8,8 @@ import PageHeader from "@/app/components/page-header"
 import StandingsGroups from "@/app/components/standings/standings-groups"
 import StandingsRefresher from "@/app/components/standings/standings-refresher"
 import ThirdPlacedTable from "@/app/components/standings/third-placed-table"
+import PageShell from "@/app/components/page-shell"
+import { BRAND_GRADIENT, SECTION_EYEBROW, TEXT_PRIMARY } from "@/app/util/css-classes"
 import { buildTeamGroupMap } from "@/app/util/group-matches"
 import { ListMatchesFilterTypeEnum, Match, MatchApi, MatchRoundEnum, Standings, StandingsApi } from "@/client"
 import React from "react"
@@ -74,8 +76,7 @@ export default async function StandingsPage(
     const knockoutMatches = bracket?.matches ?? []
 
     return (
-        <main className="relative min-h-svh bg-slate-50 text-slate-900 dark:bg-gray-900 dark:text-white overflow-x-clip">
-            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(59,130,246,0.08),transparent_55%),radial-gradient(ellipse_at_bottom,rgba(34,197,94,0.05),transparent_60%)] dark:bg-[radial-gradient(ellipse_at_top,rgba(59,130,246,0.15),transparent_55%),radial-gradient(ellipse_at_bottom,rgba(34,197,94,0.10),transparent_60%)]"/>
+        <PageShell svh>
             <div className="pointer-events-none absolute inset-x-0 top-0 h-svh"><PitchPerspective/></div>
 
             {hasLiveMatch && <StandingsRefresher/>}
@@ -86,8 +87,8 @@ export default async function StandingsPage(
                 {knockoutMatches.length > 0 && (
                     <section className="space-y-4">
                         <div className="flex flex-col items-center text-center">
-                            <p className="text-xs font-bold uppercase tracking-[0.25em] text-slate-500 dark:text-gray-400">Knockouts</p>
-                            <h2 className="mt-0.5 text-2xl font-black tracking-tight text-slate-900 dark:text-white">Bracket</h2>
+                            <p className={SECTION_EYEBROW}>Knockouts</p>
+                            <h2 className={`mt-0.5 text-2xl font-black tracking-tight ${TEXT_PRIMARY}`}>Bracket</h2>
                             <p className="mt-1 max-w-md text-sm text-slate-500 dark:text-gray-400">
                                 The road to the final, filled in as results come in.
                             </p>
@@ -97,11 +98,11 @@ export default async function StandingsPage(
                 )}
 
                 <div className="flex flex-col items-center text-center">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 via-cyan-400 to-teal-300 shadow-lg shadow-cyan-500/30">
+                    <div className={`flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br ${BRAND_GRADIENT} shadow-lg shadow-cyan-500/30`}>
                         <TableIcon className="h-6 w-6 text-white"/>
                     </div>
-                    <p className="mt-2 text-xs font-bold uppercase tracking-[0.25em] text-slate-500 dark:text-gray-400">Group Stage</p>
-                    <h1 className="mt-0.5 text-3xl font-black tracking-tight text-slate-900 dark:text-white">Standings</h1>
+                    <p className={`mt-2 ${SECTION_EYEBROW}`}>Group Stage</p>
+                    <h1 className={`mt-0.5 text-3xl font-black tracking-tight ${TEXT_PRIMARY}`}>Standings</h1>
                     <p className="mt-2 max-w-md text-sm text-slate-500 dark:text-gray-400">
                         Live group tables, updated as scores come in.
                         {hasLiveMatch && (
@@ -123,7 +124,7 @@ export default async function StandingsPage(
 
                         <section className="space-y-4">
                             <div className="flex flex-col items-center text-center">
-                                <h2 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white">Third-placed teams</h2>
+                                <h2 className={`text-2xl font-black tracking-tight ${TEXT_PRIMARY}`}>Third-placed teams</h2>
                                 <p className="mt-1 max-w-md text-sm text-slate-500 dark:text-gray-400">
                                     Ranked across all groups — the eight best third-placed teams join the round of 32.
                                 </p>
@@ -140,6 +141,6 @@ export default async function StandingsPage(
                     <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-amber-500"/>Best-third contention</span>
                 </div>
             </div>
-        </main>
+        </PageShell>
     )
 }

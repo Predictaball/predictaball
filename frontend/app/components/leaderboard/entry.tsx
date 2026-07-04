@@ -4,7 +4,7 @@ import React, {useState} from "react"
 import {LeaderboardInner, LeaderboardInnerMovementEnum} from "@/client"
 import FormBadge from "@/app/components/leaderboard/form-badge"
 import {FlagImage} from "@/app/components/predictions/flag-image"
-import {NEGATIVE_CHIP, NEUTRAL_CHIP, PODIUM_GLOW, POSITIVE_CHIP} from "@/app/util/css-classes"
+import {BRAND_GRADIENT, NEGATIVE_CHIP, NEUTRAL_CHIP, PODIUM_GLOW, POSITIVE_CHIP} from "@/app/util/css-classes"
 
 interface EntryProps {
     entry: LeaderboardInner
@@ -33,7 +33,7 @@ export default function Entry(props: EntryProps): React.JSX.Element {
             onClick={() => setIsLoading(!props.disablePulse)}
             className={`group relative w-full max-w-2xl rounded-2xl p-[1px] mb-2.5 transition-transform ${
                 isUser
-                    ? "bg-gradient-to-r from-blue-500 via-cyan-400 to-teal-300"
+                    ? `bg-gradient-to-r ${BRAND_GRADIENT}`
                     : isPodium
                         ? podiumGlow
                         : "bg-slate-900/10 dark:bg-white/10"

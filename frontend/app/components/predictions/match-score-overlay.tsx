@@ -2,6 +2,7 @@ import React from "react"
 import {Match, MatchStateEnum} from "@/client"
 import {FlagImage} from "@/app/components/predictions/flag-image"
 import {COUNTRY_CODES} from "@/app/util/teams"
+import {LIVE_DOT} from "@/app/util/css-classes"
 
 function teamLabel(team: string): string {
     return COUNTRY_CODES[team.toLowerCase()] ?? team
@@ -22,7 +23,7 @@ export function MatchScoreOverlay({match}: {match: Match}): React.JSX.Element {
         <div className="flex flex-col items-center gap-1.5">
             {label && (
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-white/80 border border-slate-200 text-slate-500 dark:bg-black/50 dark:border-white/10 dark:text-gray-400 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.2em] backdrop-blur">
-                    {isLive && <span className="h-1.5 w-1.5 rounded-full bg-red-500 animate-pulse"/>}
+                    {isLive && <span className={LIVE_DOT}/>}
                     {label}
                 </span>
             )}

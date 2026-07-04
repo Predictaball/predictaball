@@ -7,7 +7,8 @@ import React from "react";
 import {getUserForm} from "@/app/components/leaderboard/get-user-form";
 import {FlagImage} from "@/app/components/predictions/flag-image";
 import FormBadge from "@/app/components/leaderboard/form-badge";
-import {SECTION_EYEBROW} from "@/app/util/css-classes";
+import {BRAND_GRADIENT, SECTION_EYEBROW, TEXT_PRIMARY} from "@/app/util/css-classes";
+import PageShell from "@/app/components/page-shell";
 import StreakBadges from "@/app/components/points/streak-badges";
 import {computeStreakStats} from "@/app/util/streaks";
 import {bucketMatchesByGroupLetter, groupMatchesByDay, KNOCKOUT_GROUP} from "@/app/util/group-matches";
@@ -85,9 +86,7 @@ export default async function Home({
     const totalPoints = user ? user.fixedPoints + user.livePoints : undefined
 
     return (
-        <main className="relative min-h-svh bg-slate-50 text-slate-900 dark:bg-gray-900 dark:text-white overflow-x-clip">
-            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(59,130,246,0.08),transparent_55%),radial-gradient(ellipse_at_bottom,rgba(34,197,94,0.05),transparent_60%)] dark:bg-[radial-gradient(ellipse_at_top,rgba(59,130,246,0.15),transparent_55%),radial-gradient(ellipse_at_bottom,rgba(34,197,94,0.10),transparent_60%)]"/>
-
+        <PageShell svh>
             <div className="relative w-full max-w-3xl mx-auto px-4 sm:px-6 py-6 space-y-8">
                 <PageHeader/>
 
@@ -96,12 +95,12 @@ export default async function Home({
                         {user?.supportedTeamFlagCode ? (
                             <FlagImage code={user.supportedTeamFlagCode} name={user.supportedTeamName ?? fullName} size={76}/>
                         ) : (
-                            <div className="flex h-[76px] w-[76px] shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 via-cyan-400 to-teal-300 text-2xl font-black text-white shadow-lg shadow-cyan-500/30">
+                            <div className={`flex h-[76px] w-[76px] shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${BRAND_GRADIENT} text-2xl font-black text-white shadow-lg shadow-cyan-500/30`}>
                                 {initials.toUpperCase()}
                             </div>
                         )}
                         <div className="min-w-0">
-                            <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white truncate">{fullName}</h1>
+                            <h1 className={`text-3xl font-black tracking-tight ${TEXT_PRIMARY} truncate`}>{fullName}</h1>
                             {user?.supportedTeamName && (
                                 <p className="mt-1 text-sm text-slate-500 dark:text-gray-400">
                                     Supporting <span className="font-semibold text-slate-700 dark:text-gray-200">{user.supportedTeamName}</span>
@@ -192,6 +191,6 @@ export default async function Home({
                     )}
                 </section>
             </div>
-        </main>
+        </PageShell>
     )
 }

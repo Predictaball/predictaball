@@ -11,6 +11,8 @@ import { ScoringStreakPill } from "@/app/components/points/streak-badges";
 import { StreakStats } from "@/app/util/streaks";
 import FormBadge from "@/app/components/leaderboard/form-badge";
 import { getUserForm } from "@/app/components/leaderboard/get-user-form";
+import SurfaceCard from "@/app/components/surface-card";
+import { BRAND_TEXT_GRADIENT, LIVE_DOT, TEXT_PRIMARY } from "@/app/util/css-classes";
 
 interface HeadlineProps {
     hasLiveMatch: boolean
@@ -71,31 +73,30 @@ export default async function Headline({ hasLiveMatch, supportedTeamId, streaks 
     const countryNeighbours = country ? countryRankings.slice(Math.max(0, countryIndex - 1), countryIndex + 2) : []
 
     return (
-        <div className="relative rounded-3xl bg-gradient-to-br from-slate-900/15 to-slate-900/5 dark:from-white/15 dark:to-white/5 p-[1px] shadow-2xl shadow-cyan-500/10">
-            <div className="rounded-3xl bg-white dark:bg-gray-900/80 backdrop-blur-sm px-6 py-7 sm:py-10 text-center">
-                {/* The points total stays dead-centre; the live pill rides alongside
-                    it on the right without nudging the number off-centre. */}
-                <div className="relative">
-                    <div className="text-5xl sm:text-7xl font-black leading-none tracking-tight">
-                        <span className="bg-gradient-to-r from-blue-500 via-cyan-400 to-teal-300 bg-clip-text text-transparent">
-                            <CountUpWrapped end={total} />
-                        </span>
-                    </div>
-                    {hasLiveMatch && (
-                        <span className="absolute right-0 top-1/2 -translate-y-1/2 inline-flex items-center gap-2 rounded-full bg-slate-900/5 dark:bg-white/5 border border-slate-900/10 dark:border-white/10 px-3.5 py-1.5 text-sm">
-                            <span className="h-1.5 w-1.5 rounded-full bg-red-500 animate-pulse"/>
-                            <span className="font-bold text-slate-900 dark:text-white tabular-nums">{live}</span>
-                            <span className="text-slate-500 dark:text-gray-400 text-[11px] uppercase tracking-[0.15em]">live</span>
-                        </span>
-                    )}
-                </div>
-                <div className="mt-2 text-[11px] sm:text-xs font-bold uppercase tracking-[0.25em] text-slate-500 dark:text-gray-400">points</div>
-                <div className="mt-5 flex items-center justify-center gap-3 flex-wrap text-sm">
-                    <span className="inline-flex items-center gap-2 rounded-full bg-slate-900/5 dark:bg-white/5 border border-slate-900/10 dark:border-white/10 px-3.5 py-1.5">
-                        <span className="h-1.5 w-1.5 rounded-full bg-blue-400"/>
-                        <span className="font-bold text-slate-900 dark:text-white tabular-nums">#{position ?? "—"}</span>
-                        <span className="text-slate-500 dark:text-gray-400 text-[11px] uppercase tracking-[0.15em]">global</span>
+        <SurfaceCard solid innerClassName="backdrop-blur-sm px-6 py-7 sm:py-10 text-center">
+            {/* The points total stays dead-centre; the live pill rides alongside
+                it on the right without nudging the number off-centre. */}
+            <div className="relative">
+                <div className="text-5xl sm:text-7xl font-black leading-none tracking-tight">
+                    <span className={BRAND_TEXT_GRADIENT}>
+                        <CountUpWrapped end={total} />
                     </span>
+                </div>
+                {hasLiveMatch && (
+                    <span className="absolute right-0 top-1/2 -translate-y-1/2 inline-flex items-center gap-2 rounded-full bg-slate-900/5 dark:bg-white/5 border border-slate-900/10 dark:border-white/10 px-3.5 py-1.5 text-sm">
+                        <span className={LIVE_DOT}/>
+                        <span className={`font-bold ${TEXT_PRIMARY} tabular-nums`}>{live}</span>
+                        <span className="text-slate-500 dark:text-gray-400 text-[11px] uppercase tracking-[0.15em]">live</span>
+                    </span>
+                )}
+            </div>
+            <div className="mt-2 text-[11px] sm:text-xs font-bold uppercase tracking-[0.25em] text-slate-500 dark:text-gray-400">points</div>
+            <div className="mt-5 flex items-center justify-center gap-3 flex-wrap text-sm">
+                <span className="inline-flex items-center gap-2 rounded-full bg-slate-900/5 dark:bg-white/5 border border-slate-900/10 dark:border-white/10 px-3.5 py-1.5">
+                    <span className="h-1.5 w-1.5 rounded-full bg-blue-400"/>
+                    <span className={`font-bold ${TEXT_PRIMARY} tabular-nums`}>#{position ?? "—"}</span>
+                    <span className="text-slate-500 dark:text-gray-400 text-[11px] uppercase tracking-[0.15em]">global</span>
+                </span>
                     {country && (
                         <Link
                             href="/app/leaderboard/countries"
@@ -123,7 +124,6 @@ export default async function Headline({ hasLiveMatch, supportedTeamId, streaks 
                         </span>
                     )}
                 </div>
-            </div>
-        </div>
+        </SurfaceCard>
     )
 }

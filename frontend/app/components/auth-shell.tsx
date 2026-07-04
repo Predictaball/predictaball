@@ -1,6 +1,7 @@
 import React from "react"
 import Link from "next/link"
 import FlagGlobeClient from "@/app/components/flags/flag-globe-client"
+import Wordmark from "@/app/components/wordmark"
 
 interface AuthShellProps {
     title: string
@@ -24,15 +25,7 @@ export default function AuthShell({title, children}: AuthShellProps): React.JSX.
             </div>
 
             <div className="relative flex flex-col items-center justify-center px-6 py-12 min-h-svh">
-                <Link href="/" className="group flex items-center mb-8">
-                    <span className="font-display flex items-baseline font-black tracking-tight text-lg">
-                        <span className="bg-gradient-to-r from-blue-500 via-cyan-300 to-teal-300 bg-clip-text text-transparent">
-                            predicta
-                        </span>
-                        <span className="text-slate-900 dark:text-white">ball</span>
-                        <span className="ml-0.5 text-xs font-medium tracking-[0.2em] text-slate-500 dark:text-gray-400">.LIVE</span>
-                    </span>
-                </Link>
+                <Wordmark className="group mb-8 font-display"/>
 
                 <div className="relative w-full max-w-md rounded-2xl bg-gradient-to-br from-slate-900/15 to-slate-900/5 dark:from-white/15 dark:to-white/5 p-[1px]">
                     <div className="rounded-2xl bg-white dark:bg-gray-900/80 backdrop-blur-xl p-6 sm:p-8">

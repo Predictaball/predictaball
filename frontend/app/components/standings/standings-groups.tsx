@@ -6,6 +6,7 @@ import {GroupStanding} from "@/client"
 import GroupTable from "@/app/components/standings/group-table"
 import type {GroupMatch} from "@/app/components/flags/group-venue-map"
 import GroupMatchList from "@/app/components/standings/group-match-list"
+import {BRAND_GRADIENT} from "@/app/util/css-classes"
 
 interface StandingsGroupsProps {
     groups: GroupStanding[]
@@ -46,7 +47,7 @@ export default function StandingsGroups({groups, matchesByGroup, initialGroup}: 
                             aria-pressed={isActive}
                             className={`flex h-9 min-w-9 items-center justify-center rounded-full px-3 text-sm font-bold transition-colors ${
                                 isActive
-                                    ? "bg-gradient-to-br from-blue-500 via-cyan-400 to-teal-300 text-white shadow-lg shadow-cyan-500/30"
+                                    ? `bg-gradient-to-br ${BRAND_GRADIENT} text-white shadow-lg shadow-cyan-500/30`
                                     : "bg-slate-900/5 text-slate-600 hover:bg-slate-900/10 dark:bg-white/5 dark:text-gray-300 dark:hover:bg-white/10"
                             }`}
                         >

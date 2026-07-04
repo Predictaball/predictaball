@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react"
 import { BracketLeaderboardRow } from "@/client"
 import Pagination from "@/app/components/pagination"
 import useWindowDimensions from "@/app/hooks/use-window-dimension"
-import { PODIUM_GLOW } from "@/app/util/css-classes"
+import { BRAND_GRADIENT, PODIUM_GLOW } from "@/app/util/css-classes"
 
 interface CupLeaderboardProps {
     rows: BracketLeaderboardRow[]
@@ -20,7 +20,7 @@ function CupEntry({ row, isYou }: { row: BracketLeaderboardRow; isYou: boolean }
         <div
             className={`relative w-full max-w-2xl rounded-2xl p-[1px] mb-2.5 ${
                 isYou
-                    ? "bg-gradient-to-r from-blue-500 via-cyan-400 to-teal-300"
+                    ? `bg-gradient-to-r ${BRAND_GRADIENT}`
                     : isPodium
                         ? podiumGlow
                         : "bg-slate-900/10 dark:bg-white/10"

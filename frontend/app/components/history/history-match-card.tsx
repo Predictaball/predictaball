@@ -4,6 +4,7 @@ import {Match, MatchRoundEnum, MatchStateEnum} from "@/client"
 import {FlagImage} from "@/app/components/predictions/flag-image"
 import {LocalTime} from "@/app/components/predictions/local-time"
 import {ChipBadge, chipDisplay, NudgeScore, PointsPill} from "@/app/components/predictions/chip-impact"
+import {LIVE_DOT} from "@/app/util/css-classes"
 
 const ROUND_LABEL: Record<MatchRoundEnum, string> = {
     GROUP_STAGE: "Group Stage",
@@ -32,7 +33,7 @@ export default function HistoryMatchCard({match}: {match: Match}): React.JSX.Ele
                     <span className="font-bold uppercase tracking-[0.15em] text-slate-500 dark:text-gray-400">
                         {live ? (
                             <span className="inline-flex items-center gap-1.5 text-red-500">
-                                <span className="h-1.5 w-1.5 rounded-full bg-red-500 animate-pulse"/> Live
+                                <span className={LIVE_DOT}/> Live
                             </span>
                         ) : ROUND_LABEL[match.round]}
                     </span>

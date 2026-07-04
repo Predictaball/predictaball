@@ -6,6 +6,7 @@ import {Match, PredictionWithUser} from "@/client";
 import {FlagImage} from "@/app/components/predictions/flag-image";
 import {generateHistoryPageLinkForUser} from "@/app/app/user/[userId]/history/user-link-generator";
 import {ChipBadge, chipDisplay, NudgeScore} from "@/app/components/predictions/chip-impact";
+import {BRAND_GRADIENT} from "@/app/util/css-classes";
 
 export default function PredictionWithLink(props: {
     predictionWithUser: PredictionWithUser
@@ -23,7 +24,7 @@ export default function PredictionWithLink(props: {
             <div
                 className={`group relative w-full rounded-2xl p-[1px] mb-2.5 transition-transform hover:scale-[1.01] ${
                     isUser
-                        ? "bg-gradient-to-r from-blue-500 via-cyan-400 to-teal-300"
+                        ? `bg-gradient-to-r ${BRAND_GRADIENT}`
                         : isPodium
                             ? "bg-gradient-to-r from-slate-900/20 to-slate-900/10 dark:from-white/25 dark:to-white/10"
                             : "bg-slate-900/10 dark:bg-white/10"
