@@ -2,7 +2,7 @@
 // Single source of truth for the palette. To re-theme, change values here.
 //
 // Roles (kept distinct so no colour does double duty):
-//   brand     = blue → indigo → violet  (gradient + indigo for interactive/info)
+//   brand     = blue → cyan → teal  (gradient + cyan for interactive/info)
 //   positive  = emerald             (improved / gained)
 //   negative  = rose                (worsened / lost)
 //   live      = red                 (a match in play)
@@ -10,21 +10,16 @@
 //   warning   = amber
 // Green is intentionally NOT part of the brand gradient so it can mean
 // "positive" everywhere without ambiguity.
-//
-// NOTE: the `cyan-*` / `teal-*` utilities below (and throughout the app) are
-// re-pointed at indigo / violet in tailwind.config.ts, so they render as the
-// deeper brand band rather than literal cyan. New code can use `indigo-*` /
-// `violet-*` directly — they resolve to the same values.
 
-// Brand gradient stops — blue → indigo → violet (cool, green-free, deliberate).
+// Brand gradient stops (cool, green-free).
 export const BRAND_GRADIENT = "from-blue-500 via-cyan-400 to-teal-300"
 export const BRAND_TEXT_GRADIENT = `bg-gradient-to-r ${BRAND_GRADIENT} bg-clip-text text-transparent`
 
-export const BUTTON_CLASS = `bg-gradient-to-r ${BRAND_GRADIENT} text-white font-semibold shadow-lg shadow-indigo-500/25 transition duration-200 hover:brightness-110`
+export const BUTTON_CLASS = `bg-gradient-to-r ${BRAND_GRADIENT} text-gray-900 font-semibold shadow-lg shadow-cyan-500/20 transition-transform hover:scale-[1.02]`
 
 export const GHOST_BUTTON_CLASS = "bg-slate-900/5 border border-slate-900/10 text-slate-700 hover:bg-slate-900/10 hover:border-cyan-500/40 dark:bg-white/5 dark:border-white/10 dark:text-gray-200 dark:hover:bg-white/10 dark:hover:border-cyan-400/40 transition-colors"
 
-// Interactive / info accent (indigo — the `cyan-*` here renders as indigo).
+// Interactive / info accent (cyan).
 export const BRAND_GHOST_BUTTON_CLASS = "bg-cyan-500/10 border border-cyan-500/20 text-cyan-600 hover:bg-cyan-500/20 hover:border-cyan-500/40 dark:bg-cyan-400/10 dark:border-cyan-400/20 dark:text-cyan-300 dark:hover:bg-cyan-400/20 dark:hover:border-cyan-400/40 transition-colors"
 
 // Warm "action needed" accent (amber) — pops against the cool UI for calls-to-act.
@@ -35,7 +30,7 @@ export const ACTION_DOT = "bg-amber-500 dark:bg-amber-400"
 export const ACTION_PILL_BORDER = "bg-amber-500/40 hover:bg-amber-500/60 dark:bg-amber-400/40 dark:hover:bg-amber-400/60"
 // Primary call-to-action — solid warm amber/orange that pops against the cool
 // brand UI. Use for the single most important action on a surface.
-export const ACTION_BUTTON_CLASS = "bg-gradient-to-r from-amber-400 to-orange-500 text-gray-950 font-bold shadow-lg shadow-orange-500/25 transition duration-200 hover:brightness-105"
+export const ACTION_BUTTON_CLASS = "bg-gradient-to-r from-amber-400 to-orange-500 text-gray-950 font-bold shadow-lg shadow-orange-500/25 transition-transform hover:scale-[1.01]"
 
 // Podium glows for the top three leaderboard places. Each value is the
 // gradient "border" (revealed by the row's 1px padding) plus a coloured glow
