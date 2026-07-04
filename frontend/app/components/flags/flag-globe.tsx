@@ -7,13 +7,11 @@ import * as THREE from "three"
 import {useTheme} from "next-themes"
 import {COUNTRY_COORDS} from "./country-coords"
 import {WORLD_CUP_2026_STADIUMS} from "./stadium-coords"
-import {GLOBE_RADIUS, latLngToVec3, buildContinentGeometry, orientationForPosition, cropSquare} from "./globe-utils"
+import {GLOBE_RADIUS, latLngToVec3, orientationForPosition, cropSquare, mirrorHorizontally} from "./globe-utils"
 import {useFlagTextures} from "./flag-textures"
+import {Continents, FlagDisc, GlobeLights, GlobeSphere, useCoarsePointer} from "./globe-primitives"
 
 const FLAG_RADIUS = 1.92
-const FLAG_DISC_RADIUS = 0.09
-const FLAG_BORDER_WIDTH = 0.012
-const FLAG_PLACEHOLDER_COLOR = "#334155"
 const MIN_ANGLE = 0.11
 const RELAX_ITERATIONS = 220
 
@@ -67,16 +65,6 @@ function greatCircleArc(aDir: THREE.Vector3, bDir: THREE.Vector3, steps = 48, li
     return points
 }
 
-function mirrorHorizontally(source: THREE.Texture): THREE.Texture {
-    const tex = source.clone()
-    tex.wrapS = THREE.ClampToEdgeWrapping
-    tex.wrapT = THREE.ClampToEdgeWrapping
-    tex.offset.set(source.offset.x + source.repeat.x, source.offset.y)
-    tex.repeat.set(-source.repeat.x, source.repeat.y)
-    tex.needsUpdate = true
-    return tex
-}
-
 function Matches({matches}: {matches: Match[]}) {
     const arcs = useMemo(() =>
         matches.flatMap(m => {
@@ -112,15 +100,6 @@ function Stadiums() {
                 </mesh>
             ))}
         </>
-    )
-}
-
-function Continents() {
-    const geometry = useMemo(() => buildContinentGeometry(GLOBE_RADIUS + 0.008), [])
-    return (
-        <lineSegments geometry={geometry}>
-            <lineBasicMaterial color="#22d3ee" transparent opacity={0.55}/>
-        </lineSegments>
     )
 }
 
@@ -266,36 +245,7 @@ function Flags() {
     return (
         <>
             {markers.map(({code, anchorPos, flagPos, rotation, frontTexture, backTexture}) => (
-                <group key={code}>
-                    <mesh position={anchorPos}>
-                        <sphereGeometry args={[0.012, 10, 10]}/>
-                        <meshBasicMaterial color="#22d3ee"/>
-                    </mesh>
-                    <Line points={[anchorPos, flagPos]} color="#22d3ee" lineWidth={0.8} transparent opacity={0.45}/>
-                    <group position={flagPos} rotation={rotation}>
-                        <mesh>
-                            <circleGeometry args={[FLAG_DISC_RADIUS + FLAG_BORDER_WIDTH, 48]}/>
-                            <meshBasicMaterial color="#ffffff" side={THREE.DoubleSide}/>
-                        </mesh>
-                        {frontTexture && backTexture ? (
-                            <>
-                                <mesh position={[0, 0, 0.001]}>
-                                    <circleGeometry args={[FLAG_DISC_RADIUS, 48]}/>
-                                    <meshBasicMaterial map={frontTexture} toneMapped={false} side={THREE.FrontSide}/>
-                                </mesh>
-                                <mesh position={[0, 0, -0.001]} rotation={[0, Math.PI, 0]}>
-                                    <circleGeometry args={[FLAG_DISC_RADIUS, 48]}/>
-                                    <meshBasicMaterial map={backTexture} toneMapped={false} side={THREE.FrontSide}/>
-                                </mesh>
-                            </>
-                        ) : (
-                            <mesh position={[0, 0, 0.001]}>
-                                <circleGeometry args={[FLAG_DISC_RADIUS, 48]}/>
-                                <meshBasicMaterial color={FLAG_PLACEHOLDER_COLOR} side={THREE.DoubleSide}/>
-                            </mesh>
-                        )}
-                    </group>
-                </group>
+                <FlagDisc key={code} anchorPos={anchorPos} flagPos={flagPos} rotation={rotation} frontTexture={frontTexture} backTexture={backTexture}/>
             ))}
         </>
     )
@@ -309,15 +259,8 @@ function Globe({matches}: {matches: Match[]}) {
 
     return (
         <group ref={groupRef}>
-            <mesh>
-                <sphereGeometry args={[GLOBE_RADIUS, 64, 64]}/>
-                <meshStandardMaterial color="#1e3a5f" roughness={0.75} metalness={0.15}/>
-            </mesh>
-            <mesh>
-                <sphereGeometry args={[GLOBE_RADIUS + 0.003, 48, 48]}/>
-                <meshBasicMaterial color="#22d3ee" wireframe transparent opacity={0.08}/>
-            </mesh>
-            <Continents/>
+            <GlobeSphere/>
+            <Continents opacity={0.55}/>
             <Stadiums/>
             <Matches matches={matches}/>
             <React.Suspense fallback={null}>
@@ -334,20 +277,8 @@ interface FlagGlobeProps {
     interactive?: boolean
 }
 
-function useCoarsePointer(): boolean {
-    const [coarse, setCoarse] = useState(false)
-    useEffect(() => {
-        const mq = window.matchMedia("(pointer: coarse)")
-        const update = () => setCoarse(mq.matches)
-        update()
-        mq.addEventListener("change", update)
-        return () => mq.removeEventListener("change", update)
-    }, [])
-    return coarse
-}
-
 export default function FlagGlobe({matches = DEFAULT_MATCHES, interactive = true}: FlagGlobeProps = {}): React.JSX.Element {
-    const coarsePointer = useCoarsePointer()
+    const coarsePointer = useCoarsePointer(false)
     const effectiveInteractive = interactive && !coarsePointer
     const {resolvedTheme} = useTheme()
     const [mounted, setMounted] = useState(false)
@@ -356,9 +287,7 @@ export default function FlagGlobe({matches = DEFAULT_MATCHES, interactive = true
     return (
         <div className={`relative h-full w-full ${effectiveInteractive ? "" : "pointer-events-none"}`}>
             <Canvas camera={{position: [0, 0, 5.2], fov: 45}} gl={{antialias: true, alpha: true}} dpr={[1, 1.5]}>
-                <ambientLight intensity={0.7}/>
-                <directionalLight position={[5, 3, 5]} intensity={1.1}/>
-                <pointLight position={[-5, -3, -5]} intensity={0.4} color="#22d3ee"/>
+                <GlobeLights ambientIntensity={0.7}/>
                 {showStars && <StarField/>}
                 <Globe matches={matches}/>
                 {effectiveInteractive && (

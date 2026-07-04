@@ -2,6 +2,7 @@ import { getBracket } from "@/app/api/bracket"
 import { getConfigWithAuthHeader } from "@/app/api/client-config"
 import { PitchPerspective } from "@/app/components/atmosphere"
 import BracketTree from "@/app/components/bracket/bracket-tree"
+import EmptyState from "@/app/components/empty-state"
 import type { GroupMatch } from "@/app/components/flags/group-venue-map"
 import PageHeader from "@/app/components/page-header"
 import StandingsGroups from "@/app/components/standings/standings-groups"
@@ -113,9 +114,9 @@ export default async function StandingsPage(
                 </div>
 
                 {standings.groups.length === 0 ? (
-                    <div className="mx-auto max-w-md rounded-2xl bg-white border border-slate-200 dark:bg-white/5 dark:border-white/10 px-4 py-8 text-center text-sm text-slate-500 dark:text-gray-400">
+                    <EmptyState className="mx-auto max-w-md" contentClassName="px-4 py-8 text-sm text-slate-500 dark:text-gray-400">
                         Standings will appear here once the group stage gets under way.
-                    </div>
+                    </EmptyState>
                 ) : (
                     <>
                         <StandingsGroups groups={standings.groups} matchesByGroup={matchesByGroup} initialGroup={initialGroup}/>

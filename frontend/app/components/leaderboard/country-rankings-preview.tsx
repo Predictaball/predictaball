@@ -3,6 +3,7 @@ import {CountryLeaderboardInner, LeagueApi} from "@/client";
 import {getConfigWithAuthHeader} from "@/app/api/client-config";
 import {SHARED_DATA_REVALIDATE_SECONDS} from "@/app/api/constants";
 import CountryRankingEntry from "@/app/components/leaderboard/country-ranking-entry";
+import EmptyState from "@/app/components/empty-state";
 
 interface CountryRankingsPreviewProps {
     limit?: number
@@ -15,11 +16,7 @@ export default async function CountryRankingsPreview({limit = 5}: CountryRanking
         .catch(() => [])
 
     if (rankings.length === 0) {
-        return (
-            <div className="rounded-2xl bg-white border border-slate-200 dark:bg-white/5 dark:border-white/10 px-4 py-6 text-center text-sm text-slate-500 dark:text-gray-400">
-                No country scores yet — check back once matches have been played.
-            </div>
-        )
+        return <EmptyState>No country scores yet — check back once matches have been played.</EmptyState>
     }
 
     return (

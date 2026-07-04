@@ -1,6 +1,7 @@
 import React from "react"
 import {GroupStandingRow} from "@/client"
 import {FlagImage} from "@/app/components/predictions/flag-image"
+import EmptyState from "@/app/components/empty-state"
 
 // The eight best third-placed teams advance to the round of 32.
 const QUALIFYING_THIRD_PLACED = 8
@@ -8,9 +9,9 @@ const QUALIFYING_THIRD_PLACED = 8
 export default function ThirdPlacedTable({rows}: {rows: GroupStandingRow[]}): React.JSX.Element {
     if (rows.length === 0) {
         return (
-            <div className="rounded-2xl bg-white border border-slate-200 dark:bg-white/5 dark:border-white/10 px-4 py-8 text-center text-sm text-slate-500 dark:text-gray-400">
+            <EmptyState contentClassName="px-4 py-8 text-sm text-slate-500 dark:text-gray-400">
                 No standings yet — check back once group matches have been played.
-            </div>
+            </EmptyState>
         )
     }
     return (

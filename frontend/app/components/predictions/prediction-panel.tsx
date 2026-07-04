@@ -3,6 +3,7 @@
 import React, {useEffect, useMemo, useState} from "react"
 import {useRouter} from "next/navigation"
 import {Match, MatchRoundEnum, MatchStateEnum} from "@/client"
+import EmptyState from "@/app/components/empty-state"
 import FocusedGlobeClient from "@/app/components/flags/focused-globe-client"
 import PredictionForm from "@/app/components/predictions/prediction-form"
 import MatchStrip from "@/app/components/predictions/match-strip"
@@ -61,9 +62,9 @@ export default function PredictionPanel({liveMatches, upcomingMatches, completed
 
     if (!selected) {
         return (
-            <div className="w-full max-w-5xl mx-auto my-10 rounded-2xl bg-white border border-slate-200 dark:bg-white/5 dark:border-white/10 p-8 text-center text-slate-600 dark:text-gray-300">
+            <EmptyState className="w-full max-w-5xl mx-auto my-10" contentClassName="p-8 text-slate-600 dark:text-gray-300">
                 No matches available right now. Check back soon.
-            </div>
+            </EmptyState>
         )
     }
 

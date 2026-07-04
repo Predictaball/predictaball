@@ -5,6 +5,7 @@ import React, {useEffect, useState} from "react";
 import LeagueComponent from "@/app/components/leaderboard/league";
 import {getConfigWithAuthHeaderClient} from "@/app/api/client-config-client-side";
 import {sortLeagues} from "@/app/util/leagues";
+import EmptyState from "@/app/components/empty-state";
 
 export default function YourLeaguesFetch({initialLeagues}: {initialLeagues: League[]}): React.JSX.Element {
     // Seed from the server-rendered list. Only refetch when the seed is empty (e.g. the
@@ -33,11 +34,7 @@ export default function YourLeaguesFetch({initialLeagues}: {initialLeagues: Leag
     }
 
     if (leagues.length === 0) {
-        return (
-            <div className="rounded-2xl bg-white border border-slate-200 dark:bg-white/5 dark:border-white/10 px-4 py-6 text-center text-sm text-slate-500 dark:text-gray-400">
-                You haven&apos;t joined any leagues yet.
-            </div>
-        )
+        return <EmptyState>You haven&apos;t joined any leagues yet.</EmptyState>
     }
 
     return (

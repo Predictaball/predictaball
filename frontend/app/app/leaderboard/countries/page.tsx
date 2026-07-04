@@ -1,6 +1,7 @@
 import React from "react";
 import Link from "next/link";
 import BackButton from "@/app/components/back-button";
+import EmptyState from "@/app/components/empty-state";
 import {getConfigWithAuthHeader} from "@/app/api/client-config";
 import {SHARED_DATA_REVALIDATE_SECONDS} from "@/app/api/constants";
 import {CountryLeaderboardInner, LeagueApi} from "@/client";
@@ -55,9 +56,9 @@ export default async function CountryRankingsPage(): Promise<React.JSX.Element> 
 
                     <div className="w-full max-w-2xl mx-auto">
                         {rankings.length === 0 ? (
-                            <div className="rounded-2xl bg-white border border-slate-200 dark:bg-white/5 dark:border-white/10 px-4 py-8 text-center text-sm text-slate-500 dark:text-gray-400">
+                            <EmptyState contentClassName="px-4 py-8 text-sm text-slate-500 dark:text-gray-400">
                                 No country scores yet — check back once matches have been played.
-                            </div>
+                            </EmptyState>
                         ) : (
                             rankings.map(entry => (
                                 <CountryRankingEntry key={entry.teamId} entry={entry}/>

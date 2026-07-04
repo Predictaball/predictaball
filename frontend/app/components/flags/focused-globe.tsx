@@ -6,12 +6,10 @@ import {Html, Line, OrbitControls} from "@react-three/drei"
 import * as THREE from "three"
 import {COUNTRY_COORDS} from "./country-coords"
 import {resolveStadium, Stadium} from "./stadium-coords"
-import {GLOBE_RADIUS, latLngToVec3, buildContinentGeometry, buildCountryFillGeometry, hasCountryFill, cropSquare} from "./globe-utils"
+import {GLOBE_RADIUS, latLngToVec3, buildCountryFillGeometry, hasCountryFill, cropSquare, mirrorHorizontally} from "./globe-utils"
 import {useFlagTexture} from "./flag-textures"
+import {Continents, FLAG_BORDER_WIDTH, FLAG_DISC_RADIUS, FlagDisc, GlobeLights, GlobeSphere, useCoarsePointer} from "./globe-primitives"
 
-const FLAG_DISC_RADIUS = 0.09
-const FLAG_BORDER_WIDTH = 0.012
-const FLAG_PLACEHOLDER_COLOR = "#334155"
 const FLAG_ANCHOR_OFFSET = 0.005
 const FLAG_LIFT = 0.42
 const FLAG_CAMERA_TILT = 0.45
@@ -286,15 +284,6 @@ function CameraRig({homeCode, awayCode, stadium, anim, tourLegs, controlsRef, us
     return null
 }
 
-function Continents() {
-    const geometry = useMemo(() => buildContinentGeometry(GLOBE_RADIUS + 0.008), [])
-    return (
-        <lineSegments geometry={geometry}>
-            <lineBasicMaterial color="#22d3ee" transparent opacity={0.45}/>
-        </lineSegments>
-    )
-}
-
 const COUNTRY_FILL_OPACITY = 0.85
 const COUNTRY_FILL_FADE_SECONDS = 0.9
 
@@ -339,16 +328,6 @@ function CountryFill({code, color}: {code: string; color: string}) {
     )
 }
 
-function mirrorHorizontally(source: THREE.Texture): THREE.Texture {
-    const tex = source.clone()
-    tex.wrapS = THREE.ClampToEdgeWrapping
-    tex.wrapT = THREE.ClampToEdgeWrapping
-    tex.offset.set(source.offset.x + source.repeat.x, source.offset.y)
-    tex.repeat.set(-source.repeat.x, source.repeat.y)
-    tex.needsUpdate = true
-    return tex
-}
-
 function FocusFlag({code, position, anchorRadius}: {code: string; position: THREE.Vector3; anchorRadius: number}) {
     const texture = useFlagTexture(code, "w320")
     const front = useMemo(() => (texture ? cropSquare(texture) : null), [texture])
@@ -372,38 +351,7 @@ function FocusFlag({code, position, anchorRadius}: {code: string; position: THRE
         groupRef.current.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), faceDir)
     })
 
-    return (
-        <>
-            <mesh position={anchorPos}>
-                <sphereGeometry args={[0.012, 10, 10]}/>
-                <meshBasicMaterial color="#22d3ee"/>
-            </mesh>
-            <Line points={[anchorPos, flagPos]} color="#22d3ee" lineWidth={0.8} transparent opacity={0.45}/>
-            <group ref={groupRef} position={flagPos}>
-                <mesh>
-                    <circleGeometry args={[FLAG_DISC_RADIUS + FLAG_BORDER_WIDTH, 48]}/>
-                    <meshBasicMaterial color="#ffffff" side={THREE.DoubleSide}/>
-                </mesh>
-                {front && back ? (
-                    <>
-                        <mesh position={[0, 0, 0.001]}>
-                            <circleGeometry args={[FLAG_DISC_RADIUS, 48]}/>
-                            <meshBasicMaterial map={front} toneMapped={false} side={THREE.FrontSide}/>
-                        </mesh>
-                        <mesh position={[0, 0, -0.001]} rotation={[0, Math.PI, 0]}>
-                            <circleGeometry args={[FLAG_DISC_RADIUS, 48]}/>
-                            <meshBasicMaterial map={back} toneMapped={false} side={THREE.FrontSide}/>
-                        </mesh>
-                    </>
-                ) : (
-                    <mesh position={[0, 0, 0.001]}>
-                        <circleGeometry args={[FLAG_DISC_RADIUS, 48]}/>
-                        <meshBasicMaterial color={FLAG_PLACEHOLDER_COLOR} side={THREE.DoubleSide}/>
-                    </mesh>
-                )}
-            </group>
-        </>
-    )
+    return <FlagDisc groupRef={groupRef} anchorPos={anchorPos} flagPos={flagPos} frontTexture={front} backTexture={back}/>
 }
 
 // Flag discs sit ~FLAG_LIFT above the surface; treat stadium label as conflicting
@@ -574,15 +522,8 @@ function Scene({homeCode, awayCode, venue, enableControls, userStopped, onUserSt
                 userStopped={userStopped}
                 onIntroComplete={() => setIntroDone(true)}
             />
-            <mesh>
-                <sphereGeometry args={[GLOBE_RADIUS, 64, 64]}/>
-                <meshStandardMaterial color="#1e3a5f" roughness={0.75} metalness={0.15}/>
-            </mesh>
-            <mesh>
-                <sphereGeometry args={[GLOBE_RADIUS + 0.003, 48, 48]}/>
-                <meshBasicMaterial color="#22d3ee" wireframe transparent opacity={0.08}/>
-            </mesh>
-            <Continents/>
+            <GlobeSphere/>
+            <Continents opacity={0.45}/>
             {hasHome && <CountryFill code={homeCode} color="#67e8f9"/>}
             {hasAway && <CountryFill code={awayCode} color="#818cf8"/>}
             {arcs.map((points, i) => (
@@ -608,20 +549,8 @@ function Scene({homeCode, awayCode, venue, enableControls, userStopped, onUserSt
     )
 }
 
-function useCoarsePointer(): boolean {
-    const [coarse, setCoarse] = useState(true)
-    useEffect(() => {
-        const mq = window.matchMedia("(pointer: coarse)")
-        const update = () => setCoarse(mq.matches)
-        update()
-        mq.addEventListener("change", update)
-        return () => mq.removeEventListener("change", update)
-    }, [])
-    return coarse
-}
-
 export default function FocusedGlobe({homeCode, awayCode, venue}: {homeCode: string; awayCode: string; venue?: string}): React.JSX.Element {
-    const coarsePointer = useCoarsePointer()
+    const coarsePointer = useCoarsePointer(true)
     const interactive = !coarsePointer
     const [userStopped, setUserStopped] = useState(false)
 
@@ -632,9 +561,7 @@ export default function FocusedGlobe({homeCode, awayCode, venue}: {homeCode: str
     return (
         <div className={`relative h-full w-full ${interactive ? "cursor-grab active:cursor-grabbing" : "pointer-events-none"}`}>
             <Canvas camera={{position: [0, 0, 5], fov: 42}} gl={{antialias: true, alpha: true}} dpr={[1, 1.5]}>
-                <ambientLight intensity={0.75}/>
-                <directionalLight position={[5, 3, 5]} intensity={1.1}/>
-                <pointLight position={[-5, -3, -5]} intensity={0.4} color="#22d3ee"/>
+                <GlobeLights ambientIntensity={0.75}/>
                 <Scene
                     homeCode={homeCode}
                     awayCode={awayCode}

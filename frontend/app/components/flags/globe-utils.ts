@@ -24,6 +24,18 @@ export function orientationForPosition(pos: THREE.Vector3): THREE.Euler {
     return new THREE.Euler().setFromQuaternion(quaternion)
 }
 
+// Duplicates a texture with its U axis flipped, so a flag disc's back face
+// reads correctly instead of mirror-reversed when viewed from behind.
+export function mirrorHorizontally(source: THREE.Texture): THREE.Texture {
+    const tex = source.clone()
+    tex.wrapS = THREE.ClampToEdgeWrapping
+    tex.wrapT = THREE.ClampToEdgeWrapping
+    tex.offset.set(source.offset.x + source.repeat.x, source.offset.y)
+    tex.repeat.set(-source.repeat.x, source.repeat.y)
+    tex.needsUpdate = true
+    return tex
+}
+
 export function cropSquare(source: THREE.Texture): THREE.Texture {
     const tex = source.clone()
     tex.wrapS = THREE.ClampToEdgeWrapping
