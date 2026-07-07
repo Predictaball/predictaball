@@ -57,8 +57,11 @@ jobs:
         run: cd frontend && npm run lint
 
   deploy-staging:
+    # Dev AWS account was closed after credits ran out. Skip the deploy until
+    # dev has a new home; the build job above still runs, so PRs and pushes
+    # continue to type-check + test the code.
+    if: false
     needs: build
-    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     environment: staging
