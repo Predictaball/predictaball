@@ -33,9 +33,10 @@ import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 
 // ESPN's site scoreboard API. Undocumented but stable for years — powers their
-// own site. One call returns every WC fixture in the date range, with status,
-// scores, and bracket placeholder names ("Round of 32 1 Winner") for fixtures
-// whose participants aren't yet known.
+// own site. Each call returns the WC fixtures in the requested date range, with
+// status, scores, and bracket placeholder names ("Round of 32 1 Winner") for
+// fixtures whose participants aren't yet known. Its per-response event count is
+// capped (~100), so we sweep the tournament in slices — see fetchAllEvents.
 @JsonIgnoreProperties(ignoreUnknown = true)
 private data class EspnTeam(val displayName: String?, val abbreviation: String?)
 
@@ -177,21 +178,10 @@ class ScoreUpdater(
 ) {
     private val client = JavaHttpClient()
 
-    // One call returns the whole tournament window. We pass a 60-day range so
-    // we get group + every knockout round in one request.
-    private val scoreboardUrl = "https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=20260601-20260801"
-
     fun run() {
         val started = System.currentTimeMillis()
-        val response = client(Request(Method.GET, scoreboardUrl))
+        val events = fetchAllEvents() ?: return
         val httpMs = System.currentTimeMillis() - started
-
-        if (!response.status.successful) {
-            log.warn("ScoreUpdater: ESPN returned ${response.status.code} after ${httpMs}ms, skipping")
-            return
-        }
-
-        val events = response.bodyString().fromJson<EspnScoreboardResponse>().events ?: emptyList()
         log.info("ScoreUpdater poll: http=${httpMs}ms events=${events.size}")
 
         var inserted = 0
@@ -366,6 +356,46 @@ class ScoreUpdater(
         log.info("ScoreUpdater done: events=${events.size} inserted=$inserted transitions=$transitions skippedPlaceholder=$skippedPlaceholder unknownTeam=$unknownTeam")
     }
 
+    // ESPN's scoreboard response caps the number of events it returns,
+    // regardless of how wide a `dates` range we ask for (empirically ~100).
+    // The 2026 World Cup has 104 fixtures, so a single call over the whole
+    // tournament window silently drops the overflow — and which fixtures get
+    // dropped isn't stable, so a match can flicker in and out of our polling
+    // and never get inserted/scored. Fetch the window in narrow date slices
+    // (each comfortably under the cap) and merge the events, deduped by id.
+    //
+    // A slice that fails is logged and skipped rather than aborting the whole
+    // tick — we only ever act on fixtures we can see, so a partial view is
+    // safe and the missing slice is retried next tick. Returns null only when
+    // every slice failed, so an ESPN outage isn't mistaken for "no fixtures".
+    private fun fetchAllEvents(): List<EspnEvent>? {
+        val byId = LinkedHashMap<String, EspnEvent>()
+        var failures = 0
+        var windowStart = SEASON_START
+        while (!windowStart.isAfter(SEASON_END)) {
+            val windowEnd = minOf(windowStart.plusDays(WINDOW_DAYS - 1), SEASON_END)
+            val url = "$SCOREBOARD_BASE?dates=${windowStart.format(WINDOW_FMT)}-${windowEnd.format(WINDOW_FMT)}"
+            val response = try {
+                client(Request(Method.GET, url))
+            } catch (e: Exception) {
+                log.warn("ScoreUpdater: ESPN request failed for window $windowStart..$windowEnd: ${e.message}")
+                failures++
+                windowStart = windowEnd.plusDays(1)
+                continue
+            }
+            if (!response.status.successful) {
+                log.warn("ScoreUpdater: ESPN returned ${response.status.code} for window $windowStart..$windowEnd")
+                failures++
+            } else {
+                val events = response.bodyString().fromJson<EspnScoreboardResponse>().events ?: emptyList()
+                for (event in events) byId[event.id] = event
+            }
+            windowStart = windowEnd.plusDays(1)
+        }
+        if (failures > 0 && byId.isEmpty()) return null
+        return byId.values.toList()
+    }
+
     private fun findTeamId(normalizedName: String?): Int? {
         if (normalizedName == null) return null
         return transaction {
@@ -419,5 +449,21 @@ class ScoreUpdater(
         // into the same numbering scheme.
         private val TOURNAMENT_START_DATE: LocalDate = LocalDate.of(2026, 6, 11)
         private val MATCH_DAY_ZONE: ZoneId = ZoneId.of("America/Los_Angeles")
+
+        // ESPN's site scoreboard API. Undocumented but stable for years —
+        // powers their own site. Queried in date slices (see fetchAllEvents)
+        // to stay under its per-response event cap.
+        private const val SCOREBOARD_BASE = "https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard"
+
+        // Overall window we sweep for fixtures: comfortably brackets the
+        // tournament (11 Jun – 19 Jul 2026) on both sides.
+        private val SEASON_START: LocalDate = LocalDate.of(2026, 6, 1)
+        private val SEASON_END: LocalDate = LocalDate.of(2026, 8, 1)
+
+        // Slice width. The group stage runs at most ~6 fixtures/day, so a
+        // 10-day slice tops out near 60 events — a wide margin under ESPN's
+        // ~100-event response cap, with room for future format growth.
+        private const val WINDOW_DAYS = 10L
+        private val WINDOW_FMT: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMdd")
     }
 }
