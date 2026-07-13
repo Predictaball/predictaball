@@ -62,11 +62,30 @@ export default function PredictionPanel({liveMatches, upcomingMatches, completed
         setStatus({saved: selected.prediction !== undefined, hasChanges: selected.prediction === undefined})
     }, [selected?.matchId, selected?.prediction])
 
+    // When there are no live or upcoming games we still want to show the
+    // Completed strip below (recent results are useful the morning after a
+    // match day and after the tournament ends). If there's nothing at all —
+    // no live, no upcoming, no completed — fall back to the empty state.
     if (!selected) {
+        if (completedMatches.length === 0) {
+            return (
+                <EmptyState className="w-full max-w-5xl mx-auto my-10" contentClassName="p-8 text-slate-600 dark:text-gray-300">
+                    No matches available right now. Check back soon.
+                </EmptyState>
+            )
+        }
         return (
-            <EmptyState className="w-full max-w-5xl mx-auto my-10" contentClassName="p-8 text-slate-600 dark:text-gray-300">
-                No matches available right now. Check back soon.
-            </EmptyState>
+            <div className="w-full space-y-6">
+                <MatchStrip
+                    liveMatches={liveMatches}
+                    upcomingMatches={upcomingMatches}
+                    completedMatches={completedMatches}
+                    historyHref={historyHref}
+                    selectedId=""
+                    onSelect={setSelectedId}
+                    streaks={streaks}
+                />
+            </div>
         )
     }
 
