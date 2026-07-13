@@ -177,21 +177,42 @@ class ScoreUpdater(
 ) {
     private val client = JavaHttpClient()
 
-    // One call returns the whole tournament window. We pass a 60-day range so
-    // we get group + every knockout round in one request.
-    private val scoreboardUrl = "https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=20260601-20260801"
+    // ESPN's scoreboard endpoint caps each response at 100 events. WC2026 has
+    // 104 (72 group + 16 R32 + 8 R16 + 4 QF + 2 SF + 1 third-place + 1 final),
+    // so a single 60-day window truncates the semis and final off the end.
+    // Fetch one calendar month at a time and dedupe by event id — a WC month
+    // maxes out around 80 events (the group-stage-heavy first month), well
+    // under the cap. Two months cover the whole tournament; extend
+    // TOURNAMENT_MONTHS if a future tournament spills into a third.
+    private fun scoreboardWindows(): List<String> {
+        val fmt = DateTimeFormatter.ofPattern("yyyyMMdd")
+        val firstMonth = TOURNAMENT_START_DATE.withDayOfMonth(1)
+        return generateSequence(firstMonth) { it.plusMonths(1) }
+            .take(TOURNAMENT_MONTHS)
+            .map { start ->
+                val end = start.plusMonths(1).minusDays(1)
+                "${start.format(fmt)}-${end.format(fmt)}"
+            }
+            .toList()
+    }
+
+    private fun scoreboardUrlFor(range: String) =
+        "https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=$range"
 
     fun run() {
         val started = System.currentTimeMillis()
-        val response = client(Request(Method.GET, scoreboardUrl))
-        val httpMs = System.currentTimeMillis() - started
-
-        if (!response.status.successful) {
-            log.warn("ScoreUpdater: ESPN returned ${response.status.code} after ${httpMs}ms, skipping")
-            return
+        val eventsById = linkedMapOf<String, EspnEvent>()
+        for (range in scoreboardWindows()) {
+            val response = client(Request(Method.GET, scoreboardUrlFor(range)))
+            if (!response.status.successful) {
+                log.warn("ScoreUpdater: ESPN returned ${response.status.code} for range $range, skipping tick")
+                return
+            }
+            val batch = response.bodyString().fromJson<EspnScoreboardResponse>().events ?: emptyList()
+            batch.forEach { eventsById[it.id] = it }
         }
-
-        val events = response.bodyString().fromJson<EspnScoreboardResponse>().events ?: emptyList()
+        val httpMs = System.currentTimeMillis() - started
+        val events: List<EspnEvent> = eventsById.values.toList()
         log.info("ScoreUpdater poll: http=${httpMs}ms events=${events.size}")
 
         var inserted = 0
@@ -418,6 +439,10 @@ class ScoreUpdater(
         // same boundaries; we hardcode them so newly-discovered fixtures slot
         // into the same numbering scheme.
         private val TOURNAMENT_START_DATE: LocalDate = LocalDate.of(2026, 6, 11)
+
+        // Calendar months the tournament spans (June + July for WC2026). Used
+        // to page ESPN's scoreboard calls around its 100-event response cap.
+        private const val TOURNAMENT_MONTHS = 2
         private val MATCH_DAY_ZONE: ZoneId = ZoneId.of("America/Los_Angeles")
     }
 }
