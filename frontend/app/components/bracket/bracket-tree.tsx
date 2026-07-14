@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState } from "react"
 import { BracketMatch } from "@/client"
 import { ROUND_LABELS, ROUND_SHORT_LABELS } from "@/app/util/bracket-scoring"
-import { RoundColumn, Slot, buildBracket } from "@/app/util/bracket-layout"
+import { RoundColumn, Slot, buildBracket, thirdPlaceSlot } from "@/app/util/bracket-layout"
 import BracketCell, { CellDims, LockIcon, PlaceholderCell, isMatchLocked } from "./bracket-cell"
 
 // Desktop tree geometry.
@@ -61,10 +61,35 @@ function isRoundLocked(column: RoundColumn<BracketMatch>): boolean {
 export default function BracketTree({ matches, resultsOnly = false }: BracketTreeProps): React.JSX.Element {
     const compact = useCompact()
     const rounds = buildBracket(matches)
+    // The third-place playoff isn't part of the connected tree — it's laid out on
+    // its own beneath the final (see DesktopTree / MobileCarousel).
+    const thirdPlace = thirdPlaceSlot(matches)
 
     return compact
-        ? <MobileCarousel rounds={rounds} resultsOnly={resultsOnly} />
-        : <DesktopTree rounds={rounds} resultsOnly={resultsOnly} />
+        ? <MobileCarousel rounds={rounds} thirdPlace={thirdPlace} resultsOnly={resultsOnly} />
+        : <DesktopTree rounds={rounds} thirdPlace={thirdPlace} resultsOnly={resultsOnly} />
+}
+
+/**
+ * The third-place playoff as a standalone block: a round label above a single
+ * cell, mirroring the tree's own headers. Positioned by its callers beneath the
+ * final.
+ */
+function ThirdPlaceBlock({ slot, dims, resultsOnly }: {
+    slot: Slot<BracketMatch>
+    dims: CellDims
+    resultsOnly: boolean
+}): React.JSX.Element {
+    const locked = !resultsOnly && slot.kind === "match" && isMatchLocked(slot.match)
+    return (
+        <>
+            <div className="mb-1.5 flex items-center justify-center gap-1 text-center text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500 dark:text-gray-400">
+                {ROUND_SHORT_LABELS.THIRD_PLACE_PLAYOFF}
+                {locked && <LockIcon className="h-3 w-3 text-slate-400 dark:text-gray-500" />}
+            </div>
+            {renderSlot(slot, dims, resultsOnly)}
+        </>
+    )
 }
 
 function renderSlot(slot: Slot<BracketMatch>, dims: CellDims, resultsOnly: boolean): React.JSX.Element {
@@ -97,7 +122,7 @@ function mobileCenters(matchCount: number, totalSlots: number): number[] {
 }
 
 /** Phone layout: snap-scroll carousel with proper bracket connector lines. */
-function MobileCarousel({ rounds, resultsOnly }: { rounds: RoundColumn<BracketMatch>[]; resultsOnly: boolean }): React.JSX.Element {
+function MobileCarousel({ rounds, thirdPlace, resultsOnly }: { rounds: RoundColumn<BracketMatch>[]; thirdPlace: Slot<BracketMatch> | null; resultsOnly: boolean }): React.JSX.Element {
     const firstRoundCount = rounds[0].slots.length
     // Slot height × slot count gives the bounding box. We previously subtracted
     // M_V_GAP to avoid a trailing gap below the last cell, but mobileCenters()
@@ -205,6 +230,12 @@ function MobileCarousel({ rounds, resultsOnly }: { rounds: RoundColumn<BracketMa
                                             {renderSlot(slot, dims, resultsOnly)}
                                         </div>
                                     ))}
+                                    {r === rounds.length - 1 && thirdPlace && (
+                                        // Beneath the final (centred in the last column).
+                                        <div className="absolute w-full" style={{ top: centers[0] + M_CARD_H / 2 + 22 }}>
+                                            <ThirdPlaceBlock slot={thirdPlace} dims={dims} resultsOnly={resultsOnly} />
+                                        </div>
+                                    )}
                                 </section>
                             </React.Fragment>
                         )
@@ -217,7 +248,7 @@ function MobileCarousel({ rounds, resultsOnly }: { rounds: RoundColumn<BracketMa
 }
 
 /** Desktop layout: the connected bracket tree. */
-function DesktopTree({ rounds, resultsOnly }: { rounds: RoundColumn<BracketMatch>[]; resultsOnly: boolean }): React.JSX.Element {
+function DesktopTree({ rounds, thirdPlace, resultsOnly }: { rounds: RoundColumn<BracketMatch>[]; thirdPlace: Slot<BracketMatch> | null; resultsOnly: boolean }): React.JSX.Element {
     const dims: CellDims = { width: CARD_W, height: CARD_H, compact: false }
     const totalHeight = rounds[0].slots.length * SLOT
 
@@ -285,6 +316,20 @@ function DesktopTree({ rounds, resultsOnly }: { rounds: RoundColumn<BracketMatch
                                 {renderSlot(slot, dims, resultsOnly)}
                             </div>
                         )),
+                    )}
+                    {thirdPlace && (
+                        // Hang the third-place playoff beneath the final (last column,
+                        // vertically centred) — its own label above a single cell.
+                        <div
+                            className="absolute"
+                            style={{
+                                left: (rounds.length - 1) * COL,
+                                top: centers[rounds.length - 1][0] + CARD_H / 2 + 28,
+                                width: CARD_W,
+                            }}
+                        >
+                            <ThirdPlaceBlock slot={thirdPlace} dims={dims} resultsOnly={resultsOnly} />
+                        </div>
                     )}
                 </div>
             </div>

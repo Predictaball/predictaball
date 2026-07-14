@@ -18,6 +18,8 @@ object BracketScoring {
         MatchRound.ROUND_OF_SIXTEEN to 3,
         MatchRound.QUARTER_FINAL to 5,
         MatchRound.SEMI_FINAL to 8,
+        // The third-place playoff is worth the same as a semi-final.
+        MatchRound.THIRD_PLACE_PLAYOFF to 8,
         MatchRound.FINAL to 12,
     )
 

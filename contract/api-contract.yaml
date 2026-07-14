@@ -450,6 +450,7 @@ components:
             - ROUND_OF_SIXTEEN
             - QUARTER_FINAL
             - SEMI_FINAL
+            - THIRD_PLACE_PLAYOFF
             - FINAL
         homeTeam:
           type: string

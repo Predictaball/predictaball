@@ -58,12 +58,13 @@ export default async function BracketPage({ searchParams }: {
                         climb each round. Call matches right in a row to build a streak bonus on top.
                         Top of your league lifts the cup.
                     </p>
-                    <div className="mx-auto flex max-w-xs justify-center gap-3 pt-1">
+                    <div className="mx-auto flex max-w-sm justify-center gap-3 pt-1">
                         {[
                             { label: "R32", pts: 1 },
                             { label: "R16", pts: 3 },
                             { label: "QF", pts: 5 },
                             { label: "SF", pts: 8 },
+                            { label: "3rd", pts: 8 },
                             { label: "Final", pts: 12 },
                         ].map(({ label, pts }) => (
                             <div key={label} className="flex flex-col items-center gap-0.5">
