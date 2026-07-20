@@ -18,14 +18,14 @@ object EmailService {
         val html: String,
     )
 
-    fun send(to: String, subject: String, html: String) {
+    fun send(to: String, subject: String, html: String, from: String = "Predictaball <noreply@predictaball.live>") {
         if (apiKey.isNullOrBlank()) {
             log.info("RESEND_API_KEY not set, skipping email to $to: $subject")
             return
         }
 
         val body = ResendRequest(
-            from = "Predictaball <noreply@predictaball.live>",
+            from = from,
             to = listOf(to),
             subject = subject,
             html = html,
