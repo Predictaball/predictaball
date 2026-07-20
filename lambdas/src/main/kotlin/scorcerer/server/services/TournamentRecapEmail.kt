@@ -307,8 +307,8 @@ object TournamentRecapEmail {
           <div style="margin-top:8px;font-size:16px;font-weight:900;color:$SLATE_900;letter-spacing:-0.01em;">${escape(shortName(c.teamName))}</div>
           <div style="margin-top:2px;font-size:11px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:$CYAN_600;">Champions &#127942;</div>
         </td>
-        <td width="16%" align="center" style="vertical-align:middle;">
-          <div style="font-size:26px;font-weight:900;color:$SLATE_900;letter-spacing:-0.02em;">${c.finalHomeScore} &ndash; ${c.finalAwayScore}</div>
+        <td width="16%" align="center" style="vertical-align:middle;white-space:nowrap;">
+          <div style="font-size:26px;font-weight:900;color:$SLATE_900;letter-spacing:-0.02em;white-space:nowrap;">${c.finalHomeScore}&nbsp;&ndash;&nbsp;${c.finalAwayScore}</div>
         </td>
         <td width="42%" align="right" style="vertical-align:middle;">
           ${flag(c.runnerUpFlagCode, c.runnerUpName, 56)}
@@ -396,8 +396,8 @@ object TournamentRecapEmail {
           ${flag(b.homeFlagCode, b.homeName)}
           <div style="margin-top:8px;font-size:13px;font-weight:700;color:$SLATE_700;">${escape(shortName(b.homeName))}</div>
         </td>
-        <td width="30%" align="center" style="vertical-align:middle;">
-          <div style="font-size:28px;font-weight:900;color:$SLATE_900;letter-spacing:-0.02em;">${b.actualHome} &ndash; ${b.actualAway}</div>
+        <td width="30%" align="center" style="vertical-align:middle;white-space:nowrap;">
+          <div style="font-size:28px;font-weight:900;color:$SLATE_900;letter-spacing:-0.02em;white-space:nowrap;">${b.actualHome}&nbsp;&ndash;&nbsp;${b.actualAway}</div>
           <div style="margin-top:6px;font-size:11px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:$SLATE_400;">Result</div>
         </td>
         <td width="35%" align="right" style="vertical-align:middle;">
