@@ -1,4 +1,4 @@
-import { LayoutMatch, ROUND_SIZES, Slot, buildBracket } from "@/app/util/bracket-layout"
+import { EliminationRound, LayoutMatch, ROUND_SIZES, Slot, buildBracket, thirdPlaceSlot } from "@/app/util/bracket-layout"
 
 const r32 = "ROUND_OF_THIRTY_TWO" as const
 const r16 = "ROUND_OF_SIXTEEN" as const
@@ -49,7 +49,8 @@ describe("buildBracket", () => {
             "FINAL",
         ])
         rounds.forEach((column) => {
-            expect(column.slots.length).toBe(ROUND_SIZES[column.round])
+            // buildBracket only ever emits elimination rounds.
+            expect(column.slots.length).toBe(ROUND_SIZES[column.round as EliminationRound])
         })
         // The single real match keeps its slot; the rest of R32 is placeholders.
         expect(rounds[0].slots[0]).toEqual({ kind: "match", match: expect.objectContaining({ bracketPosition: 1 }) })
@@ -130,5 +131,69 @@ describe("buildBracket", () => {
         const tie = r16Match("England", "France")
         const r16Slots = roundSlots(buildBracket([tie]), r16)
         expect(r16Slots[0]).toMatchObject({ kind: "match", match: { homeTeam: "England" } })
+    })
+
+    it("keeps the third-place playoff out of the connected tree", () => {
+        const rounds = buildBracket([thirdPlaceMatch()])
+        expect(rounds.map((c) => c.round)).toEqual([
+            "ROUND_OF_THIRTY_TWO", "ROUND_OF_SIXTEEN", "QUARTER_FINAL", "SEMI_FINAL", "FINAL",
+        ])
+        const seated = rounds.flatMap((c) => c.slots).some((s) => s.kind === "match")
+        expect(seated).toBe(false)
+    })
+})
+
+function semiFinalMatch(position: number, home: string, away: string, overrides: Partial<LayoutMatch> = {}): LayoutMatch {
+    return {
+        round: "SEMI_FINAL",
+        state: "UPCOMING",
+        homeTeam: home,
+        homeTeamFlagCode: "h",
+        awayTeam: away,
+        awayTeamFlagCode: "a",
+        bracketPosition: position,
+        ...overrides,
+    }
+}
+
+function thirdPlaceMatch(overrides: Partial<LayoutMatch> = {}): LayoutMatch {
+    return {
+        round: "THIRD_PLACE_PLAYOFF",
+        state: "UPCOMING",
+        homeTeam: "Spain",
+        homeTeamFlagCode: "es",
+        awayTeam: "Italy",
+        awayTeamFlagCode: "it",
+        ...overrides,
+    }
+}
+
+describe("thirdPlaceSlot", () => {
+    it("returns the real fixture when it exists", () => {
+        const match = thirdPlaceMatch()
+        expect(thirdPlaceSlot([match])).toEqual({ kind: "match", match })
+    })
+
+    it("projects the two semi-final losers into a placeholder before the fixture is seeded", () => {
+        const slot = thirdPlaceSlot([
+            semiFinalMatch(1, "England", "France", { state: "COMPLETED", actualGoThrough: "HOME" }),
+            semiFinalMatch(2, "Spain", "Italy", { state: "COMPLETED", actualGoThrough: "AWAY" }),
+        ])
+        // SF1: England went through, so France is the loser. SF2: Italy went
+        // through, so Spain is the loser.
+        expect(slot).toMatchObject({ kind: "placeholder", home: { name: "France" }, away: { name: "Spain" } })
+    })
+
+    it("fills only the decided side when a single semi-final is complete", () => {
+        const slot = thirdPlaceSlot([
+            semiFinalMatch(1, "England", "France", { state: "COMPLETED", actualGoThrough: "HOME" }),
+            semiFinalMatch(2, "Spain", "Italy"),
+        ])
+        expect(slot).toMatchObject({ kind: "placeholder", home: { name: "France" } })
+        expect((slot as Extract<Slot<LayoutMatch>, { kind: "placeholder" }>).away).toBeUndefined()
+    })
+
+    it("returns null while nothing about the playoff is known", () => {
+        expect(thirdPlaceSlot([semiFinalMatch(1, "England", "France"), semiFinalMatch(2, "Spain", "Italy")])).toBeNull()
     })
 })

@@ -11,10 +11,27 @@
  * client so it can be unit-tested in isolation (see `__tests__/bracket-layout.test.ts`).
  */
 
-import { BracketRound, GoThrough, KNOCKOUT_ROUNDS } from "./bracket-scoring"
+import { BracketRound, GoThrough } from "./bracket-scoring"
+
+/**
+ * The single-elimination spine of the bracket. The third-place playoff is a
+ * knockout round too, but it hangs off the semi-finals rather than feeding the
+ * next round, so it's laid out on its own (see `thirdPlaceSlot`) instead of in
+ * this connected tree.
+ */
+export type EliminationRound = Exclude<BracketRound, "THIRD_PLACE_PLAYOFF">
+
+/** The elimination-tree rounds, earliest first. */
+export const ELIMINATION_ROUNDS: EliminationRound[] = [
+    "ROUND_OF_THIRTY_TWO",
+    "ROUND_OF_SIXTEEN",
+    "QUARTER_FINAL",
+    "SEMI_FINAL",
+    "FINAL",
+]
 
 /** Expected match count per round in a standard 32-team knockout. */
-export const ROUND_SIZES: Record<BracketRound, number> = {
+export const ROUND_SIZES: Record<EliminationRound, number> = {
     ROUND_OF_THIRTY_TWO: 16,
     ROUND_OF_SIXTEEN: 8,
     QUARTER_FINAL: 4,
@@ -115,7 +132,7 @@ export function buildBracket<M extends LayoutMatch>(matches: M[]): RoundColumn<M
     const columns: RoundColumn<M>[] = []
     let prev: Slot<M>[] | null = null
 
-    for (const round of KNOCKOUT_ROUNDS) {
+    for (const round of ELIMINATION_ROUNDS) {
         const size = ROUND_SIZES[round]
         // Order by bracket position so consecutive pairs feed the right next-round
         // slot; matches without a position keep their incoming (kickoff) order.
@@ -155,4 +172,32 @@ export function buildBracket<M extends LayoutMatch>(matches: M[]): RoundColumn<M
     }
 
     return columns
+}
+
+/** The side that lost a decided match — the one that did NOT go through. */
+function projectedLoser<M extends LayoutMatch>(match: M | undefined): DerivedTeam | undefined {
+    if (match == null || match.state !== "COMPLETED" || match.actualGoThrough == null) return undefined
+    return match.actualGoThrough === "HOME"
+        ? { name: match.awayTeam, flag: match.awayTeamFlagCode }
+        : { name: match.homeTeam, flag: match.homeTeamFlagCode }
+}
+
+/**
+ * The third-place playoff slot, rendered on its own beneath the final. Prefers
+ * the real fixture; before it's seeded, once the semi-finals are decided the two
+ * losers are projected into a placeholder (mirroring how the tree pre-fills the
+ * next round from known results). Returns null while nothing is known yet, so no
+ * empty block is shown.
+ */
+export function thirdPlaceSlot<M extends LayoutMatch>(matches: M[]): Slot<M> | null {
+    const real = matches.find((m) => m.round === "THIRD_PLACE_PLAYOFF")
+    if (real) return { kind: "match", match: real }
+
+    const semis = matches
+        .filter((m) => m.round === "SEMI_FINAL")
+        .sort((a, b) => (a.bracketPosition ?? Infinity) - (b.bracketPosition ?? Infinity))
+    const home = projectedLoser(semis[0])
+    const away = projectedLoser(semis[1])
+    if (home == null && away == null) return null
+    return { kind: "placeholder", id: "THIRD_PLACE_PLAYOFF-ph", home, away }
 }

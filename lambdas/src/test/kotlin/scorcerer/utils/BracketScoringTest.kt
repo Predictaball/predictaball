@@ -46,6 +46,19 @@ internal class BracketScoringTest {
     }
 
     @Test
+    fun thirdPlacePlayoffScoresLikeASemiFinal() {
+        val run = listOf(
+            RunMatch(MatchRound.SEMI_FINAL, home, home),
+            RunMatch(MatchRound.THIRD_PLACE_PLAYOFF, home, home),
+            RunMatch(MatchRound.FINAL, home, home),
+        )
+        // bases 8+8+12=28, bonuses 0+1+2=3 -> 31
+        val result = BracketScoring.scoreRun(run)
+        result.totalPoints shouldBe 31
+        result.perMatch[1] shouldBe BracketScoring.MatchScore(8, 1, true)
+    }
+
+    @Test
     fun aMissResetsTheStreak() {
         val run = listOf(
             RunMatch(r32, home, home),

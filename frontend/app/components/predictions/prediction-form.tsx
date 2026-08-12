@@ -30,6 +30,20 @@ function vibrate(pattern: number | number[]) {
 
 const isKnockoutRound = (round: MatchRoundEnum): boolean => round !== MatchRoundEnum.GroupStage
 
+// Round-specific phrasing for the knockout prompt and confirmation. The final and
+// the third-place playoff crown a placing rather than send a team onward, so they
+// read differently from the "go through" of the earlier rounds.
+function knockoutPhrasing(round: MatchRoundEnum): {question: string; outcome: string} {
+    switch (round) {
+        case MatchRoundEnum.Final:
+            return {question: "Who will be world champions?", outcome: "to be world champions"}
+        case MatchRoundEnum.ThirdPlacePlayoff:
+            return {question: "Who will come third place?", outcome: "to come third place"}
+        default:
+            return {question: "Who goes through?", outcome: "to go through"}
+    }
+}
+
 // Which side a knockout prediction backs to progress. The API now echoes the
 // stored choice on the prediction, so prefer it; fall back to deriving it from a
 // decisive score for older predictions saved before a side was captured.
@@ -90,9 +104,10 @@ export default function PredictionForm({match, onPredictionSaved, userChips, onC
     // the score crosses the draw line.
     const knockoutWinner = homeScore > awayScore ? match.homeTeam : match.awayTeam
     const knockoutWinnerShort = SHORT_COUNTRY_NAMES[knockoutWinner.toLowerCase()] ?? knockoutWinner
+    const phrasing = knockoutPhrasing(match.round)
     const knockoutPrompt = !isKnockout || chip === Chip.Crowd || justSaved
         ? ""
-        : isDraw ? "Who goes through?" : `${knockoutWinnerShort} to go through`
+        : isDraw ? phrasing.question : `${knockoutWinnerShort} ${phrasing.outcome}`
 
     const homeCode = match.homeTeamFlagCode.toLowerCase()
     const awayCode = match.awayTeamFlagCode.toLowerCase()
@@ -207,6 +222,7 @@ export default function PredictionForm({match, onPredictionSaved, userChips, onC
                 <ThroughBar
                     code={drawPickSide === ToGoThrough.Home ? homeCode : awayCode}
                     name={drawPickSide === ToGoThrough.Home ? match.homeTeam : match.awayTeam}
+                    outcome={phrasing.outcome}
                 />
             )}
 
@@ -244,7 +260,7 @@ export default function PredictionForm({match, onPredictionSaved, userChips, onC
                         </div>
                     )}
                     {/* Reserve a fixed-height prompt row on knockout matches so the
-                        button stays put when the "who goes through?" text toggles. */}
+                        button stays put when the knockout prompt text toggles. */}
                     {isKnockout && (
                         <div className="h-4 mb-1.5 truncate text-center text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500 dark:text-gray-400">
                             {knockoutPrompt}
@@ -258,6 +274,7 @@ export default function PredictionForm({match, onPredictionSaved, userChips, onC
                             homeCode={homeCode}
                             awayName={match.awayTeam}
                             awayCode={awayCode}
+                            outcome={phrasing.outcome}
                             savedSide={savedPrediction?.toGoThrough}
                             sendingSide={isSending ? toGoThrough : undefined}
                             disabled={isSending}
@@ -326,11 +343,13 @@ export default function PredictionForm({match, onPredictionSaved, userChips, onC
 
 // Knockout match with a predicted draw: the submit button is split in half, a
 // team in each side, so pressing one submits with that team going through.
-function KnockoutSubmit({homeName, homeCode, awayName, awayCode, savedSide, sendingSide, disabled, onSubmit}: {
+function KnockoutSubmit({homeName, homeCode, awayName, awayCode, outcome, savedSide, sendingSide, disabled, onSubmit}: {
     homeName: string
     homeCode: string
     awayName: string
     awayCode: string
+    /** The phrase describing what the pick backs, e.g. "to go through" or "to be world champions". */
+    outcome: string
     savedSide?: ToGoThrough
     sendingSide?: ToGoThrough
     disabled: boolean
@@ -350,7 +369,7 @@ function KnockoutSubmit({homeName, homeCode, awayName, awayCode, savedSide, send
                         onPress={() => onSubmit(side)}
                         isLoading={sendingSide === side}
                         isDisabled={disabled}
-                        title={`Submit with ${short} to go through`}
+                        title={`Submit with ${short} ${outcome}`}
                         className={`flex-1 min-w-0 h-11 gap-2 ${rounded} ${ACTION_BUTTON_CLASS} ${
                             savedSide === side ? "ring-2 ring-inset ring-gray-950/40" : ""
                         }`}
@@ -417,13 +436,13 @@ function TeamSide({code, name, reverse, ranking, picked, dimmed}: {code: string;
 
 // Centered confirmation chip naming the team backed to progress, shown beneath
 // the scores on a live/finished knockout draw.
-function ThroughBar({code, name}: {code: string; name: string}): React.JSX.Element {
+function ThroughBar({code, name, outcome}: {code: string; name: string; outcome: string}): React.JSX.Element {
     const short = SHORT_COUNTRY_NAMES[name.toLowerCase()] ?? name
     return (
         <div className="mt-4 flex justify-center">
             <span className="inline-flex items-center gap-2 rounded-full border border-cyan-500/20 bg-cyan-500/10 px-3 py-1 text-xs font-bold text-cyan-700 dark:border-cyan-400/20 dark:bg-cyan-400/10 dark:text-cyan-300">
                 <FlagImage code={code} name={short} size={16}/>
-                {short} to go through
+                {short} {outcome}
             </span>
         </div>
     )

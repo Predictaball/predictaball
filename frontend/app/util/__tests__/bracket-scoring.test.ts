@@ -39,6 +39,18 @@ describe("bracket-scoring", () => {
         expect(scoreRun(run).totalPoints).toBe(38)
     })
 
+    it("scores the third-place playoff like a semi-final", () => {
+        const run: RunMatch[] = [
+            { round: "SEMI_FINAL", pick: home, actual: home },
+            { round: "THIRD_PLACE_PLAYOFF", pick: home, actual: home },
+            { round: "FINAL", pick: home, actual: home },
+        ]
+        // bases 8+8+12=28, bonuses 0+1+2=3 -> 31
+        const result = scoreRun(run)
+        expect(result.totalPoints).toBe(31)
+        expect(result.perMatch[1]).toEqual({ basePoints: 8, bonusPoints: 1, correct: true })
+    })
+
     it("resets the streak on a miss", () => {
         const run: RunMatch[] = [
             { round: r32, pick: home, actual: home },

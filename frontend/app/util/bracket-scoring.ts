@@ -20,6 +20,7 @@ export type BracketRound =
     | "ROUND_OF_SIXTEEN"
     | "QUARTER_FINAL"
     | "SEMI_FINAL"
+    | "THIRD_PLACE_PLAYOFF"
     | "FINAL"
 
 export type GoThrough = "HOME" | "AWAY"
@@ -30,15 +31,21 @@ export const ROUND_BASE: Record<BracketRound, number> = {
     ROUND_OF_SIXTEEN: 3,
     QUARTER_FINAL: 5,
     SEMI_FINAL: 8,
+    // The third-place playoff is worth the same as a semi-final.
+    THIRD_PLACE_PLAYOFF: 8,
     FINAL: 12,
 }
 
-/** Knockout rounds that count toward the cup, earliest first. */
+/**
+ * Knockout rounds that count toward the cup, in kickoff order — the third-place
+ * playoff sits before the final, matching when it's actually played.
+ */
 export const KNOCKOUT_ROUNDS: BracketRound[] = [
     "ROUND_OF_THIRTY_TWO",
     "ROUND_OF_SIXTEEN",
     "QUARTER_FINAL",
     "SEMI_FINAL",
+    "THIRD_PLACE_PLAYOFF",
     "FINAL",
 ]
 
@@ -47,6 +54,7 @@ export const ROUND_LABELS: Record<BracketRound, string> = {
     ROUND_OF_SIXTEEN: "Round of 16",
     QUARTER_FINAL: "Quarter-finals",
     SEMI_FINAL: "Semi-finals",
+    THIRD_PLACE_PLAYOFF: "Third-place playoff",
     FINAL: "Final",
 }
 
@@ -55,6 +63,7 @@ export const ROUND_SHORT_LABELS: Record<BracketRound, string> = {
     ROUND_OF_SIXTEEN: "R16",
     QUARTER_FINAL: "QF",
     SEMI_FINAL: "SF",
+    THIRD_PLACE_PLAYOFF: "3rd Place",
     FINAL: "Final",
 }
 
